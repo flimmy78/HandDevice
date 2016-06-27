@@ -1,16 +1,17 @@
+/***************************************************
+**	模块功能:	主函数
+**	模块名字:	application.c
+**	作者：		宋宝善
+****************************************************
+*/
 #include "user.h"
+#include "db.h"
 #include "interface.h"
 
 int main(void){
-//	U8 key;
-//	while(1){
-//		LcdPutString("Hello......",0,16);
-//		key=KeyWait();
-//		if(key==KEY_ESC)
-//            break;
-//		else if(key==KEY_ENTER)
-//            maingui();
-//	}
+//	KeyWait();
+
+	db_readAllConfig();
     LcdClear();
     maingui();
     return 0;

@@ -1,8 +1,15 @@
+/***************************************************
+**	模块功能:	处理用户界面交互
+**	模块名字:	interface.c
+**	作者：		宋宝善
+****************************************************
+*/
 #include "user.h"
+#include "logic.h"
 #include "interface.h"
 
 //集中器程序主界面
-const GUI_WIDGET_CREATE_INFO mainFrame[] =            
+static const GUI_WIDGET_CREATE_INFO mainFrame[] =
 {
     { FRAMEWIN_CreateIndirect,  "集中器程序主界面", BASE_FRAME_IDX,     0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
     { BUTTON_CreateIndirect,    "参数设置及控制",   GUI_ID_BUTTON0,     40,10,150,60,0},
@@ -10,8 +17,8 @@ const GUI_WIDGET_CREATE_INFO mainFrame[] =
     { BUTTON_CreateIndirect,    "系统设置",         GUI_ID_BUTTON2,     40,170,150,60,0}
 };
 
-//参数设置及控制
-const GUI_WIDGET_CREATE_INFO setParaAndControl[] =            
+//参数设置及控制界面
+static const GUI_WIDGET_CREATE_INFO setParaAndControl[] =
 {
     { FRAMEWIN_CreateIndirect,  "参数设置及控制",   CONFIG_FRAME_IDX,   0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
     { BUTTON_CreateIndirect,    "校时",             GUI_ID_BUTTON0,     5,5,105,60,0},
@@ -24,8 +31,18 @@ const GUI_WIDGET_CREATE_INFO setParaAndControl[] =
     { BUTTON_CreateIndirect,    "重启集中器",       GUI_ID_BUTTON7,     130,215,105,60,0}
 };
 
+//给集中器校时
+static const GUI_WIDGET_CREATE_INFO setTime[] =
+{
+	{ FRAMEWIN_CreateIndirect,  "校时", CONFIG_BASE_INFO_FRAME_IDX, 0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 },
+	{ BUTTON_CreateIndirect,    "集中器号",     GUI_ID_BUTTON0,             10,26,80,30,0 },
+	{ EDIT_CreateIndirect,      "",             GUI_ID_EDIT0,               108,26,110,30,0 },
+	{ BUTTON_CreateIndirect,    "退出",         GUI_ID_BUTTON1,             10,221,80,30,0 },
+	{ BUTTON_CreateIndirect,    "校时",         GUI_ID_BUTTON2,             138,221,80,30,0 }
+};
+
 //基础信息下发
-const GUI_WIDGET_CREATE_INFO baseInfoIssue[] =            
+static const GUI_WIDGET_CREATE_INFO baseInfoIssue[] =
 {
     { FRAMEWIN_CreateIndirect,  "基础信息下发", CONFIG_BASE_INFO_FRAME_IDX, 0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
     { BUTTON_CreateIndirect,    "集中器号",     GUI_ID_BUTTON0,             10,26,80,30,0},
@@ -36,7 +53,7 @@ const GUI_WIDGET_CREATE_INFO baseInfoIssue[] =
 
 
 //对集中器程序的主界面初始化
-void mainFrameInit( WM_HWIN hDlg )
+static void mainFrameInit( WM_HWIN hDlg )
 {
     WM_HWIN pObj;
     pObj = WM_GetDialogItem( hDlg, GUI_ID_TEXT0);
@@ -47,18 +64,22 @@ void mainFrameInit( WM_HWIN hDlg )
 }
 
 //对参数设置与控制界面初始化
-void setParaAndControlInit(WM_HWIN hDlg)
+static void setParaAndControlInit(WM_HWIN hDlg)
 {
     
 }
 
 //对基础信息下发界面初始化
-void baseInfoIssueInit(WM_HWIN hDlg)
+static void baseInfoIssueInit(WM_HWIN hDlg)
 {
     
 }
 
+//对集中器校时界面初始化
+static void setTimeInit(WM_HWIN hDlg)
+{
 
+}
 
 //主界面的回调函数
 void mainCb( WM_MESSAGE* pMsg )
@@ -163,6 +184,56 @@ void setParaAndControlCb( WM_MESSAGE* pMsg )
     }
 }
 
+void setTimeCb(struct WM_MESSAGE* pMsg)
+{
+	int NCode, Id, keyId;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		setTimeInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			GUI_EndDialog(hDlg, Id);
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		keyId = ((WM_KEY_INFO*)(pMsg->Data.p))->Key;
+		switch (keyId)
+		{
+		case GUI_KEY_ESCAPE:
+			GUI_EndDialog(hDlg, -1);
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			if (keyId >= GUI_KEY_NUM1 && keyId <= GUI_KEY_NUM8)
+				GUI_EndDialog(hDlg, keyId + (GUI_ID_BUTTON0 - GUI_KEY_NUM0) - 1);//让按键"1"对应button0
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
 void baseInfoIssueCb(WM_MESSAGE* pMsg)
 {
     int NCode, Id, keyId;
@@ -213,6 +284,34 @@ void baseInfoIssueCb(WM_MESSAGE* pMsg)
     }
 }
 
+int setTimeConfig()
+{
+	int iRet;
+	U8 testId[6] = {0x34, 0x12, 0x00, 0x00, 0x00, 0x00};
+	while (1) {
+		iRet = GUI_ExecDialogBox(setTime, GUI_COUNTOF(setTime), &setTimeCb, WM_HBKWIN, 0, 0);
+		switch (iRet) {
+		case GUI_ID_BUTTON0://广播读取集中器号
+			break;
+		case GUI_ID_BUTTON1://退出
+			break;
+		case GUI_ID_BUTTON2://下发集中器时间
+			if(logic_setTime(testId) == NO_ERR){
+				;
+			} else {
+				;
+			}
+			break;
+		case 0:
+			return 0;
+		case -1:
+			return -1;
+		default:
+			break;
+		}
+	}
+}
+
 int baseinfoIssue()
 {
     int iRet;
@@ -241,6 +340,7 @@ int dispConfig(){
         iRet = GUI_ExecDialogBox(setParaAndControl, GUI_COUNTOF(setParaAndControl), &setParaAndControlCb, WM_HBKWIN, 0, 0);
         switch(iRet){
         case GUI_ID_BUTTON0://校时
+			setTimeConfig();
             break;
         case GUI_ID_BUTTON1://抄表定时
             break;
