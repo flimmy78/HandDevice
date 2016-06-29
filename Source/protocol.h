@@ -25,6 +25,7 @@
 #define GATEWAY_EC_LEN      1       //集中器通讯协议的消息体校验长度
 #define GATEWAY_HEAD_LEN    (GATEWAY_VER_LEN+GATEWAY_SADD_LEN+GATEWAY_OADD_LEN+GATEWAY_MID_LEN\
                             +GATEWAY_MSGL_LEN+GATEWAY_MT_LEN+GATEWAY_TS_LEN)
+#define GATEWAY_RETID_OFFSET	(GATEWAY_PREFIX_CNT+GATEWAY_START_CNT+GATEWAY_VER_LEN)//offset that gatewayId in return frame
 
 //异常回应代码--表示意义
 #define GAT_EXCEP_FAIL          0x10//失败、异常
@@ -121,8 +122,9 @@ typedef struct {//集中器仪表基础信息结构
 
 
 U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
-U8 protoA_setTime(U8* buf, U32 len);
+U8 protoA_setTime(U8* buf, U16 bufSize);
 U8 protoR_radioReadId(U8* buf, U16* bufSize);
+U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
 
 #endif
 

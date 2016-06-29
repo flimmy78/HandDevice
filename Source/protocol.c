@@ -57,7 +57,6 @@ static void createFrame(U8 *sendBuf, u16 *sendLen, gateway_protocol_ptr pProto)
 	lenFrame += (GATEWAY_HEAD_LEN + GATEWAY_HCK_LEN);//协议头长度+协议头校验长度
 	lenFrame += u16dataLen;//消息体长度
 	lenFrame += (GATEWAY_EC_LEN + GATEWAY_SUFIX_CNT);//消息体校验长度+结束符长度
-	Lib_printf("[%s][%s][%d]lenFrame: %d", FILE_LINE, lenFrame);
 	*sendLen = lenFrame;
 }
 
@@ -93,11 +92,18 @@ U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize)
 	return NO_ERR;
 }
 
-U8 protoA_setTime(U8* buf, U32 len)
+/*
+**	分析集中器校时返回是否成功.
+**	@buf:		发送帧
+**	@bufSize:	发送帧的长度
+*/
+U8 protoA_setTime(U8* buf, U16 bufSize)
 {
-	U8 *lu8pBuf = buf;
-	lu8pBuf += 27;
-	if (GATEWAY_ASW_CODE_SUC == (*lu8pBuf))
+	if (bufSize<28) {
+		return ERROR;
+	}
+	buf += 27;
+	if (GATEWAY_ASW_CODE_SUC == (*buf))
 		return NO_ERR;
 	else
 		return ERROR;
@@ -105,13 +111,31 @@ U8 protoA_setTime(U8* buf, U32 len)
 
 /*
 **	广播读集中器号.
-**	@gatewatId: 集中器号
-**	@idLen:		集中器号的长度
 **	@buf:		发送帧
 **	@bufSize:	发送帧的长度
 */
 U8 protoR_radioReadId(U8* buf, U16* bufSize)
 {
-	U8 lu8gatewayId[GATEWAY_SADD_LEN] = { 0 };
-	return protoW_setTime(lu8gatewayId, GATEWAY_SADD_LEN, buf, bufSize);
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	return protoW_setTime(lu8gatewayId, GATEWAY_OADD_LEN, buf, bufSize);
+}
+
+/*
+**	从集中器返回帧, 读取集中器号.
+**	@gatewatId: 集中器号
+**	@idLen:		集中器号的长度
+**	@buf:		返回帧
+**	@bufSize:	返回帧的长度
+*/
+U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize)
+{
+	if (bufSize<(GATEWAY_RETID_OFFSET+ GATEWAY_OADD_LEN) || idLen < GATEWAY_OADD_LEN) {
+		return ERROR;
+	}
+	buf += GATEWAY_RETID_OFFSET;
+	memset(gatewayId, 0, idLen);
+	memcpy(gatewayId, buf, GATEWAY_OADD_LEN);
+	inserseArray(gatewayId, GATEWAY_OADD_LEN);
+
+	return NO_ERR;
 }

@@ -7,7 +7,7 @@
 #include "protocol.h"
 #include "db.h"
 
-static com_config_str gComConfig;//串口设置
+static sUART gComConfig;//com config
 static U8 gu8svrAdd[GATEWAY_SADD_LEN] = {0};//主站编号
 static U8 gu8gwyAdd[GATEWAY_OADD_LEN] = {0};//集中器编号
 
@@ -19,6 +19,7 @@ U8 db_hasInitConfig()
 
 U8 db_readAllConfig(void)
 {
+	memset(&gComConfig, 0x00, sizeof(sUART));
 	gu8hasInitConfig = CONFIG_INITTED;
 	return gu8hasInitConfig;
 }
@@ -30,7 +31,7 @@ U8 db_getCongfig(em_config_idx configIdx, U8* config)
 
 	switch (configIdx){
 	case config_com_para:
-		memcpy(config, (U8*)&gComConfig, sizeof(com_config_str));
+		memcpy(config, (U8*)&gComConfig, sizeof(sUART));
 		break;
 	case config_gateway_id:
 		memcpy(config, gu8gwyAdd, GATEWAY_OADD_LEN);

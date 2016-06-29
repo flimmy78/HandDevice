@@ -5,13 +5,17 @@
 ****************************************************
 */
 #include "user.h"
+#include "GUI.h"
+#include "EDIT.h"
 #include "logic.h"
+#include "lib.h"
+#include "protocol.h"
 #include "interface.h"
 
 //集中器程序主界面
 static const GUI_WIDGET_CREATE_INFO mainFrame[] =
 {
-    { FRAMEWIN_CreateIndirect,  "集中器程序主界面", BASE_FRAME_IDX,     0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
+    { FRAMEWIN_CreateIndirect,  "集中器程序主界面", GUI_ID_USER,     	0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
     { BUTTON_CreateIndirect,    "参数设置及控制",   GUI_ID_BUTTON0,     40,10,150,60,0},
     { BUTTON_CreateIndirect,    "信息查询及编辑",   GUI_ID_BUTTON1,     40,90,150,60,0},
     { BUTTON_CreateIndirect,    "系统设置",         GUI_ID_BUTTON2,     40,170,150,60,0}
@@ -34,11 +38,11 @@ static const GUI_WIDGET_CREATE_INFO setParaAndControl[] =
 //给集中器校时
 static const GUI_WIDGET_CREATE_INFO setTime[] =
 {
-	{ FRAMEWIN_CreateIndirect,  "校时", CONFIG_BASE_INFO_FRAME_IDX, 0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 },
-	{ BUTTON_CreateIndirect,    "集中器号",     GUI_ID_BUTTON0,             10,26,80,30,0 },
-	{ EDIT_CreateIndirect,      "",             GUI_ID_EDIT0,               108,26,110,30,0 },
-	{ BUTTON_CreateIndirect,    "退出",         GUI_ID_BUTTON1,             10,221,80,30,0 },
-	{ BUTTON_CreateIndirect,    "校时",         GUI_ID_BUTTON2,             138,221,80,30,0 }
+	{ FRAMEWIN_CreateIndirect,  "校时",		CONFIG_CTIME_FRAME_IDX,		0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 },
+	{ BUTTON_CreateIndirect,    "集中器号",	GUI_ID_BUTTON0,             10,26,80,30,0 },
+	{ EDIT_CreateIndirect,      "",			GUI_ID_EDIT0,               108,26,110,30,0 },
+	{ BUTTON_CreateIndirect,    "退出",		GUI_ID_BUTTON1,             10,221,80,30,0 },
+	{ BUTTON_CreateIndirect,    "校时",		GUI_ID_BUTTON2,             138,221,80,30,0 }
 };
 
 //基础信息下发
@@ -46,7 +50,7 @@ static const GUI_WIDGET_CREATE_INFO baseInfoIssue[] =
 {
     { FRAMEWIN_CreateIndirect,  "基础信息下发", CONFIG_BASE_INFO_FRAME_IDX, 0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
     { BUTTON_CreateIndirect,    "集中器号",     GUI_ID_BUTTON0,             10,26,80,30,0},
-    { EDIT_CreateIndirect,      "",             GUI_ID_EDIT0,               108,26,110,30,0},
+    { EDIT_CreateIndirect,      "集中器号",     GUI_ID_EDIT0,               108,26,110,30,0},
     { BUTTON_CreateIndirect,    "退出",         GUI_ID_BUTTON1,             10,221,80,30,0},
     { BUTTON_CreateIndirect,    "下发",         GUI_ID_BUTTON2,             138,221,80,30,0}
 };
@@ -69,16 +73,16 @@ static void setParaAndControlInit(WM_HWIN hDlg)
     
 }
 
+//对集中器校时界面初始化
+static void setTimeInit(WM_HWIN hDlg)
+{
+	WM_HWIN hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_SetMaxLen(hObj, 2 * GATEWAY_OADD_LEN);
+}
 //对基础信息下发界面初始化
 static void baseInfoIssueInit(WM_HWIN hDlg)
 {
     
-}
-
-//对集中器校时界面初始化
-static void setTimeInit(WM_HWIN hDlg)
-{
-
 }
 
 //主界面的回调函数
@@ -184,13 +188,66 @@ void setParaAndControlCb( WM_MESSAGE* pMsg )
     }
 }
 
+void userSetTime(WM_HWIN hObj)
+{
+	U8 lu8tmpStr[EDIT_MAX_LEN] = { 0 };
+	U8 lu8InputBuf[EDIT_MAX_LEN] = { 0 };
+	U8 lu8gatewayId[EDIT_MAX_LEN] = { 0 };
+	U8 lu8InputLen = 0;
+
+	EDIT_GetText(hObj, (char*)lu8InputBuf, EDIT_MAX_LEN);
+	lu8InputLen = strlen((const char*)lu8InputBuf);
+
+	Lib_printf("\n[%s][%s][%d]input: %s, input length: %d\n", FILE_LINE, lu8InputBuf, lu8InputLen);
+	trimSpace(lu8InputBuf, EDIT_MAX_LEN);
+	if (isNumber(lu8InputBuf, lu8InputLen) == ERROR) {
+		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+
+	//supplement '0' before lu8InputBuf, if lu8InputBuf < GATEWAY_OADD_LEN
+	lu8InputLen = strlen((const char*)lu8InputBuf);
+	//we use 2 chars to represent a byte, so the mod is 2.
+	if (lu8InputLen % 2) {//if lu8InputLen is Odd, lu8InputLen must <= (GATEWAY_OADD_LEN - 1)
+		if (lu8InputLen > 2*GATEWAY_OADD_LEN - 1)
+			return;
+	}
+	else {//if lu8InputLen is Even, lu8InputLen must <= GATEWAY_OADD_LEN
+		if (lu8InputLen > 2 * GATEWAY_OADD_LEN)
+			return;
+	}
+	memset(lu8tmpStr, '0', 2 * GATEWAY_OADD_LEN - lu8InputLen);
+	memcpy(lu8tmpStr + (2 * GATEWAY_OADD_LEN - lu8InputLen), lu8InputBuf, lu8InputLen);
+	memcpy(lu8InputBuf, lu8tmpStr, 2 * GATEWAY_OADD_LEN);
+
+	inverseStrToBCD(lu8InputBuf, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+
+	if (logic_setTime(lu8gatewayId) == NO_ERR) {
+		GUI_MessageBox("\n设置时间成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		GUI_MessageBox("\n设置时间失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
+void radioReadGatewayId(WM_HWIN hObj)
+{
+	U8 gatewayId[GATEWAY_OADD_LEN];
+	char gatewayStr[2 * GATEWAY_OADD_LEN] = { 0 };
+	logic_readGatewayId(gatewayId);
+	sprintf(gatewayStr, "%02X%02X%02X%02X%02X%02X", \
+		gatewayId[0], gatewayId[1], gatewayId[2], \
+		gatewayId[3], gatewayId[4], gatewayId[5]);
+
+	EDIT_SetText(hObj, gatewayStr);
+}
+
 void setTimeCb(struct WM_MESSAGE* pMsg)
 {
-	int NCode, Id, keyId;
+	int NCode, Id;
 	WM_HWIN hDlg;
 
 	hDlg = pMsg->hWin;
-
 	switch (pMsg->MsgId)
 	{
 	case WM_INIT_DIALOG:
@@ -204,18 +261,41 @@ void setTimeCb(struct WM_MESSAGE* pMsg)
 		switch (NCode)
 		{
 		case WM_NOTIFICATION_RELEASED: //触摸屏消息
-			GUI_EndDialog(hDlg, Id);
-			break;
-		default:
+			switch (Id)
+			{
+			case GUI_ID_BUTTON0://radio read gateway's Id
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://Exit
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://下发集中器时间
+				userSetTime(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			default:
+				break;
+			}
 			break;
 		}
 		break;
 	case WM_KEY: //按键消息
-		keyId = ((WM_KEY_INFO*)(pMsg->Data.p))->Key;
-		switch (keyId)
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key)
 		{
-		case GUI_KEY_ESCAPE:
-			GUI_EndDialog(hDlg, -1);
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://radio read gateway's Id
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://Exit
+			GUI_EndDialog(hDlg, GUI_ID_BUTTON1);
+			break;
+		case GUI_KEY_NUM3://下发集中器时间
+			userSetTime(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_ENTER:
+			userSetTime(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			GUI_EndDialog(hDlg, GUI_KEY_ENTER);
 			break;
 		case GUI_KEY_UP:
 			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
@@ -224,14 +304,12 @@ void setTimeCb(struct WM_MESSAGE* pMsg)
 			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
 			break;
 		default:
-			if (keyId >= GUI_KEY_NUM1 && keyId <= GUI_KEY_NUM8)
-				GUI_EndDialog(hDlg, keyId + (GUI_ID_BUTTON0 - GUI_KEY_NUM0) - 1);//让按键"1"对应button0
 			break;
 		}
 		break;
 	default:
 		WM_DefaultProc(pMsg);
-	}
+	}	
 }
 
 void baseInfoIssueCb(WM_MESSAGE* pMsg)
@@ -284,31 +362,13 @@ void baseInfoIssueCb(WM_MESSAGE* pMsg)
     }
 }
 
-int setTimeConfig()
+void setTimeConfig()
 {
 	int iRet;
-	U8 testId[6] = {0x34, 0x12, 0x00, 0x00, 0x00, 0x00};
 	while (1) {
 		iRet = GUI_ExecDialogBox(setTime, GUI_COUNTOF(setTime), &setTimeCb, WM_HBKWIN, 0, 0);
-		switch (iRet) {
-		case GUI_ID_BUTTON0://广播读取集中器号
-			break;
-		case GUI_ID_BUTTON1://退出
-			break;
-		case GUI_ID_BUTTON2://下发集中器时间
-			if(logic_setTime(testId) == NO_ERR){
-				;
-			} else {
-				;
-			}
-			break;
-		case 0:
-			return 0;
-		case -1:
-			return -1;
-		default:
-			break;
-		}
+		if (iRet == WM_USER_EXIT)
+			return;
 	}
 }
 
@@ -362,29 +422,30 @@ int dispConfig(){
         case -1:
             return -1;
         default:
-        break;
+			break;
         }
     }
 }
 
 int maingui( void ){
     int iRet;
+	//	KeyWait();
     while(1){
         iRet=GUI_ExecDialogBox(mainFrame, GUI_COUNTOF(mainFrame), &mainCb, WM_HBKWIN, 0, 0);//创建并执行对话框
         switch(iRet){
         case GUI_ID_BUTTON0:
             dispConfig();
-        break;
+			break;
         case GUI_ID_BUTTON1:
-        break;
+			break;
         case GUI_ID_BUTTON2:
-        break;
+			break;
         case GUI_ID_BUTTON5:
             return 0;
         case -1:
             return -1;
         default:
-        break;
+			break;
         }
     }
 }
