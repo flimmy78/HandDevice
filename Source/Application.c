@@ -32,10 +32,11 @@ Purpose     : Example demonstrating the use of a EDIT widget
 
 #include "GUI.h"
 #include "EDIT.h"
+#include "db.h"
 
-int main(void){
+int main(void) {
 	db_readAllConfig();
-    LcdClear();
-    maingui();
-    return 0;
+	LcdClear();
+	maingui();
+	return 0;
 }

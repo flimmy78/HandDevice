@@ -5,6 +5,7 @@
 ****************************************************
 */
 #include "basedef.h"
+#include "protocol.h"
 #include "lib.h"
 #include "user.h"
 
@@ -119,4 +120,44 @@ void inserseArray(U8* buf, U16 bufSize)
 		buf[bufSize - i - 1] = buf[i] ^ buf[bufSize - i - 1];
 		buf[i] = buf[i] ^ buf[bufSize - i - 1];
 	}
+}
+
+/*
+**	将数字字符串的最前面的'0'去掉.
+**	@buf:		字符串
+**	@bufSize:	字符串长度
+*/
+void trimZero(U8* buf, U8 bufSize)
+{
+	U16 i = 0;
+	U8* lu8pBuf = buf;
+	U8 tmpBuf[512] = { 0 };
+	while (i < bufSize && (*lu8pBuf == '0')) {
+		i++;
+		lu8pBuf++;
+	}
+	memcpy(tmpBuf, lu8pBuf, bufSize - i);
+	memset(buf, 0, bufSize);
+	memcpy(buf, tmpBuf, bufSize - i);
+}
+
+void suppplementTo12(U8* data)
+{
+	U8 lu8tmpStr[EDIT_MAX_LEN] = { 0 };
+	U8 lu8InputLen = 0;
+
+	//supplement '0' before data, if lu8InputLen < 2 * GATEWAY_OADD_LEN
+	lu8InputLen = strlen((const char*)data);
+	//we use 2 chars to represent a byte, so the mod is 2.
+	if (lu8InputLen % 2) {//if lu8InputLen is Odd, lu8InputLen must <= (2 * GATEWAY_OADD_LEN - 1)
+		if (lu8InputLen > 2 * GATEWAY_OADD_LEN - 1)
+			return;
+	}
+	else {//if lu8InputLen is Even, lu8InputLen must <= 2 * GATEWAY_OADD_LEN
+		if (lu8InputLen > 2 * GATEWAY_OADD_LEN)
+			return;
+	}
+	memset(lu8tmpStr, '0', 2 * GATEWAY_OADD_LEN - lu8InputLen);
+	memcpy(lu8tmpStr + (2 * GATEWAY_OADD_LEN - lu8InputLen), data, lu8InputLen);
+	memcpy(data, lu8tmpStr, 2 * GATEWAY_OADD_LEN);
 }

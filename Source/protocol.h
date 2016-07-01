@@ -121,10 +121,10 @@ typedef struct {//集中器仪表基础信息结构
 }meter_info_str;//类型名用下划线分隔
 
 
-U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
-U8 protoA_setTime(U8* buf, U16 bufSize);
-U8 protoR_radioReadId(U8* buf, U16* bufSize);
-U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
+extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
+extern U8 protoA_setTime(U8* buf, U16 bufSize);
+extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
+extern U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
 
 #endif
 

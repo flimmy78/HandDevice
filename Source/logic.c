@@ -24,11 +24,7 @@ U8 sendAndRead(U8* buf, U16* bufSize)
 	sUART *pu;
 	sUART comConfig;
 	db_getCongfig(config_com_para, (U8*)&comConfig);
-#ifdef DEBUG
-	comConfig.baud = 9600;
-	comConfig.mode = UART_MODE_8B_NONE_1S;
-	comConfig.device = DEVICE_RS485;
-#endif
+
 	pu = UartOpen(comConfig.baud, comConfig.mode, comConfig.device);//´ò¿ª´®¿Ú
 	if (!pu)
 		return ERROR;

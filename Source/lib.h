@@ -10,10 +10,13 @@
 #define IS_SPACE	0x01
 #define NOT_SPACE	0x00
 
-U8 readSysTime(sys_time_ptr pTime);
-U8 countCheck(U8 *_data, U16 _len);
-U8 trimSpace(U8* s, U16 len);
-U8 isNumber(U8* s, U16 len);
-U8 inverseStrToBCD(U8* s, U16 sLen, U8* t, U16 tLen);
-void inserseArray(U8* s, U16 sLen);
-#endif
+extern U8 readSysTime(sys_time_ptr pTime);
+extern U8 countCheck(U8 *_data, U16 _len);
+extern U8 trimSpace(U8* s, U16 len);
+extern U8 isNumber(U8* s, U16 len);
+extern U8 inverseStrToBCD(U8* s, U16 sLen, U8* t, U16 tLen);
+extern void inserseArray(U8* s, U16 sLen);
+extern void trimZero(U8* buf, U8 bufSize);
+extern void suppplementTo12(U8* data);
+
+#endif//LIB_H

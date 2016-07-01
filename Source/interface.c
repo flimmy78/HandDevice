@@ -9,6 +9,7 @@
 #include "EDIT.h"
 #include "logic.h"
 #include "lib.h"
+#include "db.h"
 #include "protocol.h"
 #include "interface.h"
 
@@ -190,36 +191,18 @@ void setParaAndControlCb( WM_MESSAGE* pMsg )
 
 void userSetTime(WM_HWIN hObj)
 {
-	U8 lu8tmpStr[EDIT_MAX_LEN] = { 0 };
 	U8 lu8InputBuf[EDIT_MAX_LEN] = { 0 };
 	U8 lu8gatewayId[EDIT_MAX_LEN] = { 0 };
-	U8 lu8InputLen = 0;
 
 	EDIT_GetText(hObj, (char*)lu8InputBuf, EDIT_MAX_LEN);
-	lu8InputLen = strlen((const char*)lu8InputBuf);
 
-	Lib_printf("\n[%s][%s][%d]input: %s, input length: %d\n", FILE_LINE, lu8InputBuf, lu8InputLen);
 	trimSpace(lu8InputBuf, EDIT_MAX_LEN);
-	if (isNumber(lu8InputBuf, lu8InputLen) == ERROR) {
+	if (isNumber(lu8InputBuf, strlen((const char*)lu8InputBuf)) == ERROR) {
 		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
 
-	//supplement '0' before lu8InputBuf, if lu8InputBuf < GATEWAY_OADD_LEN
-	lu8InputLen = strlen((const char*)lu8InputBuf);
-	//we use 2 chars to represent a byte, so the mod is 2.
-	if (lu8InputLen % 2) {//if lu8InputLen is Odd, lu8InputLen must <= (GATEWAY_OADD_LEN - 1)
-		if (lu8InputLen > 2*GATEWAY_OADD_LEN - 1)
-			return;
-	}
-	else {//if lu8InputLen is Even, lu8InputLen must <= GATEWAY_OADD_LEN
-		if (lu8InputLen > 2 * GATEWAY_OADD_LEN)
-			return;
-	}
-	memset(lu8tmpStr, '0', 2 * GATEWAY_OADD_LEN - lu8InputLen);
-	memcpy(lu8tmpStr + (2 * GATEWAY_OADD_LEN - lu8InputLen), lu8InputBuf, lu8InputLen);
-	memcpy(lu8InputBuf, lu8tmpStr, 2 * GATEWAY_OADD_LEN);
-
+	suppplementTo12(lu8InputBuf);
 	inverseStrToBCD(lu8InputBuf, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 
 	if (logic_setTime(lu8gatewayId) == NO_ERR) {
@@ -232,13 +215,13 @@ void userSetTime(WM_HWIN hObj)
 
 void radioReadGatewayId(WM_HWIN hObj)
 {
-	U8 gatewayId[GATEWAY_OADD_LEN];
+	U8 gatewayId[GATEWAY_OADD_LEN] = { 0 };
 	char gatewayStr[2 * GATEWAY_OADD_LEN] = { 0 };
 	logic_readGatewayId(gatewayId);
 	sprintf(gatewayStr, "%02X%02X%02X%02X%02X%02X", \
 		gatewayId[0], gatewayId[1], gatewayId[2], \
 		gatewayId[3], gatewayId[4], gatewayId[5]);
-
+	trimZero((U8*)gatewayStr, 2 * GATEWAY_OADD_LEN);
 	EDIT_SetText(hObj, gatewayStr);
 }
 
@@ -287,15 +270,11 @@ void setTimeCb(struct WM_MESSAGE* pMsg)
 		case GUI_KEY_NUM1://radio read gateway's Id
 			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
 			break;
-		case GUI_KEY_NUM2://Exit
-			GUI_EndDialog(hDlg, GUI_ID_BUTTON1);
-			break;
 		case GUI_KEY_NUM3://下发集中器时间
 			userSetTime(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
 			break;
 		case GUI_KEY_ENTER:
 			userSetTime(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
-			GUI_EndDialog(hDlg, GUI_KEY_ENTER);
 			break;
 		case GUI_KEY_UP:
 			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
@@ -429,8 +408,8 @@ int dispConfig(){
 
 int maingui( void ){
     int iRet;
-	//	KeyWait();
-    while(1){
+
+	while (1) {
         iRet=GUI_ExecDialogBox(mainFrame, GUI_COUNTOF(mainFrame), &mainCb, WM_HBKWIN, 0, 0);//创建并执行对话框
         switch(iRet){
         case GUI_ID_BUTTON0:

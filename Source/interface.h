@@ -3,9 +3,6 @@
 
 #include "basedef.h"
 
-#define WM_USER_EXIT	-1
-#define EDIT_MAX_LEN	128
-
 #define CL998_LCD_XLEN  240//创伦998手持机屏幕宽度, 参考"手持机光盘(新)\1、文档\C_产品宣传资料\三款产品参数.pdf"
 #define CL998_LCD_YLEN  320//创伦998手持机屏幕高度, 参考"手持机光盘(新)\1、文档\C_产品宣传资料\三款产品参数.pdf"
 
@@ -29,6 +26,6 @@
 #define COM_CONFIG_FRAME_IDX  				(GUI_ID_USER+0x30)//手持机基本设置界面的编号
 
 
-int maingui(void);
+extern int maingui(void);
 
 #endif//INTERFACE_H
