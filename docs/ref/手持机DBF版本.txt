@@ -1,0 +1,2 @@
+经测试发现, 使用DBF Viewer Plus创建的DBF文件(xDbaseIII, xDbaseIII, xDbaseIV, xDbaseVII, xFoxPro), 用代码打开会出现问题: 1. 有时候读取不了数据库里的内容; 2. 有时候打不开数据库; 3. 有时候读取到数据库里的内容不是手动插入的内容, 呈现解码错误.
+而读取以前遗留下的DBF文件信息发现, 其版本信息为<FoxBASE+/Dbase III plus, 无备注 >(使用DBF Viewer Plus查看). 经测试发现, 可以正常打开, 读出DBF中的内容.
