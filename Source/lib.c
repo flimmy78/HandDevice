@@ -7,6 +7,7 @@
 #include "basedef.h"
 #include "protocol.h"
 #include "lib.h"
+#include "db.h"
 #include "user.h"
 
 static const U8 spaces[] = { ' ', '\t', '\n', '\r', '\0' };
@@ -108,11 +109,11 @@ U8 inverseStrToBCD(U8* s, U16 sLen, U8* t, U16 tLen)
 		t[i] = (ASCII_TO_HEX(s[0]) << 4 | ASCII_TO_HEX(s[1]));
 	}
 
-	inserseArray(t, i);
+	inverseArray(t, i);
 	return NO_ERR;
 }
 
-void inserseArray(U8* buf, U16 bufSize)
+void inverseArray(U8* buf, U16 bufSize)
 {
 	U16 i = 0;
 	for (i = 0;i < bufSize / 2; i++) {//swap two symmetric elements
@@ -141,6 +142,10 @@ void trimZero(U8* buf, U8 bufSize)
 	memcpy(buf, tmpBuf, bufSize - i);
 }
 
+/*
+**	将不足12位的集中器号前面补零.
+**	@data:	用户输入的集中器号
+*/
 void suppplementTo12(U8* data)
 {
 	U8 lu8tmpStr[EDIT_MAX_LEN] = { 0 };
@@ -160,4 +165,32 @@ void suppplementTo12(U8* data)
 	memset(lu8tmpStr, '0', 2 * GATEWAY_OADD_LEN - lu8InputLen);
 	memcpy(lu8tmpStr + (2 * GATEWAY_OADD_LEN - lu8InputLen), data, lu8InputLen);
 	memcpy(data, lu8tmpStr, 2 * GATEWAY_OADD_LEN);
+}
+
+/*
+**	将数据库读取上来的表地址数据结构转化为协议结构.
+**	@pDbInfo:	数据库中的信息指针
+**	@pProtoInfo:	协议帧指针
+*/
+void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo)
+{
+	U16 i = 0;
+
+	i = Lib_atoi((const char*)pDbInfo->rowId);
+	pProtoInfo->rowId[0] = (U8)i;//L
+	pProtoInfo->rowId[1] = (U8)(i >> 8);//H
+	inverseStrToBCD(pDbInfo->meterAddr, DB_MINFO_LEN_METERADDR, pProtoInfo->meterAddr, PROTO_LEN_MADDR);
+	pProtoInfo->vendorId = Lib_atoi((const char*)pDbInfo->vendorId);
+	pProtoInfo->protoVer = Lib_atoi((const char*)pDbInfo->protoVer);
+	pProtoInfo->meterType = (ASCII_TO_HEX(pDbInfo->meterType[0]) << 4 | ASCII_TO_HEX(pDbInfo->meterType[1]));
+	pProtoInfo->channel = Lib_atoi((const char*)pDbInfo->channel);
+	pProtoInfo->valveProtoVer = Lib_atoi((const char*)pDbInfo->valveProtoVer);
+	inverseStrToBCD(pDbInfo->valveAddr, DB_MINFO_LEN_METERADDR, pProtoInfo->valveAddr, PROTO_LEN_VADDR);
+	inverseStrToBCD(pDbInfo->controlPanelAddr, DB_MINFO_LEN_METERADDR, pProtoInfo->controlPanelAddr, PROTO_LEN_VADDR);
+	pProtoInfo->buildId = Lib_atoi((const char*)pDbInfo->buildId);
+	pProtoInfo->unitId = Lib_atoi((const char*)pDbInfo->unitId);
+	i = Lib_atoi((const char*)pDbInfo->roomId);
+	pProtoInfo->roomId[0] = (U8)i;//L
+	pProtoInfo->roomId[1] = (U8)(i >> 8);//H
+	memset(pProtoInfo->reserved, 0, PROTO_LEN_RSV);
 }

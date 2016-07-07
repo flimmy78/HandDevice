@@ -60,8 +60,6 @@ static void createFrame(U8 *sendBuf, u16 *sendLen, gateway_protocol_ptr pProto)
 	*sendLen = lenFrame;
 }
 
-
-
 /*
 **	设置集中器时间.
 **	@gatewatId: 集中器号
@@ -135,7 +133,51 @@ U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize)
 	buf += GATEWAY_RETID_OFFSET;
 	memset(gatewayId, 0, idLen);
 	memcpy(gatewayId, buf, GATEWAY_OADD_LEN);
-	inserseArray(gatewayId, GATEWAY_OADD_LEN);
+	inverseArray(gatewayId, GATEWAY_OADD_LEN);
+
+	return NO_ERR;
+}
+
+U8 protoW_oneMeterInfo(meter_row_ptr pInfo)
+{
+
+	return NO_ERR;
+}
+
+U8 protoW_MeterInfoBody(U8* buf, U8 *bufSize)
+{
+
+	return NO_ERR;
+}
+
+U8 protoW_issueMinfo(U8* buf, U16* bufSize, U8* gatewayId, \
+	meterinfo_bodyHead_ptr pBodyHead, meter_row_ptr	pProtoInfo)
+{
+	gateway_protocol_str protoStr;
+	U8 bufMsgBody[GATEWAY_FRAME_MAX_LEN] = {0};
+	U16 len = 0;
+
+	db_getCongfig(config_gateway_id, protoStr.DestAddr);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = pBodyHead->seq;
+
+	len = GATEWAY_METERINFO_LEN*pBodyHead->thisRows + sizeof(meterinfo_bodyHead_str);
+	memcpy(protoStr.MsgLen, (U8*)&len, GATEWAY_MSGL_LEN);
+	inverseArray(protoStr.MsgLen, GATEWAY_MSGL_LEN);
+
+	protoStr.MsgType = GAT_MT_SVR_SEND_MINFO;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+
+	memcpy(bufMsgBody, (U8*)pBodyHead, sizeof(meterinfo_bodyHead_str));//copy body head
+	memcpy(bufMsgBody + sizeof(meterinfo_bodyHead_str), (U8*)pProtoInfo, \
+		pBodyHead->thisRows*sizeof(meter_row_str));//copy message body
+	protoStr.MsgBody = bufMsgBody;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
+U8 protoA_issueMinfo(U8* buf, U16 bufSize)
+{
 
 	return NO_ERR;
 }

@@ -6,6 +6,7 @@
 */
 #include "protocol.h"
 #include "db.h"
+#include "lib.h"
 #include "logic.h"
 
 void printBuf(U8* buf, U16 bufSize, const char* file, const char* func, u32 line)
@@ -69,5 +70,57 @@ U8 logic_readGatewayId(U8* gatewayId)
 	protoR_radioReadId(lu8buf, &lu8bufSize);
 	sendAndRead(lu8buf, &lu8bufSize);
 	protoA_radioReadId(gatewayId, GATEWAY_OADD_LEN, lu8buf, lu8bufSize);
+	return NO_ERR;
+}
+
+U8 logic_issueMeterInfo(U8* gatewayId)
+{
+	db_meterinfo_str dbmeterInfoArray[GATEWAY_MAX_METERINFO_CNT] = { 0 };
+	meter_row_str protoMeterInfoAarray[GATEWAY_MAX_METERINFO_CNT] = { 0 };
+	meterinfo_bodyHead_str BodyHeadStr;
+
+	const db_meterinfo_ptr pDbInfo = &dbmeterInfoArray[0];
+	const meter_row_ptr	pProtoInfo = &protoMeterInfoAarray[0];
+	const meterinfo_bodyHead_ptr pBodyHead = &BodyHeadStr;
+
+	S32 totalRowCnt = 0, totalFrames = 0;
+	S32 currentFrame = 0, j = 0;
+	S32 rowCntPerFrame = GATEWAY_MAX_METERINFO_CNT;
+
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+
+	if (openDBF(DB_CONFIG_NAME) == ERROR) return ERROR;//open dbf
+	if (db_getMatchCnt(gatewayId, &totalRowCnt) != NO_ERR) {
+		return ERROR;
+	}
+	if (db_gotoRecord0() != NO_ERR) {
+		return ERROR;
+	}
+
+	totalFrames = (totalRowCnt / GATEWAY_MAX_METERINFO_CNT) + ((totalRowCnt%GATEWAY_MAX_METERINFO_CNT) ? 1 : 0);
+	for (currentFrame = 0;currentFrame < totalFrames;currentFrame++) {//query db rows and issue to gateway
+		rowCntPerFrame = GATEWAY_MAX_METERINFO_CNT;
+		if (db_getMeterInfo(gatewayId, pDbInfo, &rowCntPerFrame) != NO_ERR) {
+			return ERROR;
+		}
+		//dbInfo to protoInfo
+		for (j = 0;j < rowCntPerFrame;j++) {
+			asciiToProtoBin(pDbInfo + j, pProtoInfo + j);
+		}
+		//assemble frame
+		pBodyHead->seq = (U8)currentFrame;
+		pBodyHead->thisRows = (U8)rowCntPerFrame;
+		pBodyHead->totalRows = (U8)totalRowCnt;
+		protoW_issueMinfo(buf, &bufSize, gatewayId, pBodyHead, pProtoInfo);
+		//write and read frame
+		sendAndRead(buf, &bufSize);
+		//return analyse result, if result is fail, return to user
+		protoA_issueMinfo(buf, bufSize);
+		//init dbInfo and protoInfo to 0
+		memset(pDbInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(db_meterinfo_str));
+		memset(pProtoInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(meter_row_str));
+	}
+	closeDBF();
 	return NO_ERR;
 }

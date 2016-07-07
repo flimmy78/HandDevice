@@ -16,13 +16,66 @@
 
 #define CONFIG_DELIMITER	','
 
+#define DB_MINFO_LEN_ROWID			3	//数据库中计量点长度
+#define DB_MINFO_LEN_METERADDR		14	//数据库中仪表地址长度
+#define DB_MINFO_LEN_VENDORID		3	//数据库中厂商代码长度
+#define DB_MINFO_LEN_PROTOVER		3	//数据库中仪表协议版本号长度
+#define DB_MINFO_LEN_METERTYPE		2	//数据库中仪表类型长度
+#define DB_MINFO_LEN_CHANNEL		2	//数据库中通道号长度
+#define DB_MINFO_LEN_VALVEPROTOVER	2	//数据库中阀控协议版本号长度
+#define DB_MINFO_LEN_VALVEADDR		14	//数据库中阀控地址长度
+#define DB_MINFO_LEN_CTLPANELADDR	14	//数据库中温控面板地址长度
+#define DB_MINFO_LEN_BUILDID		3	//数据库中楼栋号长度
+#define DB_MINFO_LEN_UNITID			2	//数据库中单元号长度
+#define DB_MINFO_LEN_ROOMID			4	//数据库中房间号长度
+#define DB_MINFO_LEN_GATEWAYID		12	//集中器编号长度
+
 typedef enum
 {
 	config_field_id=0,
 	config_field_vale,
 }config_field_idx;
 
+typedef enum
+{
+	minfo_field_rowId = 0,			//计量点
+	minfo_field_meterAddr,			//仪表(热量表,水表等)地址
+	minfo_field_vendorId,			//厂商代码
+	minfo_field_protoVer,			//仪表协议版本号
+	minfo_field_meterType,			//仪表类型
+	minfo_field_channel,			//通道号
+	minfo_field_valveProtoVer,		//阀控协议版本号
+	minfo_field_valveAddr,			//阀控地址
+	minfo_field_controlPanelAddr,	//温控面板地址
+	minfo_field_buildId,			//楼栋号
+	minfo_field_unitId,				//单元号
+	minfo_field_roomId,				//房间号
+	minfo_field_gatewayId			//集中器编号
+}meterinfo_field_idx;
+
+typedef struct{
+	U8 rowId[DB_MINFO_LEN_ROWID];					//计量点
+	U8 meterAddr[DB_MINFO_LEN_METERADDR];			//仪表(热量表,水表等)地址
+	U8 vendorId[DB_MINFO_LEN_VENDORID];				//厂商代码
+	U8 protoVer[DB_MINFO_LEN_PROTOVER];				//仪表协议版本号
+	U8 meterType[DB_MINFO_LEN_METERTYPE];			//仪表类型
+	U8 channel[DB_MINFO_LEN_CHANNEL];				//通道号
+	U8 valveProtoVer[DB_MINFO_LEN_VALVEPROTOVER];	//阀控协议版本号
+	U8 valveAddr[DB_MINFO_LEN_VALVEADDR];			//阀控地址
+	U8 controlPanelAddr[DB_MINFO_LEN_CTLPANELADDR];	//温控面板地址
+	U8 buildId[DB_MINFO_LEN_BUILDID];				//楼栋号
+	U8 unitId[DB_MINFO_LEN_UNITID];					//单元号
+	U8 roomId[DB_MINFO_LEN_ROOMID];					//房间号
+	U8 gatewayId[DB_MINFO_LEN_GATEWAYID];			//集中器编号
+} db_meterinfo_str;
+typedef db_meterinfo_str* db_meterinfo_ptr;
+
+extern U8 openDBF(U8* dbfName);
+extern U8 closeDBF(void);
+extern U8 db_gotoRecord0(void);
 extern U8 db_readAllConfig(void);
 extern U8 db_getCongfig(u16 configIdx, U8* config);
+extern U8 db_getMatchCnt(U8* gatewayId, S32* cnt);
+extern U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt);
 
 #endif // DB_H

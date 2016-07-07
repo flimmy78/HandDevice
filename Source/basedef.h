@@ -30,5 +30,6 @@ typedef enum {
 	config_server_id	//Ö÷Õ¾ºÅ
 }config_rowidx;
 
+
 #endif
 

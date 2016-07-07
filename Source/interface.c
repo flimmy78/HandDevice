@@ -49,11 +49,11 @@ static const GUI_WIDGET_CREATE_INFO setTime[] =
 //基础信息下发
 static const GUI_WIDGET_CREATE_INFO baseInfoIssue[] =
 {
-    { FRAMEWIN_CreateIndirect,  "基础信息下发", CONFIG_BASE_INFO_FRAME_IDX, 0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
-    { BUTTON_CreateIndirect,    "集中器号",     GUI_ID_BUTTON0,             10,26,80,30,0},
-    { EDIT_CreateIndirect,      "集中器号",     GUI_ID_EDIT0,               108,26,110,30,0},
-    { BUTTON_CreateIndirect,    "退出",         GUI_ID_BUTTON1,             10,221,80,30,0},
-    { BUTTON_CreateIndirect,    "下发",         GUI_ID_BUTTON2,             138,221,80,30,0}
+    { FRAMEWIN_CreateIndirect,  "基础信息下发",	CONFIG_BASE_INFO_FRAME_IDX, 0,0,CL998_LCD_XLEN,CL998_LCD_YLEN,0,0 }, 
+    { BUTTON_CreateIndirect,    "集中器号",		GUI_ID_BUTTON0,             10,26,80,30,0},
+    { EDIT_CreateIndirect,      "",				GUI_ID_EDIT0,               108,26,110,30,0},
+    { BUTTON_CreateIndirect,    "退出",			GUI_ID_BUTTON1,             10,221,80,30,0},
+    { BUTTON_CreateIndirect,    "下发",			GUI_ID_BUTTON2,             138,221,80,30,0}
 };
 
 
@@ -244,8 +244,7 @@ void setTimeCb(struct WM_MESSAGE* pMsg)
 		switch (NCode)
 		{
 		case WM_NOTIFICATION_RELEASED: //触摸屏消息
-			switch (Id)
-			{
+			switch (Id)	{
 			case GUI_ID_BUTTON0://radio read gateway's Id
 				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
 				break;
@@ -262,8 +261,7 @@ void setTimeCb(struct WM_MESSAGE* pMsg)
 		}
 		break;
 	case WM_KEY: //按键消息
-		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key)
-		{
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
 		case GUI_KEY_ESCAPE://Exit
 			GUI_EndDialog(hDlg, WM_USER_EXIT);
 			break;
@@ -291,9 +289,31 @@ void setTimeCb(struct WM_MESSAGE* pMsg)
 	}	
 }
 
+void userIssueInfo(WM_HWIN hObj)
+{
+	U8 lu8InputBuf[EDIT_MAX_LEN] = { 0 };
+
+	EDIT_GetText(hObj, (char*)lu8InputBuf, EDIT_MAX_LEN);
+
+	trimSpace(lu8InputBuf, EDIT_MAX_LEN);
+	if (isNumber(lu8InputBuf, strlen((const char*)lu8InputBuf)) == ERROR) {
+		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+
+	suppplementTo12(lu8InputBuf);
+
+	if (logic_issueMeterInfo(lu8InputBuf) == NO_ERR) {
+		GUI_MessageBox("\n下发表地址成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		GUI_MessageBox("\n下发表地址失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
 void baseInfoIssueCb(WM_MESSAGE* pMsg)
 {
-    int NCode, Id, keyId;
+    int NCode, Id;
     WM_HWIN hDlg;
 
     hDlg = pMsg->hWin;
@@ -302,40 +322,57 @@ void baseInfoIssueCb(WM_MESSAGE* pMsg)
     {
     case WM_INIT_DIALOG:
         baseInfoIssueInit(hDlg);
-    break;
+		break;
     case WM_PAINT:
-    break;  
+		break;  
     case WM_NOTIFY_PARENT:
         Id = WM_GetId(pMsg->hWinSrc);   
         NCode = pMsg->Data.v;        
         switch (NCode)
         {
         case WM_NOTIFICATION_RELEASED: //触摸屏消息
-            GUI_EndDialog(hDlg, Id); 
+			switch (Id) {
+			case GUI_ID_BUTTON0://radio read gateway's Id
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://Exit
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://下发仪表基础信息
+				userIssueInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			default:
+				break;
+			}
             break;
         default:
             break;
         }
-    break;
+		break;
     case WM_KEY: //按键消息
-        keyId = ((WM_KEY_INFO*)(pMsg->Data.p))->Key;
-        switch (keyId)
-        {
-        case GUI_KEY_ESCAPE:
-            GUI_EndDialog( hDlg, -1 );
-            break;
-        case GUI_KEY_UP:
-            WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem( hDlg, GUI_ID_BUTTON0)));
-            break;
-        case GUI_KEY_DOWN:
-            WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem( hDlg, GUI_ID_BUTTON0)));
-            break;
-        default:
-            if(keyId>=GUI_KEY_NUM1 && keyId<=GUI_KEY_NUM8)
-                GUI_EndDialog( hDlg, keyId+(GUI_ID_BUTTON0-GUI_KEY_NUM0)-1);//让按键"1"对应button0
-            break;
-        }
-        break;
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://radio read gateway's Id
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM3://下发集中器时间
+			userIssueInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_ENTER:
+			userIssueInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
     default:
         WM_DefaultProc(pMsg);
     }
@@ -351,25 +388,13 @@ void setTimeConfig()
 	}
 }
 
-int baseinfoIssue()
+void baseinfoIssue()
 {
     int iRet;
     while(1){
         iRet = GUI_ExecDialogBox(baseInfoIssue, GUI_COUNTOF(baseInfoIssue), &baseInfoIssueCb, WM_HBKWIN, 0, 0);
-        switch(iRet){
-        case GUI_ID_BUTTON0://广播读取集中器号
-            break;
-        case GUI_ID_BUTTON1://退出
-            break;
-        case GUI_ID_BUTTON2://下发基础信息
-            break;
-        case 0:
-            return 0;
-        case -1:
-            return -1;
-        default:
-        break;
-        }
+		if (iRet == WM_USER_EXIT)
+			return;
     }
 }
 

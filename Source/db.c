@@ -21,9 +21,9 @@ U8 db_hasInitConfig()
 	return gu8hasInitConfig;
 }
 
-U8 openDBF(void)
+U8 openDBF(U8* dbfName)
 {
-	if (DbfOpen(DB_CONFIG_NAME, pDbf) < 0) {//open
+	if (DbfOpen((char*)dbfName, pDbf) < 0) {//open
 		GUI_MessageBox("\n配置信息丢失, 请重新设置!\n", "丢失", GUI_MESSAGEBOX_CF_MODAL);
 		return ERROR;
 	}
@@ -34,6 +34,14 @@ U8 closeDBF(void)
 {
 	if (DbfClose(pDbf)<0) {
 		GUI_MessageBox("\n关闭数据库失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		return ERROR;
+	}
+	return NO_ERR;
+}
+
+U8 db_gotoRecord0()
+{
+	if (DBF_OPER_OK != DbfGotoRecord(0, pDbf) < 0) {
 		return ERROR;
 	}
 	return NO_ERR;
@@ -88,7 +96,7 @@ U8 db_readAllConfig(void)
 	s32 iRet = 0;
 	memset(&gComConfig, 0x00, sizeof(sUART));
 
-	if (openDBF() == ERROR) return ERROR;//open dbf
+	if (openDBF(DB_CONFIG_NAME) == ERROR) return ERROR;//open dbf
 	//read com config
 	iRet = DbfGotoRecord(config_com_para, pDbf);
 	if (iRet<0) return ERROR;
@@ -109,6 +117,7 @@ U8 db_readAllConfig(void)
 	readServerId((U8*)data);
 
 	gu8hasInitConfig = CONFIG_INITTED;
+	closeDBF();
 	return NO_ERR;
 }
 
@@ -130,5 +139,56 @@ U8 db_getCongfig(u16 configIdx, U8* config)
 	default:
 		break;
 	}
+	return NO_ERR;
+}
+
+U8 db_getMatchCnt(U8* gatewayId, S32* cnt)
+{
+	*cnt = DbfGetMatchCount(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_MATCH_ALL, pDbf);
+	if (*cnt < 0) {
+		return ERROR;
+	}
+	return NO_ERR;
+}
+
+/*
+**	从数据库读取表地址.
+**	本函数借助了创伦库中处理DBF的一个机制,
+**	读取了一行后, currentRecord就不再变化,
+**	否则得记住当前读到第几行
+**	@gatewayId:	数据库中的信息指针
+**	@pInfo:		用于缓存仪表信息(数组)
+**	@rowCnt:	欲读取的行数, 程序返回实际读取的行数
+*/
+U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt)
+{
+	S32 i = 0, actualCnt = 0;
+
+	while (actualCnt < *rowCnt) {
+		i = DbfRecordLocate(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_DOWN, DBF_LOCATE_MATCH_ALL, pDbf);
+		if (i >= 0) {
+			DbfFieldGet(minfo_field_rowId, (char*)pInfo->rowId, pDbf);
+			DbfFieldGet(minfo_field_meterAddr, (char*)pInfo->meterAddr, pDbf);
+			DbfFieldGet(minfo_field_vendorId, (char*)pInfo->vendorId, pDbf);
+			DbfFieldGet(minfo_field_protoVer, (char*)pInfo->protoVer, pDbf);
+			DbfFieldGet(minfo_field_meterType, (char*)pInfo->meterType, pDbf);
+			DbfFieldGet(minfo_field_channel, (char*)pInfo->channel, pDbf);
+			DbfFieldGet(minfo_field_valveProtoVer, (char*)pInfo->valveProtoVer, pDbf);
+			DbfFieldGet(minfo_field_valveAddr, (char*)pInfo->valveAddr, pDbf);
+			DbfFieldGet(minfo_field_controlPanelAddr, (char*)pInfo->controlPanelAddr, pDbf);
+			DbfFieldGet(minfo_field_buildId, (char*)pInfo->buildId, pDbf);
+			DbfFieldGet(minfo_field_unitId, (char*)pInfo->unitId, pDbf);
+			DbfFieldGet(minfo_field_roomId, (char*)pInfo->roomId, pDbf);
+			actualCnt++;
+			pInfo++;
+		} else {
+			return ERROR;
+		}
+	}
+	if (actualCnt)
+		*rowCnt = actualCnt;
+	else
+		*rowCnt = 0;
+
 	return NO_ERR;
 }

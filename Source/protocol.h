@@ -26,7 +26,11 @@
 #define GATEWAY_HEAD_LEN    (GATEWAY_VER_LEN+GATEWAY_SADD_LEN+GATEWAY_OADD_LEN+GATEWAY_MID_LEN\
                             +GATEWAY_MSGL_LEN+GATEWAY_MT_LEN+GATEWAY_TS_LEN)
 #define GATEWAY_RETID_OFFSET	(GATEWAY_PREFIX_CNT+GATEWAY_START_CNT+GATEWAY_VER_LEN)//offset that gatewayId in return frame
-
+#define GATEWAY_MAIN_FRAME_LEN	30	//集中器协议中 排除消息体部分的帧长度(包括消息体校验)
+#define GATEWAY_FRAME_MAX_LEN	1024//每帧协议最大长度
+#define GATEWAY_METERINFO_LEN	40//仪表信息的长度
+#define GATEWAY_MAX_METERINFO_CNT	24//集中器协议中每行最大下发多少行数据
+#define GATEWAY_ISSUE_BODY_HEAD	3//下发表地址消息头的长度
 //异常回应代码--表示意义
 #define GAT_EXCEP_FAIL          0x10//失败、异常
 #define GAT_EXCEP_MEASURE_POINT 0x11//异常，查不到指定计量点号。
@@ -43,7 +47,7 @@
 #define GAT_MT_CLT_MODIFY_SINFO 0x14//集中器响应主站更改单个热表地址信息(0x14)
 
 #define GAT_MT_SVR_SEND_MINFO   0x0C//主站下发所有仪表地址(0x0C)
-#define GAT_MT_CLT__SEND_MINFO	 0x0D//集中器响应主站下发仪表地址(0x0D)
+#define GAT_MT_CLT__SEND_MINFO	0x0D//集中器响应主站下发仪表地址(0x0D)
 
 #define GAT_MT_SVR_TIME_POINT   0x20//主站设置定时抄表时间(0x20)
 #define GAT_MT_CLT_TIME_POINT   0x21//设置定时抄表时间反馈(0x21)
@@ -92,6 +96,12 @@
 
 #endif
 
+#define PROTO_LEN_MADDR		7//协议中仪表地址长度
+#define PROTO_LEN_VADDR		7//协议中阀门地址长度
+#define PROTO_LEN_ROWID		2//协议中计量点编号长度
+#define PROTO_LEN_ROOMID	2//协议中房间编号长度
+#define PROTO_LEN_RSV		8//保留字段
+
 //为避免编译器字节对齐, 全部使用单字节结构
 typedef struct {//集中器协议体结构
 	U8 SourceAddr[GATEWAY_SADD_LEN];//源地址, 低字节在前
@@ -101,30 +111,42 @@ typedef struct {//集中器协议体结构
 	U8 MsgType;                     //消息类型
 	U8 ssmmhhDDMMYY[GATEWAY_TS_LEN];//秒分时日月年, 低字节在前
 	U8 *MsgBody;                    //消息体, 低字节在前
-} gateway_protocol_str;//类型名用下划线分隔
+} gateway_protocol_str;//类型名用下划线分隔, 下同
 typedef gateway_protocol_str* gateway_protocol_ptr;
 
-typedef struct {//集中器仪表基础信息结构
-	U8 MeterID[2];          //计量点编号
-	U8 MeterAddr[7];        //热计量表地址
-	U8 Manufacturer;        //厂商代码
-	U8 ProtocolVer;         //热表协议版本
-	U8 EquipmentType;       //设备类型
-	U8 ChannelIndex;        //通道号
-	U8 ValveProtocol;       //阀控协议版本
-	U8 ValveAddr[7];        //阀门地址
-	U8 ControlPanelAddr[7]; //控制面板地址
-	U8 BuildID;             //楼号
-	U8 UnitID;              //单元号
-	U8 RoomID[2];           //房间号
-	U8 Reserved[8];         //预留8字节
-}meter_info_str;//类型名用下划线分隔
+typedef struct{//集中器仪表基础信息结构
+	U8 rowId[PROTO_LEN_ROWID];		//计量点, 用作唯一标示一行(Little Ending, Hex)
+	U8 meterAddr[PROTO_LEN_MADDR];  //仪表(热量表,水表等)地址(Little Ending, BCD)
+	U8 vendorId;					//厂商代码(Hex)
+	U8 protoVer;					//仪表协议版本号(Hex)
+	U8 meterType;					//仪表类型(Hex)
+	U8 channel;						//通道号(Hex)
+	U8 valveProtoVer;				//阀控协议版本号(Hex)
+	U8 valveAddr[PROTO_LEN_VADDR];  //阀控地址(Little Ending, BCD)
+	U8 controlPanelAddr[PROTO_LEN_VADDR]; //温控面板地址(Little Ending, BCD)
+	U8 buildId;						//楼栋号(Hex)
+	U8 unitId;						//单元号(Hex)
+	U8 roomId[PROTO_LEN_ROOMID];    //房间号(Little Ending, Hex)
+	U8 reserved[PROTO_LEN_RSV];     //保留字段
+}meter_row_str;
+typedef meter_row_str* meter_row_ptr;
 
+typedef struct
+{
+	U8 totalRows;			//一共有多少行表地址
+	U8 seq;					//本帧的索引号
+	U8 thisRows;			//本帧包含多少行表地址
+}meterinfo_bodyHead_str;
+typedef meterinfo_bodyHead_str* meterinfo_bodyHead_ptr;
 
 extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
 extern U8 protoA_setTime(U8* buf, U16 bufSize);
 extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
 extern U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
+extern U8 protoW_issueMinfo(U8*, U16*, U8*, meterinfo_bodyHead_ptr, meter_row_ptr);
+extern U8 protoA_issueMinfo(U8* buf, U16 bufSize);
+
+
 
 #endif
 
