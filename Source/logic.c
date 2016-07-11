@@ -9,7 +9,7 @@
 #include "lib.h"
 #include "logic.h"
 
-void printBuf(U8* buf, U16 bufSize, const char* file, const char* func, u32 line)
+void logic_printBuf(U8* buf, U16 bufSize, const char* file, const char* func, u32 line)
 {
 #ifdef DEBUG
 	U16 i = 0;
@@ -20,7 +20,12 @@ void printBuf(U8* buf, U16 bufSize, const char* file, const char* func, u32 line
 #endif // DEBUG
 }
 
-U8 sendAndRead(U8* buf, U16* bufSize)
+/*
+**	向串口读写数据.
+**	@buf:		发送与接收数据缓冲区
+**	@bufSize:	缓冲区长度
+*/
+U8 logic_sendAndRead(U8* buf, U16* bufSize)
 {
 	sUART *pu;
 	sUART comConfig;
@@ -30,10 +35,13 @@ U8 sendAndRead(U8* buf, U16* bufSize)
 	if (!pu)
 		return ERROR;
 
-	printBuf(buf, *bufSize, FILE_LINE);
+	logic_printBuf(buf, *bufSize, FILE_LINE);
 	UartWrite(buf, *bufSize, 0, pu);
 	*bufSize = UartRead(buf, 512, 2000, pu);
-	printBuf(buf, *bufSize, FILE_LINE);
+	if (*bufSize == 0) {//如果超时后没有读到数据, 返回错误
+		return ERROR;
+	}
+	logic_printBuf(buf, *bufSize, FILE_LINE);
 
 	UartClose(pu);
 
@@ -52,7 +60,9 @@ U8 logic_setTime(U8* gatewayId)
 	U8 lu8ret;
 
 	protoW_setTime(gatewayId, GATEWAY_OADD_LEN, lu8buf, &lu8bufSize);
-	sendAndRead(lu8buf, &lu8bufSize);
+	if (logic_sendAndRead(lu8buf, &lu8bufSize) == ERROR) {
+		return ERROR;
+	}
 	lu8ret = protoA_setTime(lu8buf, lu8bufSize);
 	return lu8ret;
 }
@@ -68,11 +78,17 @@ U8 logic_readGatewayId(U8* gatewayId)
 	U16 lu8bufSize = 0;
 
 	protoR_radioReadId(lu8buf, &lu8bufSize);
-	sendAndRead(lu8buf, &lu8bufSize);
+	if (logic_sendAndRead(lu8buf, &lu8bufSize) == ERROR) {
+		return ERROR;
+	}
 	protoA_radioReadId(gatewayId, GATEWAY_OADD_LEN, lu8buf, lu8bufSize);
 	return NO_ERR;
 }
 
+/*
+**	下发表地址给集中器.
+**	@gatewayId:	集中器编号, 12位正序的ascii码
+*/
 U8 logic_issueMeterInfo(U8* gatewayId)
 {
 	db_meterinfo_str dbmeterInfoArray[GATEWAY_MAX_METERINFO_CNT] = { 0 };
@@ -82,6 +98,7 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 	const db_meterinfo_ptr pDbInfo = &dbmeterInfoArray[0];
 	const meter_row_ptr	pProtoInfo = &protoMeterInfoAarray[0];
 	const meterinfo_bodyHead_ptr pBodyHead = &BodyHeadStr;
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
 
 	S32 totalRowCnt = 0, totalFrames = 0;
 	S32 currentFrame = 0, j = 0;
@@ -90,7 +107,7 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
 	U16 bufSize = 0;
 
-	if (openDBF(DB_CONFIG_NAME) == ERROR) return ERROR;//open dbf
+	if (openDBF(DB_BASEINFO_NAME) == ERROR) return ERROR;//open dbf
 	if (db_getMatchCnt(gatewayId, &totalRowCnt) != NO_ERR) {
 		return ERROR;
 	}
@@ -112,15 +129,52 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 		pBodyHead->seq = (U8)currentFrame;
 		pBodyHead->thisRows = (U8)rowCntPerFrame;
 		pBodyHead->totalRows = (U8)totalRowCnt;
-		protoW_issueMinfo(buf, &bufSize, gatewayId, pBodyHead, pProtoInfo);
+		inverseStrToBCD(gatewayId, 2*GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+		protoW_issueMinfo(buf, &bufSize, lu8gatewayId, pBodyHead, pProtoInfo);
 		//write and read frame
-		sendAndRead(buf, &bufSize);
+		if (logic_sendAndRead(buf, &bufSize) == ERROR) {
+			return ERROR;
+		}
 		//return analyse result, if result is fail, return to user
-		protoA_issueMinfo(buf, bufSize);
+		if (protoA_issueMinfo(buf, bufSize, pBodyHead->seq) == ERROR) {
+			return ERROR;
+		}
+
 		//init dbInfo and protoInfo to 0
 		memset(pDbInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(db_meterinfo_str));
 		memset(pProtoInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(meter_row_str));
 	}
 	closeDBF();
+	return NO_ERR;
+}
+
+U8 logic_queryOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pDbInfo)
+{
+	if (openDBF(DB_BASEINFO_NAME) == ERROR) return ERROR;//open dbf
+	if (db_gotoRecord0() != NO_ERR) {
+		return ERROR;
+	}
+	if (db_getOneMeterInfo(gatewayId, meterId, pDbInfo) == ERROR) {
+		return ERROR;
+	}
+	closeDBF();
+	return NO_ERR;
+}
+
+U8 logic_issueOneMeterInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	meter_row_str protoMeterInfo;
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	if (protoW_modifyOneMinfo(buf, &bufSize, lu8gatewayId, &protoMeterInfo) == ERROR)
+		return ERROR;
+	if(logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	if (protoA_modifyOneMinfo(buf, bufSize, 0x00) == ERROR)
+		return ERROR;
+	
 	return NO_ERR;
 }

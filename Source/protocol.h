@@ -86,12 +86,12 @@
 #define GAT_MT_CLT_CHIP         0x95//主站更改集中器IP及端口号响应(0x95)
 /*集中器协议中MSG_TYPE代表的意义 END*/
 
-#define	GATEWAY_ASW_CODE_SUC				0x01	//操作成功
-#define GATEWAY_ASW_CODE_FAIL				0x10	//操作失败
-#define GATEWAY_ASW_CODE_NOREC				0x11	//查不到指定计量点号
-#define GATEWAY_ASW_CODE_MBUS_BUSY			0x12	//MBUS正忙
+#define	GATEWAY_ASW_CODE_SUC				0x01//操作成功
+#define GATEWAY_ASW_CODE_FAIL				0x10//操作失败
+#define GATEWAY_ASW_CODE_NOREC				0x11//查不到指定计量点号
+#define GATEWAY_ASW_CODE_MBUS_BUSY			0x12//MBUS正忙
 #define GATEWAY_ASW_CODE_EXCEED				0x13//参数出允许范围
-#define GATEWAY_ASW_CODE_MSGBODY_VER_ERR	0x14	//消息体版本号错误
+#define GATEWAY_ASW_CODE_MSGBODY_VER_ERR	0x14//消息体版本号错误
 
 
 #endif
@@ -104,13 +104,13 @@
 
 //为避免编译器字节对齐, 全部使用单字节结构
 typedef struct {//集中器协议体结构
-	U8 SourceAddr[GATEWAY_SADD_LEN];//源地址, 低字节在前
-	U8 DestAddr[GATEWAY_OADD_LEN];  //目标地址, 低字节在前
+	U8 SourceAddr[GATEWAY_SADD_LEN];//源地址, LE=Little Ending
+	U8 DestAddr[GATEWAY_OADD_LEN];  //目标地址, LE
 	U8 MsgIndex;                    //消息序列号
-	U8 MsgLen[GATEWAY_MSGL_LEN];    //消息体长度, 低字节在前
+	U8 MsgLen[GATEWAY_MSGL_LEN];    //消息体长度, LE
 	U8 MsgType;                     //消息类型
-	U8 ssmmhhDDMMYY[GATEWAY_TS_LEN];//秒分时日月年, 低字节在前
-	U8 *MsgBody;                    //消息体, 低字节在前
+	U8 ssmmhhDDMMYY[GATEWAY_TS_LEN];//秒分时日月年, LE
+	U8 *MsgBody;                    //消息体指针
 } gateway_protocol_str;//类型名用下划线分隔, 下同
 typedef gateway_protocol_str* gateway_protocol_ptr;
 
@@ -144,8 +144,9 @@ extern U8 protoA_setTime(U8* buf, U16 bufSize);
 extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
 extern U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
 extern U8 protoW_issueMinfo(U8*, U16*, U8*, meterinfo_bodyHead_ptr, meter_row_ptr);
-extern U8 protoA_issueMinfo(U8* buf, U16 bufSize);
-
+extern U8 protoA_issueMinfo(U8* buf, U16 bufSize, U8 seq);
+extern U8 protoW_modifyOneMinfo(U8* buf, U16* bufSize, U8* gatewayId, meter_row_ptr pProtoInfo);
+extern U8 protoA_modifyOneMinfo(U8* buf, U16 bufSize, U8 seq);
 
 
 #endif

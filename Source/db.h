@@ -30,6 +30,19 @@
 #define DB_MINFO_LEN_ROOMID			4	//数据库中房间号长度
 #define DB_MINFO_LEN_GATEWAYID		12	//集中器编号长度
 
+#define DBF_GETFIELD()	DbfFieldGet(minfo_field_rowId, (char*)pInfo->rowId, pDbf);\
+						DbfFieldGet(minfo_field_meterAddr, (char*)pInfo->meterAddr, pDbf);\
+						DbfFieldGet(minfo_field_vendorId, (char*)pInfo->vendorId, pDbf);\
+						DbfFieldGet(minfo_field_protoVer, (char*)pInfo->protoVer, pDbf);\
+						DbfFieldGet(minfo_field_meterType, (char*)pInfo->meterType, pDbf);\
+						DbfFieldGet(minfo_field_channel, (char*)pInfo->channel, pDbf);\
+						DbfFieldGet(minfo_field_valveProtoVer, (char*)pInfo->valveProtoVer, pDbf);\
+						DbfFieldGet(minfo_field_valveAddr, (char*)pInfo->valveAddr, pDbf);\
+						DbfFieldGet(minfo_field_controlPanelAddr, (char*)pInfo->controlPanelAddr, pDbf);\
+						DbfFieldGet(minfo_field_buildId, (char*)pInfo->buildId, pDbf);\
+						DbfFieldGet(minfo_field_unitId, (char*)pInfo->unitId, pDbf);\
+						DbfFieldGet(minfo_field_roomId, (char*)pInfo->roomId, pDbf);
+
 typedef enum
 {
 	config_field_id=0,
@@ -53,21 +66,22 @@ typedef enum
 	minfo_field_gatewayId			//集中器编号
 }meterinfo_field_idx;
 
-typedef struct{
-	U8 rowId[DB_MINFO_LEN_ROWID];					//计量点
+typedef struct{//在数据库中的仪表信息结构. 以数值字符串存储的值, 长度必须加1, 以在字符串结尾多加一个'\0'
+	U8 rowId[DB_MINFO_LEN_ROWID+1];					//计量点
 	U8 meterAddr[DB_MINFO_LEN_METERADDR];			//仪表(热量表,水表等)地址
-	U8 vendorId[DB_MINFO_LEN_VENDORID];				//厂商代码
-	U8 protoVer[DB_MINFO_LEN_PROTOVER];				//仪表协议版本号
+	U8 vendorId[DB_MINFO_LEN_VENDORID+1];				//厂商代码
+	U8 protoVer[DB_MINFO_LEN_PROTOVER+1];				//仪表协议版本号
 	U8 meterType[DB_MINFO_LEN_METERTYPE];			//仪表类型
-	U8 channel[DB_MINFO_LEN_CHANNEL];				//通道号
-	U8 valveProtoVer[DB_MINFO_LEN_VALVEPROTOVER];	//阀控协议版本号
+	U8 channel[DB_MINFO_LEN_CHANNEL+1];				//通道号
+	U8 valveProtoVer[DB_MINFO_LEN_VALVEPROTOVER+1];	//阀控协议版本号
 	U8 valveAddr[DB_MINFO_LEN_VALVEADDR];			//阀控地址
 	U8 controlPanelAddr[DB_MINFO_LEN_CTLPANELADDR];	//温控面板地址
-	U8 buildId[DB_MINFO_LEN_BUILDID];				//楼栋号
-	U8 unitId[DB_MINFO_LEN_UNITID];					//单元号
-	U8 roomId[DB_MINFO_LEN_ROOMID];					//房间号
+	U8 buildId[DB_MINFO_LEN_BUILDID+1];				//楼栋号
+	U8 unitId[DB_MINFO_LEN_UNITID+1];					//单元号
+	U8 roomId[DB_MINFO_LEN_ROOMID+1];					//房间号
 	U8 gatewayId[DB_MINFO_LEN_GATEWAYID];			//集中器编号
 } db_meterinfo_str;
+
 typedef db_meterinfo_str* db_meterinfo_ptr;
 
 extern U8 openDBF(U8* dbfName);
@@ -77,5 +91,5 @@ extern U8 db_readAllConfig(void);
 extern U8 db_getCongfig(u16 configIdx, U8* config);
 extern U8 db_getMatchCnt(U8* gatewayId, S32* cnt);
 extern U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt);
-
+extern U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo);
 #endif // DB_H

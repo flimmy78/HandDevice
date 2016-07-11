@@ -162,33 +162,54 @@ U8 db_getMatchCnt(U8* gatewayId, S32* cnt)
 */
 U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt)
 {
-	S32 i = 0, actualCnt = 0;
+	S32 iRet = 0, actualCnt = 0;
 
 	while (actualCnt < *rowCnt) {
-		i = DbfRecordLocate(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_DOWN, DBF_LOCATE_MATCH_ALL, pDbf);
-		if (i >= 0) {
-			DbfFieldGet(minfo_field_rowId, (char*)pInfo->rowId, pDbf);
-			DbfFieldGet(minfo_field_meterAddr, (char*)pInfo->meterAddr, pDbf);
-			DbfFieldGet(minfo_field_vendorId, (char*)pInfo->vendorId, pDbf);
-			DbfFieldGet(minfo_field_protoVer, (char*)pInfo->protoVer, pDbf);
-			DbfFieldGet(minfo_field_meterType, (char*)pInfo->meterType, pDbf);
-			DbfFieldGet(minfo_field_channel, (char*)pInfo->channel, pDbf);
-			DbfFieldGet(minfo_field_valveProtoVer, (char*)pInfo->valveProtoVer, pDbf);
-			DbfFieldGet(minfo_field_valveAddr, (char*)pInfo->valveAddr, pDbf);
-			DbfFieldGet(minfo_field_controlPanelAddr, (char*)pInfo->controlPanelAddr, pDbf);
-			DbfFieldGet(minfo_field_buildId, (char*)pInfo->buildId, pDbf);
-			DbfFieldGet(minfo_field_unitId, (char*)pInfo->unitId, pDbf);
-			DbfFieldGet(minfo_field_roomId, (char*)pInfo->roomId, pDbf);
+		iRet = DbfRecordLocate(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_DOWN, DBF_LOCATE_MATCH_ALL, pDbf);
+		if (iRet >= 0) {
+			DBF_GETFIELD()
 			actualCnt++;
 			pInfo++;
 		} else {
 			return ERROR;
 		}
 	}
-	if (actualCnt)
+    if (actualCnt)
 		*rowCnt = actualCnt;
 	else
 		*rowCnt = 0;
 
 	return NO_ERR;
+}
+
+/*
+**	从数据库定位一行基础信息.
+**	@gatewayId:	数据库中的信息指针
+**	@pInfo:		用于缓存仪表信息(数组)
+**	@rowCnt:	欲读取的行数, 程序返回实际读取的行数
+*/
+U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo)
+{
+	S32 iRet = 0, recCnt = 0;
+	U16 lu16MeterId;
+	U8 lu8MeterId[DB_MINFO_LEN_ROWID + 1] = { 0 };
+	recCnt = DbfRecordCount(pDbf);
+
+	while (DbfGetCurrentRecord(pDbf) < recCnt) {
+		iRet = DbfRecordLocate(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_DOWN, DBF_LOCATE_MATCH_ALL, pDbf);
+		if (iRet < 0) {
+			return ERROR;
+		}
+		iRet = DbfFieldGet(minfo_field_rowId, (char*)lu8MeterId, pDbf);
+		if (iRet < 0) {
+			return ERROR;
+		}
+		lu16MeterId = Lib_atoi((const char*)lu8MeterId);
+		if (meterId == lu16MeterId) {
+			DBF_GETFIELD()
+			return NO_ERR;
+		}
+	}
+
+	return ERROR;
 }

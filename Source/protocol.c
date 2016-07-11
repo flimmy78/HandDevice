@@ -15,8 +15,13 @@
 #include "db.h"
 
 
-//创建集中器通讯桢, 私有函数
-static void createFrame(U8 *sendBuf, u16 *sendLen, gateway_protocol_ptr pProto)
+/*
+**	创建集中器发送帧.
+**	@sendBuf:	发送缓冲区
+**	@sendLen:	发送缓冲区长度
+**	@pProto:	发送帧额外信息
+*/
+static void createFrame(U8 *sendBuf, U16 *sendLen, gateway_protocol_ptr pProto)
 {
 	U8 *pTemp = sendBuf;
 	U16 lenFrame = 0;
@@ -103,8 +108,8 @@ U8 protoA_setTime(U8* buf, U16 bufSize)
 	buf += 27;
 	if (GATEWAY_ASW_CODE_SUC == (*buf))
 		return NO_ERR;
-	else
-		return ERROR;
+
+	return ERROR;
 }
 
 /*
@@ -138,46 +143,113 @@ U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize)
 	return NO_ERR;
 }
 
-U8 protoW_oneMeterInfo(meter_row_ptr pInfo)
-{
-
-	return NO_ERR;
-}
-
-U8 protoW_MeterInfoBody(U8* buf, U8 *bufSize)
-{
-
-	return NO_ERR;
-}
-
+/*
+**	下发表地址给集中器.
+**	@buf:		发送缓存
+**	@bufSize:	发送缓存长度
+**	@gatewayId:	集中器号(已翻转的bin格式)
+**	@pBodyHead:	消息头的指针
+**	@pProtoInfo:消息体的指针
+*/
 U8 protoW_issueMinfo(U8* buf, U16* bufSize, U8* gatewayId, \
 	meterinfo_bodyHead_ptr pBodyHead, meter_row_ptr	pProtoInfo)
 {
 	gateway_protocol_str protoStr;
-	U8 bufMsgBody[GATEWAY_FRAME_MAX_LEN] = {0};
-	U16 len = 0;
+	U8 bufMsgBody[GATEWAY_FRAME_MAX_LEN] = {0};//用于暂存消息体
+	U16 bodyLen = 0;//消息体长度
 
-	db_getCongfig(config_gateway_id, protoStr.DestAddr);
+	if (gatewayId == NULL)
+		return ERROR;
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+
 	db_getCongfig(config_server_id, protoStr.SourceAddr);
 	protoStr.MsgIndex = pBodyHead->seq;
 
-	len = GATEWAY_METERINFO_LEN*pBodyHead->thisRows + sizeof(meterinfo_bodyHead_str);
-	memcpy(protoStr.MsgLen, (U8*)&len, GATEWAY_MSGL_LEN);
-	inverseArray(protoStr.MsgLen, GATEWAY_MSGL_LEN);
+	bodyLen = GATEWAY_METERINFO_LEN*pBodyHead->thisRows + sizeof(meterinfo_bodyHead_str);
+	memcpy(protoStr.MsgLen, (U8*)&bodyLen, GATEWAY_MSGL_LEN);//芯片使用小端地址, 无需翻转
 
 	protoStr.MsgType = GAT_MT_SVR_SEND_MINFO;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 
-	memcpy(bufMsgBody, (U8*)pBodyHead, sizeof(meterinfo_bodyHead_str));//copy body head
+	memcpy(bufMsgBody, (U8*)pBodyHead, sizeof(meterinfo_bodyHead_str));//复制消息头
 	memcpy(bufMsgBody + sizeof(meterinfo_bodyHead_str), (U8*)pProtoInfo, \
-		pBodyHead->thisRows*sizeof(meter_row_str));//copy message body
-	protoStr.MsgBody = bufMsgBody;
+		pBodyHead->thisRows*sizeof(meter_row_str));//复制消息体
+	protoStr.MsgBody = bufMsgBody;//指针指向消息体, 局部变量在函数返回前一直有效
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }
 
-U8 protoA_issueMinfo(U8* buf, U16 bufSize)
+/*
+**	分析下发表地址的集中器返回帧.
+**	@buf: 返回帧
+**	@bufSize:		集中器号的长度
+**	@buf:		返回帧
+**	@bufSize:	返回帧的长度
+*/
+U8 protoA_issueMinfo(U8* buf, U16 bufSize, U8 seq)
 {
+	U8 data;
+	if (bufSize != 32) {
+		return ERROR;
+	}
+   data = *(buf + 27);
+   if (GATEWAY_ASW_CODE_SUC != (data))
+	   return ERROR;
+
+   data = *(buf + 28);
+   if (data != seq)
+	   return ERROR;
+
+   return NO_ERR;
+}
+
+/*
+**	单独修改一个计量点的表地址.
+**	@buf:		发送缓冲区
+**	@bufSize:	发送缓冲区长度
+**	@gatewayId:	已反序的集中器ID
+**	@pProto:	发送帧额外信息
+*/
+U8 protoW_modifyOneMinfo(U8* buf, U16* bufSize, U8* gatewayId, meter_row_ptr pProtoInfo)
+{
+	gateway_protocol_str protoStr;
+	U16 msgLen = GATEWAY_METERINFO_LEN;
+
+	if (gatewayId == NULL)
+		return ERROR;
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	memcpy(protoStr.MsgLen, (U8*)&msgLen, GATEWAY_MSGL_LEN);
+	protoStr.MsgType = GAT_MT_SVR_MODIFY_SINFO;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.MsgBody = (U8*)pProtoInfo;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
+/*
+**	分析单独修改一个计量点的表地址返回帧.
+**	@buf: 返回帧
+**	@bufSize:	集中器号的长度
+**	@buf:		返回帧
+**	@bufSize:	返回帧的长度
+*/
+U8 protoA_modifyOneMinfo(U8* buf, U16 bufSize, U8 seq)
+{
+	U8 data;
+	if (bufSize != 32) {
+		return ERROR;
+	}
+	data = *(buf + 27);
+	if (GATEWAY_ASW_CODE_SUC != (data))
+		return ERROR;
+
+	data = *(buf + 28);
+	if (data != seq)
+		return ERROR;
 
 	return NO_ERR;
 }
