@@ -230,7 +230,7 @@ void userSetTime(WM_HWIN hObj)
 	EDIT_GetText(hObj, (char*)lu8InputBuf, EDIT_MAX_LEN);
 
 	trimSpace(lu8InputBuf, EDIT_MAX_LEN);
-	if (isNumber(lu8InputBuf, strlen((const char*)lu8InputBuf)) == ERROR) {
+	if (isNumber(lu8InputBuf, STRLEN(lu8InputBuf)) == ERROR) {
 		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
@@ -329,7 +329,7 @@ void userIssueInfo(WM_HWIN hObj)
 	EDIT_GetText(hObj, (char*)lu8InputBuf, EDIT_MAX_LEN);
 
 	trimSpace(lu8InputBuf, EDIT_MAX_LEN);
-	if (isNumber(lu8InputBuf, strlen((const char*)lu8InputBuf)) == ERROR) {
+	if (isNumber(lu8InputBuf, STRLEN(lu8InputBuf)) == ERROR) {
 		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
@@ -337,10 +337,10 @@ void userIssueInfo(WM_HWIN hObj)
 	suppplementTo12(lu8InputBuf);
 
 	if (logic_issueMeterInfo(lu8InputBuf) == NO_ERR) {
-		GUI_MessageBox("\n下发表地址成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+		//GUI_MessageBox("\n下发表地址成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
 	else {
-		GUI_MessageBox("\n下发表地址失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		//GUI_MessageBox("\n下发表地址失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	}
 }
 
@@ -437,16 +437,16 @@ void queryOneInfo(WM_HWIN hObjGatewayId, WM_HWIN hObjMeterId, WM_HWIN hObjListvi
 	EDIT_GetText(hObjMeterId, (char*)lu8MeterId, EDIT_MAX_LEN);
 
 	trimSpace(lu8GatewayId, EDIT_MAX_LEN);
-	if (isNumber(lu8GatewayId, strlen((const char*)lu8GatewayId)) == ERROR) {
+	if (isNumber(lu8GatewayId, STRLEN(lu8GatewayId)) == ERROR) {
 		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
 	trimSpace(lu8MeterId, EDIT_MAX_LEN);
-	if (isNumber(lu8MeterId, strlen((const char*)lu8MeterId)) == ERROR) {
+	if (isNumber(lu8MeterId, STRLEN(lu8MeterId)) == ERROR) {
 		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
-	if (strlen((const char*)lu8GatewayId) > DB_MINFO_LEN_GATEWAYID) {
+	if (STRLEN(lu8GatewayId) > DB_MINFO_LEN_GATEWAYID) {
 			GUI_MessageBox("\n集中器号过长!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 			return;
 	}
@@ -487,7 +487,7 @@ void userIssueOneInfo(WM_HWIN hObjGatewayId, WM_HWIN hObjListview)
 
 	EDIT_GetText(hObjGatewayId, (char*)lu8GatewayId, EDIT_MAX_LEN);
 	trimSpace(lu8GatewayId, EDIT_MAX_LEN);
-	if (isNumber(lu8GatewayId, strlen((const char*)lu8GatewayId)) == ERROR) {
+	if (isNumber(lu8GatewayId, STRLEN(lu8GatewayId)) == ERROR) {
 		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}

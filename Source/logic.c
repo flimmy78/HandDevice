@@ -9,7 +9,7 @@
 #include "lib.h"
 #include "logic.h"
 
-void logic_printBuf(U8* buf, U16 bufSize, const char* file, const char* func, u32 line)
+void logic_printBuf(U8* buf, U16 bufSize, const char* file, const char* func, U32 line)
 {
 #ifdef DEBUG
 	U16 i = 0;
@@ -35,7 +35,7 @@ U8 logic_sendAndRead(U8* buf, U16* bufSize)
 	if (!pu)
 		return ERROR;
 
-	logic_printBuf(buf, *bufSize, FILE_LINE);
+	//logic_printBuf(buf, *bufSize, FILE_LINE);
 	UartWrite(buf, *bufSize, 0, pu);
 	*bufSize = UartRead(buf, 512, 2000, pu);
 	if (*bufSize == 0) {//如果超时后没有读到数据, 返回错误
@@ -56,15 +56,13 @@ U8 logic_setTime(U8* gatewayId)
 {
 	//init lu8readBuf to GATEWAY_ASW_CODE_SUC's complement in case that GATEWAY_ASW_CODE_SUC is set to 0x00
 	U8 lu8buf[512] = { ~GATEWAY_ASW_CODE_SUC };
-	U16 lu8bufSize;
-	U8 lu8ret;
+	U16 lu8bufSize = 0;
 
 	protoW_setTime(gatewayId, GATEWAY_OADD_LEN, lu8buf, &lu8bufSize);
 	if (logic_sendAndRead(lu8buf, &lu8bufSize) == ERROR) {
 		return ERROR;
 	}
-	lu8ret = protoA_setTime(lu8buf, lu8bufSize);
-	return lu8ret;
+	return protoA_retFrame(lu8buf, lu8bufSize, GAT_MT_CLT_TIME_POINT, 0);
 }
 
 /*
@@ -102,25 +100,36 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 
 	S32 totalRowCnt = 0, totalFrames = 0;
 	S32 currentFrame = 0, j = 0;
-	S32 rowCntPerFrame = GATEWAY_MAX_METERINFO_CNT;
+	S32 rowCntPerFrame = 0;
+	S32 alreadySendRows = 0;
+	S32 leftRows = 0;
+	S32 lastRecId = 0;
 
 	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
 	U16 bufSize = 0;
 
 	if (openDBF(DB_BASEINFO_NAME) == ERROR) return ERROR;//open dbf
-	if (db_getMatchCnt(gatewayId, &totalRowCnt) != NO_ERR) {
+	if (db_getMatchCnt(gatewayId, &totalRowCnt) == ERROR) {
 		return ERROR;
 	}
-	if (db_gotoRecord0() != NO_ERR) {
+	if (db_gotoRecord0() == ERROR) {
 		return ERROR;
 	}
 
 	totalFrames = (totalRowCnt / GATEWAY_MAX_METERINFO_CNT) + ((totalRowCnt%GATEWAY_MAX_METERINFO_CNT) ? 1 : 0);
-	for (currentFrame = 0;currentFrame < totalFrames;currentFrame++) {//query db rows and issue to gateway
-		rowCntPerFrame = GATEWAY_MAX_METERINFO_CNT;
-		if (db_getMeterInfo(gatewayId, pDbInfo, &rowCntPerFrame) != NO_ERR) {
+	if (db_gotoRecord0() == ERROR) {
+		return ERROR;
+	}
+
+	Lib_printf("totalFrames: %d\n", totalFrames);
+	for (currentFrame = 0, lastRecId = 0, alreadySendRows = 0;currentFrame < totalFrames;\
+		currentFrame++, alreadySendRows += rowCntPerFrame) {
+		leftRows = totalRowCnt - alreadySendRows;
+		rowCntPerFrame = leftRows>GATEWAY_MAX_METERINFO_CNT ? GATEWAY_MAX_METERINFO_CNT: leftRows;
+		Lib_printf("rowCntPerFrame: %d\n", rowCntPerFrame);
+		if (db_getMeterInfo(gatewayId, pDbInfo, &rowCntPerFrame, &lastRecId) == ERROR)
 			return ERROR;
-		}
+		
 		//dbInfo to protoInfo
 		for (j = 0;j < rowCntPerFrame;j++) {
 			asciiToProtoBin(pDbInfo + j, pProtoInfo + j);
@@ -132,14 +141,12 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 		inverseStrToBCD(gatewayId, 2*GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 		protoW_issueMinfo(buf, &bufSize, lu8gatewayId, pBodyHead, pProtoInfo);
 		//write and read frame
-		if (logic_sendAndRead(buf, &bufSize) == ERROR) {
+		if (logic_sendAndRead(buf, &bufSize) == ERROR)
 			return ERROR;
-		}
 		//return analyse result, if result is fail, return to user
-		if (protoA_issueMinfo(buf, bufSize, pBodyHead->seq) == ERROR) {
+		if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_SEND_MINFO, pBodyHead->seq) == ERROR)
 			return ERROR;
-		}
-
+		
 		//init dbInfo and protoInfo to 0
 		memset(pDbInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(db_meterinfo_str));
 		memset(pProtoInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(meter_row_str));
@@ -173,7 +180,7 @@ U8 logic_issueOneMeterInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 		return ERROR;
 	if(logic_sendAndRead(buf, &bufSize) == ERROR)
 		return ERROR;
-	if (protoA_modifyOneMinfo(buf, bufSize, 0x00) == ERROR)
+	if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_MODIFY_SINFO, 0) == ERROR)
 		return ERROR;
 	
 	return NO_ERR;

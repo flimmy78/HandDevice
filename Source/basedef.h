@@ -3,7 +3,7 @@
 
 #include "user.h"
 
-#define DEBUG
+//#define DEBUG
 
 #define  FILE_LINE   __FILE__,__FUNCTION__,__LINE__
 
@@ -12,6 +12,11 @@
 
 #define WM_USER_EXIT	-1
 #define EDIT_MAX_LEN	128
+
+#define MAX_TIME_NODE	24//抄表时间点不超过24个点
+#define MINUTES_PERDAY	1440//一天有多少分钟
+
+#define STRLEN(c)	strlen((const char*)(c))
 
 typedef struct{//系统时间结构, 倒序存储以方便使用
 	U8 u8second;	//秒
@@ -22,6 +27,13 @@ typedef struct{//系统时间结构, 倒序存储以方便使用
 	U8 u8year;		//年
 }sys_time_str;
 typedef sys_time_str* sys_time_ptr;
+
+typedef struct
+{
+	U8 u8hour;		//时
+	U8 u8minute;	//分
+}time_node_str;
+typedef time_node_str time_node_ptr;
 
 //手持机设置的索引号, 在数据库中的行号也与此对应
 typedef enum {

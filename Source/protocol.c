@@ -54,7 +54,7 @@ static void createFrame(U8 *sendBuf, U16 *sendLen, gateway_protocol_ptr pProto)
 	pBodyStart = pTemp;//消息体校验字节预留
 
 	u16dataLen = (pProto->MsgLen[1] << 8 | pProto->MsgLen[0]);//消息体长度
-	memcpy(pTemp, pProto->MsgBody, u16dataLen);//消息体
+	memcpy(pTemp, pProto->pMsgBody, u16dataLen);//消息体
 	pTemp += u16dataLen;
 	*pTemp++ = countCheck(pBodyStart, u16dataLen);//消息体校验
 	memset(pTemp, GATEWAY_SUFIX, GATEWAY_SUFIX_CNT);
@@ -63,6 +63,46 @@ static void createFrame(U8 *sendBuf, U16 *sendLen, gateway_protocol_ptr pProto)
 	lenFrame += u16dataLen;//消息体长度
 	lenFrame += (GATEWAY_EC_LEN + GATEWAY_SUFIX_CNT);//消息体校验长度+结束符长度
 	*sendLen = lenFrame;
+}
+
+/*
+**	分析集中器的返回帧.
+**	@buf:		返回帧
+**	@bufSize:	返回帧的长度
+**	@msgType:	集中器返回帧的消息类型,
+**				而不是服务器下发帧的类型
+**	@seq:		下发帧的序列号
+*/
+U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
+{
+	U8 data;
+	U16	retLen;
+
+	//成功状态
+	data = buf[GATEWAY_STATCODE_OFFSET];
+	if (GATEWAY_ASW_CODE_SUC != data)
+		return ERROR;
+
+	//消息类型
+	data = buf[GATEWAY_ASWCODE_OFFSET];
+	if (data != msgType)
+		return ERROR;
+
+	//消息长度
+	if ((data == GAT_MT_CLT_SEND_MINFO) || (data == GAT_MT_CLT_MODIFY_SINFO)) {
+		data = buf[GATEWAY_SEQCODE_OFFSET];//消息序列号
+		if (data != seq)
+			return ERROR;
+		retLen = GATEWAY_WITHSEQ_LEN;
+	}
+	else {
+		retLen = GATEWAY_WITHOUTSEQ_LEN;
+	}
+
+	if (bufSize != retLen)
+		return ERROR;
+
+	return NO_ERR;
 }
 
 /*
@@ -90,26 +130,9 @@ U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize)
 	protoStr.MsgLen[1] = 0x00;
 	protoStr.MsgType  = GAT_MT_SVR_TIME_SET;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
-	protoStr.MsgBody = protoStr.ssmmhhDDMMYY;
+	protoStr.pMsgBody = protoStr.ssmmhhDDMMYY;
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
-}
-
-/*
-**	分析集中器校时返回是否成功.
-**	@buf:		发送帧
-**	@bufSize:	发送帧的长度
-*/
-U8 protoA_setTime(U8* buf, U16 bufSize)
-{
-	if (bufSize<28) {
-		return ERROR;
-	}
-	buf += 27;
-	if (GATEWAY_ASW_CODE_SUC == (*buf))
-		return NO_ERR;
-
-	return ERROR;
 }
 
 /*
@@ -175,33 +198,9 @@ U8 protoW_issueMinfo(U8* buf, U16* bufSize, U8* gatewayId, \
 	memcpy(bufMsgBody, (U8*)pBodyHead, sizeof(meterinfo_bodyHead_str));//复制消息头
 	memcpy(bufMsgBody + sizeof(meterinfo_bodyHead_str), (U8*)pProtoInfo, \
 		pBodyHead->thisRows*sizeof(meter_row_str));//复制消息体
-	protoStr.MsgBody = bufMsgBody;//指针指向消息体, 局部变量在函数返回前一直有效
+	protoStr.pMsgBody = bufMsgBody;//指针指向消息体, 局部变量在函数返回前一直有效
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
-}
-
-/*
-**	分析下发表地址的集中器返回帧.
-**	@buf: 返回帧
-**	@bufSize:		集中器号的长度
-**	@buf:		返回帧
-**	@bufSize:	返回帧的长度
-*/
-U8 protoA_issueMinfo(U8* buf, U16 bufSize, U8 seq)
-{
-	U8 data;
-	if (bufSize != 32) {
-		return ERROR;
-	}
-   data = *(buf + 27);
-   if (GATEWAY_ASW_CODE_SUC != (data))
-	   return ERROR;
-
-   data = *(buf + 28);
-   if (data != seq)
-	   return ERROR;
-
-   return NO_ERR;
 }
 
 /*
@@ -225,31 +224,38 @@ U8 protoW_modifyOneMinfo(U8* buf, U16* bufSize, U8* gatewayId, meter_row_ptr pPr
 	memcpy(protoStr.MsgLen, (U8*)&msgLen, GATEWAY_MSGL_LEN);
 	protoStr.MsgType = GAT_MT_SVR_MODIFY_SINFO;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
-	protoStr.MsgBody = (U8*)pProtoInfo;
+	protoStr.pMsgBody = (U8*)pProtoInfo;
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }
 
 /*
-**	分析单独修改一个计量点的表地址返回帧.
-**	@buf: 返回帧
-**	@bufSize:	集中器号的长度
-**	@buf:		返回帧
-**	@bufSize:	返回帧的长度
+**	下发抄表时间点.
+**	@buf:		发送缓冲区
+**	@bufSize:	发送缓冲区长度
+**	@gatewayId:	已反序的集中器ID
+**	@timeCnt:	时间点个数
+**	@pTimeNode:	时间点指针
 */
-U8 protoA_modifyOneMinfo(U8* buf, U16 bufSize, U8 seq)
+U8 protoW_tmNode(U8* buf, U16* bufSize, U8* gatewayId, U8 timeCnt, U8* pTimeNode)
 {
-	U8 data;
-	if (bufSize != 32) {
-		return ERROR;
-	}
-	data = *(buf + 27);
-	if (GATEWAY_ASW_CODE_SUC != (data))
+	gateway_protocol_str protoStr;
+	U8	bodyBuf[GATEWAY_TIMENODE_MAX_CNT + 1] = { 0 };
+
+	if (gatewayId == NULL)
 		return ERROR;
 
-	data = *(buf + 28);
-	if (data != seq)
-		return ERROR;
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgLen[0] = GATEWAY_TIMENODE_CNT_LEN + timeCnt*GATEWAY_TIMENODE_LEN;
+	protoStr.MsgLen[1] = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_TIME_POINT;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 
+	memcpy(bodyBuf, &timeCnt, GATEWAY_TIMENODE_CNT_LEN);
+	memcpy(bodyBuf+ GATEWAY_TIMENODE_CNT_LEN, pTimeNode, timeCnt*GATEWAY_TIMENODE_LEN);
+	protoStr.pMsgBody = bodyBuf;
+	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }

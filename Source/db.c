@@ -80,13 +80,13 @@ static void readComConfig(S8* data)
 
 void readGatewayId(U8* data)
 {
-	if (strlen((const char*)data) != 2 * GATEWAY_OADD_LEN) return;
+	if (STRLEN(data) != 2 * GATEWAY_OADD_LEN) return;
 	inverseStrToBCD(data, 2 * GATEWAY_OADD_LEN, gu8gwyAdd, GATEWAY_OADD_LEN);
 }
 
 void readServerId(U8* data)
 {
-	if (strlen((const char*)data) != 2 * GATEWAY_OADD_LEN) return;
+	if (STRLEN(data) != 2 * GATEWAY_OADD_LEN) return;
 	inverseStrToBCD(data, 2 * GATEWAY_OADD_LEN, gu8svrAdd, GATEWAY_OADD_LEN);
 }
 
@@ -145,7 +145,7 @@ U8 db_getCongfig(u16 configIdx, U8* config)
 U8 db_getMatchCnt(U8* gatewayId, S32* cnt)
 {
 	*cnt = DbfGetMatchCount(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_MATCH_ALL, pDbf);
-	if (*cnt < 0) {
+	if (*cnt <= 0) {
 		return ERROR;
 	}
 	return NO_ERR;
@@ -159,21 +159,37 @@ U8 db_getMatchCnt(U8* gatewayId, S32* cnt)
 **	@gatewayId:	数据库中的信息指针
 **	@pInfo:		用于缓存仪表信息(数组)
 **	@rowCnt:	欲读取的行数, 程序返回实际读取的行数
+**	@lastRecId:	上一次查询后指向的记录号
 */
-U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt)
+U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* lastRecId)
 {
-	S32 iRet = 0, actualCnt = 0;
+	U8	lu8gatewayBuf[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	S32 actualCnt = 0, totalRows = 0;
 
-	while (actualCnt < *rowCnt) {
-		iRet = DbfRecordLocate(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_DOWN, DBF_LOCATE_MATCH_ALL, pDbf);
-		if (iRet >= 0) {
+	if (*lastRecId<0)
+		return ERROR;
+
+	totalRows = DbfRecordCount(pDbf);
+	if (*lastRecId >= (totalRows-1))//如果上一次已到达最后一行, 则不必再向下遍历
+		return NO_ERR;
+	if(*lastRecId > 0)//如果是从0开始遍历, 说明是第一次进入, 不必向下移动
+		*lastRecId += 1;
+	DbfGotoRecord(*lastRecId, pDbf);
+	while (actualCnt < *rowCnt && *lastRecId < totalRows) {
+		DbfGotoRecord(*lastRecId, pDbf);
+		if (DbfFieldGet(minfo_field_gatewayId, (char*)lu8gatewayBuf, pDbf) < 0)
+			return ERROR;
+		if (strcmp((const char*)lu8gatewayBuf, (const char*)gatewayId) == 0) {
 			DBF_GETFIELD()
 			actualCnt++;
 			pInfo++;
-		} else {
-			return ERROR;
+		}
+		*lastRecId += 1;
+		if (*lastRecId >= totalRows) {
+			break;
 		}
 	}
+	*lastRecId = DbfGetCurrentRecord(pDbf);
     if (actualCnt)
 		*rowCnt = actualCnt;
 	else

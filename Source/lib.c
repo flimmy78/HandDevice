@@ -21,7 +21,7 @@ U8 readSysTime(sys_time_ptr pTime)
 	pTime->u8year	= HEX_TO_BCD(pTime->u8year);
 	pTime->u8month  = HEX_TO_BCD(pTime->u8month);
 	pTime->u8day    = HEX_TO_BCD(pTime->u8day);
-	pTime->u8hour	   = HEX_TO_BCD(pTime->u8hour);
+	pTime->u8hour	= HEX_TO_BCD(pTime->u8hour);
 	pTime->u8minute = HEX_TO_BCD(pTime->u8minute);
 	pTime->u8second = HEX_TO_BCD(pTime->u8second);
 
@@ -152,7 +152,7 @@ void suppplementTo12(U8* data)
 	U8 lu8InputLen = 0;
 
 	//supplement '0' before data, if lu8InputLen < 2 * GATEWAY_OADD_LEN
-	lu8InputLen = strlen((const char*)data);
+	lu8InputLen = STRLEN(data);
 	//we use 2 chars to represent a byte, so the mod is 2.
 	if (lu8InputLen % 2) {//if lu8InputLen is Odd, lu8InputLen must <= (2 * GATEWAY_OADD_LEN - 1)
 		if (lu8InputLen > 2 * GATEWAY_OADD_LEN - 1)
@@ -193,4 +193,127 @@ void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo)
 	pProtoInfo->roomId[0] = (U8)i;//L
 	pProtoInfo->roomId[1] = (U8)(i >> 8);//H
 	memset(pProtoInfo->reserved, 0, PROTO_LEN_RSV);
+}
+
+/*
+** time's pattern is "\d[1-2](\:\d[1-2])?"
+** that is,
+** without ':', it has 1~2 digits;
+** with ':', there are 1~2 digits before ':',
+** and 1~2 digits following ':'.
+*/
+U8 timeLegal(U8* timeStr, U16 strLen)
+{
+	U16 i = 0, digitalLen = 0;
+	U8 data, value[3] = { 0 };
+	em_time_state state = tm_state_init;
+
+	for (i = 0; i < strLen; i++) {
+		data = timeStr[i];
+		switch (state) {
+		case tm_state_init:
+			if (isdigit(data)) {
+				value[digitalLen] = data;
+				digitalLen++;
+				state = tm_state_hour;
+			} else {
+				state = tm_state_end_illegal;
+				goto result;
+			}
+			break;
+		case tm_state_hour:
+			if (isdigit(data)) {
+				if (digitalLen == 2) {
+					state = tm_state_end_illegal;
+					goto result;
+				}
+				value[digitalLen] = data;
+				if (Lib_atoi((const char*)value) > 23) {
+					state = tm_state_end_illegal;
+					goto result;
+				}
+				digitalLen++;
+			} else if (isDelim(data)) {
+				digitalLen = 0;
+				memset(value, 0, sizeof(value));
+				state = tm_state_delim;
+			} else {
+				state = tm_state_end_illegal;
+				goto result;
+			}
+			break;
+		case tm_state_delim:
+			if (isdigit(data)) {
+				state = tm_state_min;
+				value[digitalLen] = data;
+				digitalLen++;
+			} else {
+				state = tm_state_end_illegal;
+				goto result;
+			}
+			break;
+		case tm_state_min:
+			if (isdigit(data)) {
+				if (digitalLen == 2) {
+					state = tm_state_end_illegal;
+					goto result;
+				}
+				value[digitalLen] = data;
+				digitalLen++;
+				if (Lib_atoi((const char*)value) > 59) {
+					state = tm_state_end_illegal;
+					goto result;
+				}
+			} else {
+				state = tm_state_end_illegal;
+				goto result;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (state == tm_state_hour || state == tm_state_min) {
+		state = tm_state_end_legal;
+	} else {
+		state = tm_state_end_illegal;
+	}
+result:
+	if (state == tm_state_end_legal)
+		return NO_ERR;
+	else
+		return ERROR;
+}
+
+/*
+**	用户设定的时间点转化为字符串.
+**	@buf:		字符串缓存
+**	@startTime:	开始时间
+**	@timeCnt:	时间点个数
+*/
+U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt)
+{
+	U32 interval = 0;
+	U8	delim = ';';
+	time_node_str tmNodes[MAX_TIME_NODE] = { {0} };
+
+	if (timeCnt > MAX_TIME_NODE)
+		return ERROR;
+	if (timeLegal(startTime, STRLEN(startTime)) == ERROR)
+		return ERROR;
+
+	interval = MINUTES_PERDAY / timeCnt;
+
+	return NO_ERR;
+}
+
+/*
+**	将用';'分隔的时间点字符串转化为集中器用的时间点格式(BCD).
+**	@buf:		字符串缓存
+**	@pTimeNode:	时间点序列
+*/
+U8 strToTimeNode(U8* buf, U8* pTimeNode)
+{
+	return NO_ERR;
 }

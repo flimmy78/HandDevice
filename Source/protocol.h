@@ -29,8 +29,19 @@
 #define GATEWAY_MAIN_FRAME_LEN	30	//集中器协议中 排除消息体部分的帧长度(包括消息体校验)
 #define GATEWAY_FRAME_MAX_LEN	1024//每帧协议最大长度
 #define GATEWAY_METERINFO_LEN	40//仪表信息的长度
-#define GATEWAY_MAX_METERINFO_CNT	24//集中器协议中每行最大下发多少行数据
+//#define GATEWAY_MAX_METERINFO_CNT	24//集中器协议中每行最大下发多少行数据
+#define GATEWAY_MAX_METERINFO_CNT	2//集中器协议中每行最大下发多少行数据
 #define GATEWAY_ISSUE_BODY_HEAD	3//下发表地址消息头的长度
+
+#define GATEWAY_TIMENODE_CNT_LEN	1//抄表时间点个数的长度
+#define GATEWAY_TIMENODE_LEN		2//每个抄表时间点的长度
+#define GATEWAY_TIMENODE_MAX_CNT	24//现在ARM7最多支持多少个抄表时间点
+
+#define GATEWAY_ASWCODE_OFFSET		19//集中器返回帧中应答码的偏移量
+#define GATEWAY_STATCODE_OFFSET		27//集中器返回帧中成功状态码的偏移量
+#define GATEWAY_SEQCODE_OFFSET		28//集中器返回帧中服务器发送的序列码的偏移量
+#define GATEWAY_WITHSEQ_LEN			32//集中器返回帧中带有服务器发送的序列号的帧长度
+#define GATEWAY_WITHOUTSEQ_LEN		31//集中器返回帧中不带有服务器发送的序列号的帧长度
 //异常回应代码--表示意义
 #define GAT_EXCEP_FAIL          0x10//失败、异常
 #define GAT_EXCEP_MEASURE_POINT 0x11//异常，查不到指定计量点号。
@@ -43,11 +54,12 @@
 #define GAT_MT_CLT_CP_1_METER   0x07//集中器向主站发送单抄表结果(0x07)
 
 #define GAT_MT_SVR_1OF_MFRM     0x11//主站请求多包传输特定包数据(0x11)
+
 #define GAT_MT_SVR_MODIFY_SINFO 0x13//主站更改单个计量点基础信息(0x13)
 #define GAT_MT_CLT_MODIFY_SINFO 0x14//集中器响应主站更改单个热表地址信息(0x14)
 
 #define GAT_MT_SVR_SEND_MINFO   0x0C//主站下发所有仪表地址(0x0C)
-#define GAT_MT_CLT__SEND_MINFO	0x0D//集中器响应主站下发仪表地址(0x0D)
+#define GAT_MT_CLT_SEND_MINFO	0x0D//集中器响应主站下发仪表地址(0x0D)
 
 #define GAT_MT_SVR_TIME_POINT   0x20//主站设置定时抄表时间(0x20)
 #define GAT_MT_CLT_TIME_POINT   0x21//设置定时抄表时间反馈(0x21)
@@ -110,7 +122,7 @@ typedef struct {//集中器协议体结构
 	U8 MsgLen[GATEWAY_MSGL_LEN];    //消息体长度, LE
 	U8 MsgType;                     //消息类型
 	U8 ssmmhhDDMMYY[GATEWAY_TS_LEN];//秒分时日月年, LE
-	U8 *MsgBody;                    //消息体指针
+	U8 *pMsgBody;                    //消息体指针
 } gateway_protocol_str;//类型名用下划线分隔, 下同
 typedef gateway_protocol_str* gateway_protocol_ptr;
 
@@ -139,14 +151,12 @@ typedef struct
 }meterinfo_bodyHead_str;
 typedef meterinfo_bodyHead_str* meterinfo_bodyHead_ptr;
 
+extern U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq);
 extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
-extern U8 protoA_setTime(U8* buf, U16 bufSize);
 extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
 extern U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
 extern U8 protoW_issueMinfo(U8*, U16*, U8*, meterinfo_bodyHead_ptr, meter_row_ptr);
-extern U8 protoA_issueMinfo(U8* buf, U16 bufSize, U8 seq);
 extern U8 protoW_modifyOneMinfo(U8* buf, U16* bufSize, U8* gatewayId, meter_row_ptr pProtoInfo);
-extern U8 protoA_modifyOneMinfo(U8* buf, U16 bufSize, U8 seq);
 
 
 #endif
