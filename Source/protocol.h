@@ -29,8 +29,8 @@
 #define GATEWAY_MAIN_FRAME_LEN	30	//集中器协议中 排除消息体部分的帧长度(包括消息体校验)
 #define GATEWAY_FRAME_MAX_LEN	1024//每帧协议最大长度
 #define GATEWAY_METERINFO_LEN	40//仪表信息的长度
-//#define GATEWAY_MAX_METERINFO_CNT	24//集中器协议中每行最大下发多少行数据
-#define GATEWAY_MAX_METERINFO_CNT	2//集中器协议中每行最大下发多少行数据
+#define GATEWAY_MAX_METERINFO_CNT	24//集中器协议中每行最大下发多少行数据
+//#define GATEWAY_MAX_METERINFO_CNT	2//集中器协议中每行最大下发多少行数据
 #define GATEWAY_ISSUE_BODY_HEAD	3//下发表地址消息头的长度
 
 #define GATEWAY_TIMENODE_CNT_LEN	1//抄表时间点个数的长度
