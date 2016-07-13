@@ -58,15 +58,40 @@ static const GUI_WIDGET_CREATE_INFO widgetBaseInfoIssue[] =
 
 //基础信息修改
 static const GUI_WIDGET_CREATE_INFO widgetModifyMeterInfo[] = {
-	{ FRAMEWIN_CreateIndirect, "基础信息修改",	CONFIG_BASE_INFO_MODIFY_FRAME_IDX,	0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
-	{ BUTTON_CreateIndirect, "集中器号",			GUI_ID_BUTTON0,						9, 6, 80, 20, 0, 0 },
-	{ TEXT_CreateIndirect, "计量点",				GUI_ID_TEXT0,						15, 38, 71, 20, 0, 0 },
-	{ EDIT_CreateIndirect, "",					GUI_ID_EDIT0,						124, 7, 80, 20, 0, 0 },
-	{ EDIT_CreateIndirect, "",					GUI_ID_EDIT1,						124, 32, 80, 20, 0, 0 },
-	{ BUTTON_CreateIndirect, "查询",				GUI_ID_BUTTON1,						12, 60, 80, 20, 0, 0 },
-	{ LISTVIEW_CreateIndirect, "",				GUI_ID_LISTVIEW0,					9, 86, 210, 192, 0, 0 },
-	{ BUTTON_CreateIndirect, "修改",				GUI_ID_BUTTON2,						138, 281, 80, 20, 0, 0 },
-	{ BUTTON_CreateIndirect, "退出",				GUI_ID_BUTTON3,						9, 279, 80, 20, 0, 0 }
+	{ FRAMEWIN_CreateIndirect, "基础信息修改", CONFIG_BASE_INFO_MODIFY_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 95, 4, 66, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 95, 32, 68, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON2, 4, 265, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "下发", GUI_ID_BUTTON3, 141, 265, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器", GUI_ID_BUTTON0, 4, 3, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "计量点", GUI_ID_TEXT0, 4, 34, 71, 17, 0, 0 },
+	{ BUTTON_CreateIndirect, "查询", GUI_ID_BUTTON1, 172, 5, 48, 45, 0, 0 },
+
+
+	{ TEXT_CreateIndirect, "计量点", TEXT_MODIFY_1INFO_ROWID, 4, 67, 48, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_ROWID, 65, 66, 53, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "表号", TEXT_MODIFY_1INFO_METERADDR, 4, 93, 46, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_METERADDR, 65, 90, 145, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "厂商", TEXT_MODIFY_1INFO_VENDORID, 4, 115, 48, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VENDORID, 65, 114, 33, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "版本", TEXT_MODIFY_1INFO_PROTOVER, 128, 65, 42, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_PROTOVER, 181, 64, 30, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "表类型", TEXT_MODIFY_1INFO_METERTYPE, 109, 114, 35, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_METERTYPE, 150, 113, 60, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "通道", TEXT_MODIFY_1INFO_CHANNEL, 4, 141, 49, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_CHANNEL, 65, 140, 34, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀控版本", TEXT_MODIFY_1INFO_VALVEPROTOVER, 113, 140, 35, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VALVEPROTOVER, 161, 141, 48, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀控", TEXT_MODIFY_1INFO_VALVEADDR, 4, 166, 54, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VALVEADDR, 65, 164, 145, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "面板", TEXT_MODIFY_1INFO_CONTROLPANELADDR, 4, 188, 36, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_CONTROLPANELADDR, 65, 190, 145, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "楼栋", TEXT_MODIFY_1INFO_BUILDID, 4, 211, 36, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_BUILDID, 65, 212, 42, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "单元", TEXT_MODIFY_1INFO_UNITID, 119, 214, 36, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_UNITID, 162, 214, 48, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "房间", TEXT_MODIFY_1INFO_ROOMID, 4, 238, 42, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_ROOMID, 65, 235, 53, 20, 0, 0 }
 };
 
 //对集中器程序的主界面初始化
@@ -102,36 +127,12 @@ static void baseInfoIssueInit(WM_HWIN hDlg)
 //对基础信息下发界面初始化
 static void ModifyOneInfoInit(WM_HWIN hDlg)
 {
-	WM_HWIN hListView;
-
-	hListView = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
-	LISTVIEW_AddColumn(hListView, 60, "item", GUI_TA_HCENTER | GUI_TA_VCENTER);
-	LISTVIEW_AddColumn(hListView, 130, "value", GUI_TA_HCENTER | GUI_TA_VCENTER);
-	LISTVIEW_SetGridVis(hListView, 1);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_AddRow(hListView, NULL);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_rowId, "计量点");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_meterAddr, "表地址");	
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_vendorId, "厂商代码");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_protoVer, "协议版本");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_meterType, "仪表类型");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_channel, "通道号");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_valveProtoVer, "阀控协议版本");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_valveAddr, "阀控地址");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_controlPanelAddr, "温控面板地址");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_buildId, "楼栋号");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_unitId, "单元号");
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_roomId, "房间号");
+	WM_HWIN hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
+	EDIT_SetMaxLen(hObj, 2 * PROTO_LEN_MADDR);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
+	EDIT_SetMaxLen(hObj, 2 * PROTO_LEN_MADDR);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
+	EDIT_SetMaxLen(hObj, 2 * PROTO_LEN_MADDR);
 }
 
 //主界面的回调函数
@@ -428,18 +429,7 @@ void baseInfoIssueCb(WM_MESSAGE* pMsg)
 
 void setListView(WM_HWIN hListView, db_meterinfo_ptr pInfo)
 {
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_rowId, (const char*)pInfo->rowId);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_meterAddr, (const char*)pInfo->meterAddr);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_vendorId, (const char*)pInfo->vendorId);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_protoVer, (const char*)pInfo->protoVer);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_meterType, (const char*)pInfo->meterType);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_channel, (const char*)pInfo->channel);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_valveProtoVer, (const char*)pInfo->valveProtoVer);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_valveAddr, (const char*)pInfo->valveAddr);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_controlPanelAddr, (const char*)pInfo->controlPanelAddr);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_buildId, (const char*)pInfo->buildId);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_unitId, (const char*)pInfo->unitId);
-	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_VALUE, minfo_field_roomId, (const char*)pInfo->roomId);
+	
 }
 
 void queryOneInfo(WM_HWIN hObjGatewayId, WM_HWIN hObjMeterId, WM_HWIN hObjListview)
@@ -476,22 +466,7 @@ void queryOneInfo(WM_HWIN hObjGatewayId, WM_HWIN hObjMeterId, WM_HWIN hObjListvi
 
 U8 readListView(WM_HWIN hObjListview, db_meterinfo_ptr pInfo)
 {
-	S8 l8buf[EDIT_MAX_LEN] = { 0 };
-	S8 msgBuf[256] = { 0 };
-	U16 lu16strLen;
-
-	LISTVIEW_TO_DBSTR(rowId, DB_MINFO_LEN_ROWID + 1, minfo_field_rowId, "计量点")
-	LISTVIEW_TO_DBSTR(meterAddr, DB_MINFO_LEN_METERADDR, minfo_field_meterAddr, "表地址")
-	LISTVIEW_TO_DBSTR(vendorId, DB_MINFO_LEN_VENDORID + 1, minfo_field_vendorId, "厂商代码")
-	LISTVIEW_TO_DBSTR(protoVer, DB_MINFO_LEN_PROTOVER + 1, minfo_field_protoVer, "仪表协议版本号")
-	LISTVIEW_TO_DBSTR(meterType, DB_MINFO_LEN_METERTYPE, minfo_field_meterType, "仪表类型")
-	LISTVIEW_TO_DBSTR(channel, DB_MINFO_LEN_CHANNEL + 1, minfo_field_channel, "通道号")
-	LISTVIEW_TO_DBSTR(valveProtoVer, DB_MINFO_LEN_VALVEPROTOVER + 1, minfo_field_valveProtoVer, "阀控协议版本号")
-	LISTVIEW_TO_DBSTR(valveAddr, DB_MINFO_LEN_VALVEADDR, minfo_field_valveAddr, "阀控地址")
-	LISTVIEW_TO_DBSTR(controlPanelAddr, DB_MINFO_LEN_CTLPANELADDR, minfo_field_controlPanelAddr, "温控面板地址")
-	LISTVIEW_TO_DBSTR(buildId, DB_MINFO_LEN_BUILDID + 1, minfo_field_buildId, "楼栋号")
-	LISTVIEW_TO_DBSTR(unitId, DB_MINFO_LEN_UNITID + 1, minfo_field_unitId, "单元号")
-	LISTVIEW_TO_DBSTR(roomId, DB_MINFO_LEN_ROOMID + 1, minfo_field_roomId, "房间号")
+	
 	return NO_ERR;
 }
 
