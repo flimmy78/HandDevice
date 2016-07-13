@@ -105,6 +105,21 @@ static void ModifyOneInfoInit(WM_HWIN hDlg)
 	WM_HWIN hListView;
 
 	hListView = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
+	LISTVIEW_AddColumn(hListView, 60, "item", GUI_TA_HCENTER | GUI_TA_VCENTER);
+	LISTVIEW_AddColumn(hListView, 130, "value", GUI_TA_HCENTER | GUI_TA_VCENTER);
+	LISTVIEW_SetGridVis(hListView, 1);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
+	LISTVIEW_AddRow(hListView, NULL);
 	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_rowId, "计量点");
 	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_meterAddr, "表地址");	
 	LISTVIEW_SetItemText(hListView, LISTVIEW_COL_ITEM, minfo_field_vendorId, "厂商代码");
