@@ -61,7 +61,7 @@ U8 isSpace(U8 s)
 U8 trimSpace(U8* s, U16 len)
 {
 	U8* p = s;
-	U8	buf[256];
+	U8	buf[256] = {0};
 	U16 i=0 ,j=0;
 	for (i = 0, j = 0;i < len; p++, i++) {
 		if(!isSpace(*p)) {
@@ -146,7 +146,7 @@ void trimZero(U8* buf, U8 bufSize)
 **	将不足12位的集中器号前面补零.
 **	@data:	用户输入的集中器号
 */
-void suppplementTo12(U8* data)
+void supplementTo12(U8* data)
 {
 	U8 lu8tmpStr[EDIT_MAX_LEN] = { 0 };
 	U8 lu8InputLen = 0;

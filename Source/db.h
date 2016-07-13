@@ -68,18 +68,18 @@ typedef enum
 
 typedef struct{//在数据库中的仪表信息结构. 以数值字符串存储的值, 长度必须加1, 以在字符串结尾多加一个'\0'
 	U8 rowId[DB_MINFO_LEN_ROWID+1];					//计量点
-	U8 meterAddr[DB_MINFO_LEN_METERADDR];			//仪表(热量表,水表等)地址
+	U8 meterAddr[DB_MINFO_LEN_METERADDR+1];			//仪表(热量表,水表等)地址
 	U8 vendorId[DB_MINFO_LEN_VENDORID+1];			//厂商代码
 	U8 protoVer[DB_MINFO_LEN_PROTOVER+1];			//仪表协议版本号
-	U8 meterType[DB_MINFO_LEN_METERTYPE];			//仪表类型
+	U8 meterType[DB_MINFO_LEN_METERTYPE+1];			//仪表类型
 	U8 channel[DB_MINFO_LEN_CHANNEL+1];				//通道号
 	U8 valveProtoVer[DB_MINFO_LEN_VALVEPROTOVER+1];	//阀控协议版本号
-	U8 valveAddr[DB_MINFO_LEN_VALVEADDR];			//阀控地址
-	U8 controlPanelAddr[DB_MINFO_LEN_CTLPANELADDR];	//温控面板地址
+	U8 valveAddr[DB_MINFO_LEN_VALVEADDR+1];			//阀控地址
+	U8 controlPanelAddr[DB_MINFO_LEN_CTLPANELADDR+1];	//温控面板地址
 	U8 buildId[DB_MINFO_LEN_BUILDID+1];				//楼栋号
 	U8 unitId[DB_MINFO_LEN_UNITID+1];				//单元号
 	U8 roomId[DB_MINFO_LEN_ROOMID+1];				//房间号
-	U8 gatewayId[DB_MINFO_LEN_GATEWAYID];			//集中器编号
+	U8 gatewayId[DB_MINFO_LEN_GATEWAYID+1];			//集中器编号
 } db_meterinfo_str;
 
 typedef db_meterinfo_str* db_meterinfo_ptr;

@@ -67,7 +67,6 @@ static const GUI_WIDGET_CREATE_INFO widgetModifyMeterInfo[] = {
 	{ TEXT_CreateIndirect, "计量点", GUI_ID_TEXT0, 4, 34, 71, 17, 0, 0 },
 	{ BUTTON_CreateIndirect, "查询", GUI_ID_BUTTON1, 172, 5, 48, 45, 0, 0 },
 
-
 	{ TEXT_CreateIndirect, "计量点", TEXT_MODIFY_1INFO_ROWID, 4, 67, 48, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_ROWID, 65, 66, 53, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "表号", TEXT_MODIFY_1INFO_METERADDR, 4, 93, 46, 20, 0, 0 },
@@ -76,12 +75,12 @@ static const GUI_WIDGET_CREATE_INFO widgetModifyMeterInfo[] = {
 	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VENDORID, 65, 114, 33, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "版本", TEXT_MODIFY_1INFO_PROTOVER, 128, 65, 42, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_PROTOVER, 181, 64, 30, 20, 0, 0 },
-	{ TEXT_CreateIndirect, "表类型", TEXT_MODIFY_1INFO_METERTYPE, 109, 114, 35, 20, 0, 0 },
-	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_METERTYPE, 150, 113, 60, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "表类型", TEXT_MODIFY_1INFO_METERTYPE, 109, 114, 50, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_METERTYPE, 180, 113, 29, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "通道", TEXT_MODIFY_1INFO_CHANNEL, 4, 141, 49, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_CHANNEL, 65, 140, 34, 20, 0, 0 },
-	{ TEXT_CreateIndirect, "阀控版本", TEXT_MODIFY_1INFO_VALVEPROTOVER, 113, 140, 35, 20, 0, 0 },
-	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VALVEPROTOVER, 161, 141, 48, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀控版本", TEXT_MODIFY_1INFO_VALVEPROTOVER, 113, 140, 65, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VALVEPROTOVER, 180, 140, 30, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "阀控", TEXT_MODIFY_1INFO_VALVEADDR, 4, 166, 54, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VALVEADDR, 65, 164, 145, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "面板", TEXT_MODIFY_1INFO_CONTROLPANELADDR, 4, 188, 36, 20, 0, 0 },
@@ -251,7 +250,7 @@ void userSetTime(WM_HWIN hObj)
 		return;
 	}
 
-	suppplementTo12(lu8InputBuf);
+	supplementTo12(lu8InputBuf);
 	inverseStrToBCD(lu8InputBuf, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 
 	if (logic_setTime(lu8gatewayId) == NO_ERR) {
@@ -350,7 +349,7 @@ void userIssueInfo(WM_HWIN hObj)
 		return;
 	}
 
-	suppplementTo12(lu8InputBuf);
+	supplementTo12(lu8InputBuf);
 
 	if (logic_issueMeterInfo(lu8InputBuf) == NO_ERR) {
 		//GUI_MessageBox("\n下发表地址成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
@@ -427,67 +426,123 @@ void baseInfoIssueCb(WM_MESSAGE* pMsg)
     }
 }
 
-void setListView(WM_HWIN hListView, db_meterinfo_ptr pInfo)
+void setListView(WM_HWIN hDlg, db_meterinfo_ptr pInfo)
 {
-	
+	WM_HWIN hObj;
+
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROWID);
+	EDIT_SetText(hObj, (const char*)pInfo->rowId);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
+	EDIT_SetText(hObj, (const char*)pInfo->meterAddr);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VENDORID);
+	EDIT_SetText(hObj, (const char*)pInfo->vendorId);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_PROTOVER);
+	EDIT_SetText(hObj, (const char*)pInfo->protoVer);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERTYPE);
+	EDIT_SetText(hObj, (const char*)pInfo->meterType);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CHANNEL);
+	EDIT_SetText(hObj, (const char*)pInfo->channel);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEPROTOVER);
+	EDIT_SetText(hObj, (const char*)pInfo->valveProtoVer);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
+	EDIT_SetText(hObj, (const char*)pInfo->valveAddr);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
+	EDIT_SetText(hObj, (const char*)pInfo->controlPanelAddr);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_BUILDID);
+	EDIT_SetText(hObj, (const char*)pInfo->buildId);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_UNITID);
+	EDIT_SetText(hObj, (const char*)pInfo->unitId);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROOMID);
+	EDIT_SetText(hObj, (const char*)pInfo->roomId);
 }
 
-void queryOneInfo(WM_HWIN hObjGatewayId, WM_HWIN hObjMeterId, WM_HWIN hObjListview)
+void queryOneInfo(WM_HWIN hDlg)
 {
 	U8 lu8GatewayId[EDIT_MAX_LEN] = { 0 };
 	U8 lu8MeterId[EDIT_MAX_LEN] = { 0 };
 	db_meterinfo_str oneMeterInfoStr;
+	WM_HWIN hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 
-	EDIT_GetText(hObjGatewayId, (char*)lu8GatewayId, EDIT_MAX_LEN);
-	EDIT_GetText(hObjMeterId, (char*)lu8MeterId, EDIT_MAX_LEN);
-
-	trimSpace(lu8GatewayId, EDIT_MAX_LEN);
+	EDIT_GetText(hObj, (char*)lu8GatewayId, EDIT_MAX_LEN);
+	trimSpace(lu8GatewayId, STRLEN(lu8GatewayId));
 	if (isNumber(lu8GatewayId, STRLEN(lu8GatewayId)) == ERROR) {
-		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
-		return;
-	}
-	trimSpace(lu8MeterId, EDIT_MAX_LEN);
-	if (isNumber(lu8MeterId, STRLEN(lu8MeterId)) == ERROR) {
-		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		GUI_MessageBox("\n集中器请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
 	if (STRLEN(lu8GatewayId) > DB_MINFO_LEN_GATEWAYID) {
-			GUI_MessageBox("\n集中器号过长!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
-			return;
+		GUI_MessageBox("\n集中器号过长!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(lu8GatewayId);
+
+	hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+	EDIT_GetText(hObj, (char*)lu8MeterId, EDIT_MAX_LEN);
+	trimSpace(lu8MeterId, STRLEN(lu8MeterId));
+	if (isNumber(lu8MeterId, STRLEN(lu8MeterId)) == ERROR) {
+		GUI_MessageBox("\n计量点请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		return;
 	}
 
 	if (logic_queryOneMeterInfo(lu8GatewayId, Lib_atoi((char*)lu8MeterId), &oneMeterInfoStr) == NO_ERR) {
-		setListView(hObjListview, &oneMeterInfoStr);
+		setListView(hDlg, &oneMeterInfoStr);
 	}
 	else {
 		GUI_MessageBox("\n查询计量点信息失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	}
 }
 
-U8 readListView(WM_HWIN hObjListview, db_meterinfo_ptr pInfo)
+U8 readListView(WM_HWIN hDlg, db_meterinfo_ptr pInfo)
 {
-	
+	WM_HWIN hObj;
+
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROWID);
+	EDIT_GetText(hObj, (char*)pInfo->rowId, DB_MINFO_LEN_ROWID + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
+	EDIT_GetText(hObj, (char*)pInfo->meterAddr, DB_MINFO_LEN_METERADDR + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VENDORID);
+	EDIT_GetText(hObj, (char*)pInfo->vendorId, DB_MINFO_LEN_VENDORID + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_PROTOVER);
+	EDIT_GetText(hObj, (char*)pInfo->protoVer, DB_MINFO_LEN_PROTOVER + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERTYPE);
+	EDIT_GetText(hObj, (char*)pInfo->meterType, DB_MINFO_LEN_METERTYPE + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CHANNEL);
+	EDIT_GetText(hObj, (char*)pInfo->channel, DB_MINFO_LEN_CHANNEL + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEPROTOVER);
+	EDIT_GetText(hObj, (char*)pInfo->valveProtoVer, DB_MINFO_LEN_VALVEPROTOVER + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
+	EDIT_GetText(hObj, (char*)pInfo->valveAddr, DB_MINFO_LEN_VALVEADDR + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
+	EDIT_GetText(hObj, (char*)pInfo->controlPanelAddr, DB_MINFO_LEN_CTLPANELADDR + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_BUILDID);
+	EDIT_GetText(hObj, (char*)pInfo->buildId, DB_MINFO_LEN_BUILDID + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_UNITID);
+	EDIT_GetText(hObj, (char*)pInfo->unitId, DB_MINFO_LEN_UNITID + 1);
+	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROOMID);
+	EDIT_GetText(hObj, (char*)pInfo->roomId, DB_MINFO_LEN_ROOMID + 1);
+
+
 	return NO_ERR;
 }
 
-void userIssueOneInfo(WM_HWIN hObjGatewayId, WM_HWIN hObjListview)
+void userIssueOneInfo(WM_HWIN hDlg)
 {
+	WM_HWIN hObj;
 	U8 lu8GatewayId[EDIT_MAX_LEN] = { 0 };
 	db_meterinfo_str oneMeterInfoStr;
 
-	EDIT_GetText(hObjGatewayId, (char*)lu8GatewayId, EDIT_MAX_LEN);
-	trimSpace(lu8GatewayId, EDIT_MAX_LEN);
+	hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hObj, (char*)lu8GatewayId, EDIT_MAX_LEN);
+	trimSpace(lu8GatewayId, STRLEN(lu8GatewayId));
 	if (isNumber(lu8GatewayId, STRLEN(lu8GatewayId)) == ERROR) {
 		GUI_MessageBox("\n请输入数字!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
-	suppplementTo12(lu8GatewayId);
+	supplementTo12(lu8GatewayId);
 
-	if (readListView(hObjListview, &oneMeterInfoStr) == ERROR) {
+	if (readListView(hDlg, &oneMeterInfoStr) == ERROR) {
 		return;
 	}
 	
-
 	if (logic_issueOneMeterInfo(lu8GatewayId, &oneMeterInfoStr) == NO_ERR) {
 		GUI_MessageBox("\n修改单行数据成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
@@ -521,14 +576,13 @@ void modifyOneInfoCb(WM_MESSAGE* pMsg)
 				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
 				break;
 			case GUI_ID_BUTTON1://从DBF查询对应计量点的基础信息
-				queryOneInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0), \
-					WM_GetDialogItem(hDlg, GUI_ID_EDIT1), WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0));
+				queryOneInfo(hDlg);
 				break;
-			case GUI_ID_BUTTON2://下发单行仪表基础信息
-				userIssueOneInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0), WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0));
-				break;
-			case GUI_ID_BUTTON3://退出
+			case GUI_ID_BUTTON2://退出
 				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON3://下发单行仪表基础信息
+				userIssueOneInfo(hDlg);
 				break;
 			default:
 				break;
@@ -547,17 +601,16 @@ void modifyOneInfoCb(WM_MESSAGE* pMsg)
 			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
 			break;		
 		case GUI_KEY_NUM2://从DBF查询对应计量点的基础信息
-			queryOneInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0), \
-				WM_GetDialogItem(hDlg, GUI_ID_EDIT1), WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0));
+			queryOneInfo(hDlg);
 			break;
 		case GUI_KEY_NUM3://下发单行仪表基础信息
-			userIssueOneInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0), WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0));
+			userIssueOneInfo(hDlg);
 			break;
 		case GUI_KEY_NUM4://退出
 			GUI_EndDialog(hDlg, WM_USER_EXIT);
 			break;
 		case GUI_KEY_ENTER:
-			userIssueOneInfo(WM_GetDialogItem(hDlg, GUI_ID_EDIT0), WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0));
+			userIssueOneInfo(hDlg);
 			break;
 		case GUI_KEY_UP:
 			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));

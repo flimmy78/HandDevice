@@ -206,25 +206,24 @@ U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* last
 */
 U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo)
 {
-	S32 iRet = 0, recCnt = 0;
+	S32 totalRec = 0, currentRec = 0;
 	U16 lu16MeterId;
 	U8 lu8MeterId[DB_MINFO_LEN_ROWID + 1] = { 0 };
-	recCnt = DbfRecordCount(pDbf);
+	U8 lu8gatewayId[DB_MINFO_LEN_GATEWAYID + 1] = { 0 };
+	totalRec = DbfRecordCount(pDbf);
 
-	while (DbfGetCurrentRecord(pDbf) < recCnt) {
-		iRet = DbfRecordLocate(minfo_field_gatewayId, (char*)gatewayId, DBF_LOCATE_DOWN, DBF_LOCATE_MATCH_ALL, pDbf);
-		if (iRet < 0) {
-			return ERROR;
+	while (currentRec < totalRec) {
+		DbfGotoRecord(currentRec, pDbf);
+		DbfFieldGet(minfo_field_gatewayId, (S8*)lu8gatewayId, pDbf);
+		if (strcmp(lu8gatewayId, gatewayId) == 0) {
+			DbfFieldGet(minfo_field_rowId, (char*)lu8MeterId, pDbf);
+			lu16MeterId = Lib_atoi((const char*)lu8MeterId);
+			if (meterId == lu16MeterId) {
+				DBF_GETFIELD()
+				return NO_ERR;
+			}
 		}
-		iRet = DbfFieldGet(minfo_field_rowId, (char*)lu8MeterId, pDbf);
-		if (iRet < 0) {
-			return ERROR;
-		}
-		lu16MeterId = Lib_atoi((const char*)lu8MeterId);
-		if (meterId == lu16MeterId) {
-			DBF_GETFIELD()
-			return NO_ERR;
-		}
+		currentRec += 1;
 	}
 
 	return ERROR;

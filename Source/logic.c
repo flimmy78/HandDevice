@@ -176,6 +176,8 @@ U8 logic_issueOneMeterInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 	U16 bufSize = 0;
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+
+	asciiToProtoBin(pDbInfo, &protoMeterInfo);
 	if (protoW_modifyOneMinfo(buf, &bufSize, lu8gatewayId, &protoMeterInfo) == ERROR)
 		return ERROR;
 	if(logic_sendAndRead(buf, &bufSize) == ERROR)

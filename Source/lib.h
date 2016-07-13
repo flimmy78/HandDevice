@@ -32,7 +32,7 @@ extern U8 isNumber(U8* s, U16 len);
 extern U8 inverseStrToBCD(U8* s, U16 sLen, U8* t, U16 tLen);
 extern void inverseArray(U8* s, U16 sLen);
 extern void trimZero(U8* buf, U8 bufSize);
-extern void suppplementTo12(U8* data);
+extern void supplementTo12(U8* data);
 extern void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo);
 
 #endif//LIB_H
