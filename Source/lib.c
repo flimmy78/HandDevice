@@ -274,9 +274,9 @@ U8 timeLegal(U8* timeStr, U16 strLen)
 		}
 	}
 
-	if (state == tm_state_hour || state == tm_state_min) {
+	if (state == tm_state_hour || state == tm_state_min) {//扫描完字符串后, 如果状态停在小时或分隔符状态, 则不合法
 		state = tm_state_end_legal;
-	} else {
+	} else {//如果状态停在小时或分钟的状态, 则认为是合法的
 		state = tm_state_end_illegal;
 	}
 result:
@@ -284,6 +284,23 @@ result:
 		return NO_ERR;
 	else
 		return ERROR;
+}
+
+/*
+**	时间相加(时:分 + 时:分).
+**	@pT1:	第一个时间
+**	@pT2:	第二个时间
+**	@pRes:	结果
+*/
+U8 addTime(time_node_ptr pT1, time_node_ptr pT2, time_node_ptr pRes)
+{
+	U8 carry = 0;
+
+	if (pT1->u8hour >24 || pT2->u8hour>24 || pT1->u8minute>60 || pT2->u8minute>60 )
+		return ERROR;
+
+
+	return NO_ERR;
 }
 
 /*

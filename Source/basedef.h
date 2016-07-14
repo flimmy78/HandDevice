@@ -30,10 +30,10 @@ typedef sys_time_str* sys_time_ptr;
 
 typedef struct
 {
-	U8 u8hour;		//时
-	U8 u8minute;	//分
+	U8 u8hour;		//时, Hex
+	U8 u8minute;	//分, Hex
 }time_node_str;
-typedef time_node_str time_node_ptr;
+typedef time_node_str* time_node_ptr;
 
 //手持机设置的索引号, 在数据库中的行号也与此对应
 typedef enum {
