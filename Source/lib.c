@@ -196,13 +196,15 @@ void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo)
 }
 
 /*
-** time's pattern is "\d[1-2](\:\d[1-2])?"
-** that is,
-** without ':', it has 1~2 digits;
-** with ':', there are 1~2 digits before ':',
-** and 1~2 digits following ':'.
+** 计算时间字符串合法与否
+** 字符串模式匹配: "\d[1-2](\:\d[1-2])?"
+** 即有1到2个数字表示小时, 如果有时间分隔符(如':'或'.')
+** 则分隔符后必须接1到2个数字的分钟.
+** @timeStr:	时间字符串
+** @strLen:		时间字符串长度
+** @pState:		返回扫描完时间字符串后的停留状态
 */
-U8 timeLegal(U8* timeStr, U16 strLen)
+U8 timeLegal(U8* timeStr, U16 strLen, em_time_state* pState)
 {
 	U16 i = 0, digitalLen = 0;
 	U8 data, value[3] = { 0 };
@@ -274,13 +276,11 @@ U8 timeLegal(U8* timeStr, U16 strLen)
 		}
 	}
 
-	if (state == tm_state_hour || state == tm_state_min) {//扫描完字符串后, 如果状态停在小时或分隔符状态, 则不合法
-		state = tm_state_end_legal;
-	} else {//如果状态停在小时或分钟的状态, 则认为是合法的
-		state = tm_state_end_illegal;
-	}
 result:
-	if (state == tm_state_end_legal)
+	if(pState)
+		*pState = state;
+	//扫描完字符串后, 如果状态停在小时或分隔符状态, 则合法
+	if (state == tm_state_hour || state == tm_state_min)
 		return NO_ERR;
 	else
 		return ERROR;
@@ -295,10 +295,43 @@ result:
 U8 addTime(time_node_ptr pT1, time_node_ptr pT2, time_node_ptr pRes)
 {
 	U8 carry = 0;
-
+	
 	if (pT1->u8hour >24 || pT2->u8hour>24 || pT1->u8minute>60 || pT2->u8minute>60 )
 		return ERROR;
 
+	pRes->u8hour = pT1->u8hour + pT2->u8hour;
+	pRes->u8minute = pT1->u8minute + pT2->u8minute;
+	carry = pRes->u8minute / 60;
+	pRes->u8hour += carry;
+	pRes->u8hour %= 24;
+	pRes->u8minute %= 60;
+	return NO_ERR;
+}
+
+/*
+**	把字符形式的时间转化为二进制形式的时间.
+**	@timeStr:	时间字符串
+**	@timeSize:	字符串长度
+**	@pRes:		结果
+*/
+U8 timeStrToBin(U8* timeStr, U8 timeSize, time_node_ptr pRes)
+{
+	U8* p = timeStr;
+	em_time_state state;
+	if (timeLegal(timeStr, timeSize, &state) == ERROR)
+		return ERROR;
+	if (state == tm_state_hour) {//如果状态停在小时状态, 则字符串必全为数字
+		pRes->u8hour = Lib_atoi((const char*)timeStr);
+		pRes->u8minute = 0;
+	} else if (state==tm_state_min) {
+		//先把分隔符修改为字符串的结束符'\0'
+		while (!isDelim(*p) && (*p != '\0')) p++;
+		*p = 0;
+		//求小时
+		pRes->u8hour = Lib_atoi((const char*)timeStr);
+		p++;//由于p指向的位置为'\0', 所以向后移动一位才能到达分钟
+		pRes->u8minute = Lib_atoi((const char*)p);//p指向了分钟位置, 而timeStr的结束符也是p的结束符
+	}
 
 	return NO_ERR;
 }
@@ -309,19 +342,37 @@ U8 addTime(time_node_ptr pT1, time_node_ptr pT2, time_node_ptr pRes)
 **	@startTime:	开始时间
 **	@timeCnt:	时间点个数
 */
-U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt)
+U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt, time_node_ptr pTimeNodes)
 {
-	U32 interval = 0;
-	U8	delim = ';';
-	time_node_str tmNodes[MAX_TIME_NODE] = { {0} };
+	U16 i = 0;
+	em_time_state state = tm_state_init;
+	time_node_str timeInterval = { 0,0 };
+	time_node_str startTimeStr = { 0,0 };
+	U8 lu8Time[10] = { 0 };
+	U8 hour = 0;
 
 	if (timeCnt > MAX_TIME_NODE)
 		return ERROR;
-	if (timeLegal(startTime, STRLEN(startTime)) == ERROR)
+	//24个小时不能被下列数整除
+	if (timeCnt == 7 || timeCnt == 11 || timeCnt == 13 || timeCnt == 14 || timeCnt == 17 || timeCnt == 19 || timeCnt == 21 || timeCnt == 23)
 		return ERROR;
+	if (timeLegal(startTime, STRLEN(startTime), &state) == ERROR)
+		return ERROR;
+	timeStrToBin(startTime, STRLEN(startTime), &startTimeStr);
+	hour = (24 / timeCnt);
+	for (i = 0; i < timeCnt ; i++) {
+		timeInterval.u8hour = i*hour;
+		addTime(&startTimeStr, &timeInterval, &(pTimeNodes[i]));
+		sprintf((char*)lu8Time, "%02d%c%02d%c", pTimeNodes[i].u8hour, TIME_DELIM, pTimeNodes[i].u8minute, TIME_NODE_DELIM);
+		strcat((char*)buf, (char*)lu8Time);
+	}
+	return NO_ERR;
+}
 
-	interval = MINUTES_PERDAY / timeCnt;
-
+U8 timeStrToBCD(time_node_ptr pTimeStr)
+{
+	pTimeStr->u8minute = HEX_TO_BCD(pTimeStr->u8minute);
+	pTimeStr->u8hour = HEX_TO_BCD(pTimeStr->u8hour);
 	return NO_ERR;
 }
 
@@ -330,7 +381,28 @@ U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt)
 **	@buf:		字符串缓存
 **	@pTimeNode:	时间点序列
 */
-U8 strToTimeNode(U8* buf, U8* pTimeNode)
+U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt)
 {
+	U8 lu8time[10] = { 0 };
+	U8* p = buf;
+	U16 i = 0;
+
+	if (*p == TIME_NODE_DELIM)
+		p++;
+
+	for (*timeCnt=0, i = 0; *p !='\0' ; p++) {
+		if (*p!=TIME_NODE_DELIM) {
+			lu8time[i] = *p;
+			i++;
+		} else {
+			if (timeStrToBin(lu8time, STRLEN(lu8time), &(((time_node_ptr)pTimeNode)[*timeCnt])) == ERROR)
+				return ERROR;
+			if (timeStrToBCD(&((time_node_ptr)pTimeNode)[*timeCnt]) == ERROR)
+				return ERROR;
+			*timeCnt += 1;
+			i = 0;
+			memset(lu8time, 0, 10);
+		}
+	}
 	return NO_ERR;
 }

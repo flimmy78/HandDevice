@@ -115,7 +115,6 @@ U8 db_readAllConfig(void)
 	iRet = DbfFieldGet(config_field_vale, data, pDbf);
 	if (iRet < 0) return ERROR;
 	readServerId((U8*)data);
-
 	gu8hasInitConfig = CONFIG_INITTED;
 	closeDBF();
 	return NO_ERR;
@@ -215,7 +214,7 @@ U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo)
 	while (currentRec < totalRec) {
 		DbfGotoRecord(currentRec, pDbf);
 		DbfFieldGet(minfo_field_gatewayId, (S8*)lu8gatewayId, pDbf);
-		if (strcmp(lu8gatewayId, gatewayId) == 0) {
+		if (strcmp((const char*)lu8gatewayId, (const char*)gatewayId) == 0) {
 			DbfFieldGet(minfo_field_rowId, (char*)lu8MeterId, pDbf);
 			lu16MeterId = Lib_atoi((const char*)lu8MeterId);
 			if (meterId == lu16MeterId) {

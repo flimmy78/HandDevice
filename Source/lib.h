@@ -13,7 +13,8 @@
 #define IS_SPACE	0x01
 #define NOT_SPACE	0x00
 
-#define	TIME_DELIM	':'
+#define	TIME_DELIM	':'//小时和分钟之间的分隔符
+#define	TIME_NODE_DELIM	';'//两个时间点之间的分隔符
 #define isDelim(c)	((c==':') || (c=='.'))
 
 typedef enum {//时间字符串跳转状态
@@ -34,5 +35,10 @@ extern void inverseArray(U8* s, U16 sLen);
 extern void trimZero(U8* buf, U8 bufSize);
 extern void supplementTo12(U8* data);
 extern void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo);
-
+extern U8 timeLegal(U8* timeStr, U16 strLen, em_time_state* pState);
+extern U8 addTime(time_node_ptr pT1, time_node_ptr pT2, time_node_ptr pRes);
+extern U8 timeStrToBin(U8* timeStr, U8 timeSize, time_node_ptr pRes);
+extern U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt, time_node_ptr pTimeNodes);
+extern U8 timeStrToBCD(time_node_ptr pTimeStr);
+extern U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt);
 #endif//LIB_H

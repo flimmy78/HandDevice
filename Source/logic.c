@@ -187,3 +187,49 @@ U8 logic_issueOneMeterInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 	
 	return NO_ERR;
 }
+
+
+U8 logic_genTimeNodesStr(U8* buf, U16 bufSize, U8* startTime, U16 nodes)
+{
+	time_node_str timeNodes[MAX_TIME_NODE] ={{0,0}};
+	if (calcTimeNode(buf, bufSize, startTime, nodes, &timeNodes[0]) == ERROR)
+		return ERROR;
+	return NO_ERR;
+}
+
+U8 logic_issueTimeNodes(U8* buf, U16 bufSize, U8* gatewayId)
+{
+	U16 timeCnt = 0;
+	U8	lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8	pTimeNode[128] = { 0 };
+	U8	bufSend[1024] = { 0 };
+	U16	bufSendSize = 0;
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	strToTimeNode(buf, bufSize, pTimeNode, &timeCnt);
+	protoW_tmNode(bufSend, &bufSendSize, lu8gatewayId, timeCnt, pTimeNode);
+	logic_sendAndRead(bufSend, &bufSendSize);
+	if (protoA_retFrame(bufSend, bufSendSize, GAT_MT_CLT_TIME_POINT, 0) == ERROR)
+		return ERROR;
+	return NO_ERR;
+}
+
+U8 logic_modifyGatewayId(U8* originalId, U8* targetId)
+{
+	U8 lu8originalId[GATEWAY_OADD_LEN] = { 0 };
+	U8 lu8targetId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[256] = { 0 };
+	U16 bufSize = 0;
+
+	inverseStrToBCD(originalId, STRLEN(originalId), lu8originalId, GATEWAY_OADD_LEN);
+	inverseStrToBCD(targetId, STRLEN(targetId), lu8targetId, GATEWAY_OADD_LEN);
+
+	protoW_modifyGatewayId(buf, &bufSize, lu8originalId, lu8targetId);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	logic_printBuf(buf, bufSize, FILE_LINE);
+	if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_MID, 0x00) == ERROR)
+		return ERROR;
+
+	return NO_ERR;
+}

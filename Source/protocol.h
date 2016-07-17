@@ -95,7 +95,10 @@
 #define GAT_MT_CLT_RD_ALLINFO   0x93//集中器向主站发送热表地址信息(0x93)
 
 #define GAT_MT_SVR_CHIP         0x94//主站更改集中器IP及端口号(0x94)
-#define GAT_MT_CLT_CHIP         0x95//主站更改集中器IP及端口号响应(0x95)
+#define GAT_MT_CLT_CHIP         0x95//集中器响应主站更改集中器IP及端口号响应(0x95)
+
+#define GAT_MT_SVR_MID			0x98//主站更改集中器及其主站编号
+#define GAT_MT_CLT_MID			0x99//集中器响应主站更改集中器及其主站编号
 /*集中器协议中MSG_TYPE代表的意义 END*/
 
 #define	GATEWAY_ASW_CODE_SUC				0x01//操作成功
@@ -157,7 +160,8 @@ extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
 extern U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
 extern U8 protoW_issueMinfo(U8*, U16*, U8*, meterinfo_bodyHead_ptr, meter_row_ptr);
 extern U8 protoW_modifyOneMinfo(U8* buf, U16* bufSize, U8* gatewayId, meter_row_ptr pProtoInfo);
-
+extern U8 protoW_tmNode(U8* buf, U16* bufSize, U8* gatewayId, U8 timeCnt, U8* pTimeNode);
+extern U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targetId);
 
 #endif
 

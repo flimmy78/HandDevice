@@ -83,11 +83,13 @@ U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
 	if (GATEWAY_ASW_CODE_SUC != data)
 		return ERROR;
 
+	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 	//消息类型
 	data = buf[GATEWAY_ASWCODE_OFFSET];
 	if (data != msgType)
 		return ERROR;
 
+	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 	//消息长度
 	if ((data == GAT_MT_CLT_SEND_MINFO) || (data == GAT_MT_CLT_MODIFY_SINFO)) {
 		data = buf[GATEWAY_SEQCODE_OFFSET];//消息序列号
@@ -98,7 +100,7 @@ U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
 	else {
 		retLen = GATEWAY_WITHOUTSEQ_LEN;
 	}
-
+	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 	if (bufSize != retLen)
 		return ERROR;
 
@@ -255,6 +257,26 @@ U8 protoW_tmNode(U8* buf, U16* bufSize, U8* gatewayId, U8 timeCnt, U8* pTimeNode
 
 	memcpy(bodyBuf, &timeCnt, GATEWAY_TIMENODE_CNT_LEN);
 	memcpy(bodyBuf+ GATEWAY_TIMENODE_CNT_LEN, pTimeNode, timeCnt*GATEWAY_TIMENODE_LEN);
+	protoStr.pMsgBody = bodyBuf;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
+U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targetId)
+{
+	gateway_protocol_str protoStr;
+	U8	bodyBuf[2*GATEWAY_OADD_LEN] = { 0 };
+
+	memcpy(protoStr.DestAddr, lu8originalId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	logic_printBuf(protoStr.SourceAddr, GATEWAY_SADD_LEN, FILE_LINE);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgLen[0] = 2 * GATEWAY_OADD_LEN;
+	protoStr.MsgLen[1] = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_MID;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	memcpy(bodyBuf, protoStr.SourceAddr, GATEWAY_SADD_LEN);
+	memcpy(bodyBuf, lu8targetId, GATEWAY_OADD_LEN);
 	protoStr.pMsgBody = bodyBuf;
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;

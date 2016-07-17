@@ -28,10 +28,9 @@ typedef struct{//系统时间结构, 倒序存储以方便使用
 }sys_time_str;
 typedef sys_time_str* sys_time_ptr;
 
-typedef struct
-{
-	U8 u8hour;		//时, Hex
+typedef struct{//用一个字节表示分钟, 超过60则进位, 对于一般的时间相加足够
 	U8 u8minute;	//分, Hex
+	U8 u8hour;		//时, Hex
 }time_node_str;
 typedef time_node_str* time_node_ptr;
 
