@@ -26,6 +26,8 @@ typedef enum {//时间字符串跳转状态
 	tm_state_end_illegal	//不合法终状态
 } em_time_state;
 
+extern void lib_printBuf(U8* buf, U16 bufSize, const char* file, const char* func, U32 line);
+extern U8 lib_printBufToUart(U8* buf, U16 bufSize, const char* file, const char* func, U32 line);
 extern U8 readSysTime(sys_time_ptr pTime);
 extern U8 countCheck(U8 *_data, U16 _len);
 extern U8 trimSpace(U8* s, U16 len);

@@ -9,17 +9,6 @@
 #include "lib.h"
 #include "logic.h"
 
-void logic_printBuf(U8* buf, U16 bufSize, const char* file, const char* func, U32 line)
-{
-#ifdef DEBUG
-	U16 i = 0;
-	Lib_printf("[%s][%s][%d]buf: ", file, func, line);
-	for (i = 0;i < bufSize;i++)
-		Lib_printf("%02X ", buf[i]);
-	Lib_printf("\n");
-#endif // DEBUG
-}
-
 /*
 **	向串口读写数据.
 **	@buf:		发送与接收数据缓冲区
@@ -35,16 +24,14 @@ U8 logic_sendAndRead(U8* buf, U16* bufSize)
 	if (!pu)
 		return ERROR;
 
-	//logic_printBuf(buf, *bufSize, FILE_LINE);
 	UartWrite(buf, *bufSize, 0, pu);
 	*bufSize = UartRead(buf, 512, 2000, pu);
 	if (*bufSize == 0) {//如果超时后没有读到数据, 返回错误
+		UartClose(pu);
 		return ERROR;
 	}
-	logic_printBuf(buf, *bufSize, FILE_LINE);
 
 	UartClose(pu);
-
 	return NO_ERR;
 }
 
@@ -62,7 +49,7 @@ U8 logic_setTime(U8* gatewayId)
 	if (logic_sendAndRead(lu8buf, &lu8bufSize) == ERROR) {
 		return ERROR;
 	}
-	return protoA_retFrame(lu8buf, lu8bufSize, GAT_MT_CLT_TIME_POINT, 0);
+	return protoA_retFrame(lu8buf, lu8bufSize, GAT_MT_CLT_TIME_SET, 0);
 }
 
 /*
@@ -225,11 +212,12 @@ U8 logic_modifyGatewayId(U8* originalId, U8* targetId)
 	inverseStrToBCD(targetId, STRLEN(targetId), lu8targetId, GATEWAY_OADD_LEN);
 
 	protoW_modifyGatewayId(buf, &bufSize, lu8originalId, lu8targetId);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	logic_sendAndRead(buf, &bufSize);
+	if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_MID, 0) == ERROR)
 		return ERROR;
-	logic_printBuf(buf, bufSize, FILE_LINE);
-	if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_MID, 0x00) == ERROR)
-		return ERROR;
-
+	if (db_modifyGatewayId(targetId) == ERROR)
+		return ERROR; 
+	PRINT_LINE()
 	return NO_ERR;
 }
+

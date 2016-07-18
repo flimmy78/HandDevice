@@ -83,13 +83,11 @@ U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
 	if (GATEWAY_ASW_CODE_SUC != data)
 		return ERROR;
 
-	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 	//消息类型
 	data = buf[GATEWAY_ASWCODE_OFFSET];
 	if (data != msgType)
 		return ERROR;
 
-	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 	//消息长度
 	if ((data == GAT_MT_CLT_SEND_MINFO) || (data == GAT_MT_CLT_MODIFY_SINFO)) {
 		data = buf[GATEWAY_SEQCODE_OFFSET];//消息序列号
@@ -100,7 +98,6 @@ U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
 	else {
 		retLen = GATEWAY_WITHOUTSEQ_LEN;
 	}
-	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 	if (bufSize != retLen)
 		return ERROR;
 
@@ -144,8 +141,18 @@ U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize)
 */
 U8 protoR_radioReadId(U8* buf, U16* bufSize)
 {
-	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
-	return protoW_setTime(lu8gatewayId, GATEWAY_OADD_LEN, buf, bufSize);
+	gateway_protocol_str protoStr;
+
+	memset(protoStr.DestAddr, 0, GATEWAY_OADD_LEN);
+	memset(protoStr.SourceAddr, 0, GATEWAY_SADD_LEN);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgLen[0] = GATEWAY_TS_LEN;
+	protoStr.MsgLen[1] = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_TIME_SET;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = protoStr.ssmmhhDDMMYY;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
 }
 
 /*
@@ -269,14 +276,13 @@ U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targe
 
 	memcpy(protoStr.DestAddr, lu8originalId, GATEWAY_OADD_LEN);
 	db_getCongfig(config_server_id, protoStr.SourceAddr);
-	logic_printBuf(protoStr.SourceAddr, GATEWAY_SADD_LEN, FILE_LINE);
 	protoStr.MsgIndex = 0x00;
-	protoStr.MsgLen[0] = 2 * GATEWAY_OADD_LEN;
+	protoStr.MsgLen[0] = GATEWAY_SADD_LEN + GATEWAY_OADD_LEN;
 	protoStr.MsgLen[1] = 0x00;
 	protoStr.MsgType = GAT_MT_SVR_MID;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 	memcpy(bodyBuf, protoStr.SourceAddr, GATEWAY_SADD_LEN);
-	memcpy(bodyBuf, lu8targetId, GATEWAY_OADD_LEN);
+	memcpy(bodyBuf + GATEWAY_SADD_LEN, lu8targetId, GATEWAY_OADD_LEN);
 	protoStr.pMsgBody = bodyBuf;
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;

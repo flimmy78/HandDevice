@@ -92,4 +92,5 @@ extern U8 db_getCongfig(u16 configIdx, U8* config);
 extern U8 db_getMatchCnt(U8* gatewayId, S32* cnt);
 extern U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* lastRecId);
 extern U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo);
+extern U8 db_modifyGatewayId(U8* gatewayId);
 #endif // DB_H

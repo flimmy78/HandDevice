@@ -3,10 +3,10 @@
 
 #include "user.h"
 
-//#define DEBUG
+#define DEBUG
 
-#define  FILE_LINE   __FILE__,__FUNCTION__,__LINE__
-
+#define	FILE_LINE   __FILE__,__FUNCTION__,__LINE__
+#define	PRINT_LINE()	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 #define NO_ERR	0x00//нч╢М
 #define ERROR	0x01//сп╢М
 

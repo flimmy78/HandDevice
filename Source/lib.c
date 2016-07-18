@@ -12,6 +12,42 @@
 
 static const U8 spaces[] = { ' ', '\t', '\n', '\r', '\0' };
 
+void lib_printBuf(U8* buf, U16 bufSize, const char* file, const char* func, U32 line)
+{
+#ifdef DEBUG
+	U16 i = 0;
+	Lib_printf("[%s][%s][%d]buf: ", file, func, line);
+	for (i = 0; i < bufSize; i++)
+		Lib_printf("%02X ", buf[i]);
+	Lib_printf("\n");
+#endif // DEBUG
+}
+
+U8 lib_printBufToUart(U8* buf, U16 bufSize, const char* file, const char* func, U32 line)
+{
+	sUART *pu;
+	sUART comConfig;
+	U8 debugStr[1024] = { 0 };
+	U8 oneByte[3] = { 0 };
+	U16 i = 0;
+	db_getCongfig(config_com_para, (U8*)&comConfig);
+
+#ifdef DEBUG
+	sprintf((char*)debugStr, "[%s][%s][%d]buf: ", file, func, line);
+	for (i = 0; i < bufSize; i++) {
+		sprintf((char*)oneByte, "%02X ", buf[i]);
+		strcat((char*)debugStr, (char*)oneByte);
+	}
+	strcat((char*)debugStr,"\n");
+	pu = UartOpen(comConfig.baud, comConfig.mode, comConfig.device);//打开串口
+	if (!pu)
+		return ERROR;
+	UartWrite(debugStr, STRLEN(debugStr), 0, pu);
+	UartClose(pu);
+#endif // DEBUG
+	return NO_ERR;
+}
+
 //读取系统时间
 U8 readSysTime(sys_time_ptr pTime)
 {

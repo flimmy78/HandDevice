@@ -108,13 +108,13 @@ static const GUI_WIDGET_CREATE_INFO widgetTimeNodes[] = {
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetModifyGatewayId[] = {
-	{ FRAMEWIN_CreateIndirect, "Framewin", CONFIG_MODIFY_GATEWAYNO_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
-	{ BUTTON_CreateIndirect, "original", GUI_ID_BUTTON0, 10, 30, 80, 20, 0, 0 },
-	{ EDIT_CreateIndirect, "EditOriginal", GUI_ID_EDIT0, 125, 31, 80, 20, 0, 0 },
-	{ EDIT_CreateIndirect, "EditTarget", GUI_ID_EDIT1, 125, 80, 80, 20, 0, 0 },
-	{ BUTTON_CreateIndirect, "Exit", GUI_ID_BUTTON1, 9, 260, 80, 20, 0, 0 },
-	{ BUTTON_CreateIndirect, "Modify", GUI_ID_BUTTON2, 146, 260, 80, 20, 0, 0 },
-	{ TEXT_CreateIndirect, "target", GUI_ID_TEXT0, 10, 82, 80, 20, 0, 0 }
+	{ FRAMEWIN_CreateIndirect, "修改集中器编号", CONFIG_MODIFY_GATEWAYNO_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ BUTTON_CreateIndirect, "原编号", GUI_ID_BUTTON0, 10, 30, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 125, 31, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 125, 80, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 9, 260, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "修改", GUI_ID_BUTTON2, 146, 260, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "现编号", GUI_ID_TEXT0, 10, 82, 80, 20, 0, 0 }
 };
 
 //对集中器程序的主界面初始化
@@ -802,11 +802,11 @@ void userModifyGatewayId(WM_HWIN hDlg)
 	supplementTo12(originalId);
 	supplementTo12(targetId);
 	if (logic_modifyGatewayId(originalId, targetId) == ERROR) {
+		PRINT_LINE()
 		GUI_MessageBox("\n修改集中器号失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
-		return;
 	} else {
+		PRINT_LINE()
 		GUI_MessageBox("\n修改集中器号成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
-		return;
 	}
 }
 

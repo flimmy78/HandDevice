@@ -227,3 +227,17 @@ U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo)
 
 	return ERROR;
 }
+
+U8 db_modifyGatewayId(U8* gatewayId)
+{
+	if (openDBF(DB_CONFIG_NAME) == ERROR)
+		return ERROR;
+	if (DbfGotoRecord(config_gateway_id, pDbf) == ERROR)
+		return ERROR;
+	if (DbfFieldSet(config_field_vale, (char*)gatewayId, pDbf) == ERROR)
+		return ERROR;
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, gu8gwyAdd, GATEWAY_OADD_LEN);
+	if (closeDBF() == ERROR)
+		return ERROR;
+	return NO_ERR;
+}
