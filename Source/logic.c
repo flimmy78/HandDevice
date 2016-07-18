@@ -189,7 +189,7 @@ U8 logic_issueTimeNodes(U8* buf, U16 bufSize, U8* gatewayId)
 	U16 timeCnt = 0;
 	U8	lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
 	U8	pTimeNode[128] = { 0 };
-	U8	bufSend[1024] = { 0 };
+	U8	bufSend[GATEWAY_FRAME_MAX_LEN] = { 0 };
 	U16	bufSendSize = 0;
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
@@ -205,7 +205,7 @@ U8 logic_modifyGatewayId(U8* originalId, U8* targetId)
 {
 	U8 lu8originalId[GATEWAY_OADD_LEN] = { 0 };
 	U8 lu8targetId[GATEWAY_OADD_LEN] = { 0 };
-	U8 buf[256] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
 	U16 bufSize = 0;
 
 	inverseStrToBCD(originalId, STRLEN(originalId), lu8originalId, GATEWAY_OADD_LEN);
