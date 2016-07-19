@@ -13,6 +13,9 @@
 #include "protocol.h"
 #include "interface.h"
 
+/************************************************************************/
+/* widget数组群                                                         */
+/************************************************************************/
 //集中器程序主界面
 static const GUI_WIDGET_CREATE_INFO widgetMainFrame[] =
 {
@@ -117,6 +120,24 @@ static const GUI_WIDGET_CREATE_INFO widgetModifyGatewayId[] = {
 	{ TEXT_CreateIndirect, "现编号", GUI_ID_TEXT0, 10, 82, 80, 20, 0, 0 }
 };
 
+static const GUI_WIDGET_CREATE_INFO widgetModifyGPRS[] = {
+	{ FRAMEWIN_CreateIndirect, "修改GPRS参数", CONFIG_GPRS_PARASET_FRAME_IDX, 0, 0, 240, 320, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 15, 12, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "IP", GUI_ID_TEXT0, 30, 45, 50, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "端口号", GUI_ID_TEXT1, 15, 75, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "APN", GUI_ID_TEXT2, 15, 105, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "读取", GUI_ID_BUTTON1, 15, 159, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON2, 15, 260, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "修改", GUI_ID_BUTTON3, 129, 260, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 12, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 80, 45, 130, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT2, 130, 75, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT3, 130, 105, 80, 20, 0, 0 }
+};
+
+/************************************************************************/
+/* Init函数群                                                           */
+/************************************************************************/
 //对集中器程序的主界面初始化
 static void mainFrameInit( WM_HWIN hDlg )
 {
@@ -169,6 +190,22 @@ static void modifyGatewayIdInit(WM_HWIN hDlg)
 	
 }
 
+static void modifyGPRSInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT0);
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT1);
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT2);
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);//ip地址
+	EDIT_SetMaxLen(hItem, 20);
+}
+
+/************************************************************************/
+/* CallBack函数群                                                       */
+/************************************************************************/
 //主界面的回调函数
 void mainCb( WM_MESSAGE* pMsg )
 {
@@ -802,10 +839,8 @@ void userModifyGatewayId(WM_HWIN hDlg)
 	supplementTo12(originalId);
 	supplementTo12(targetId);
 	if (logic_modifyGatewayId(originalId, targetId) == ERROR) {
-		PRINT_LINE()
 		GUI_MessageBox("\n修改集中器号失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	} else {
-		PRINT_LINE()
 		GUI_MessageBox("\n修改集中器号成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
 }
@@ -879,6 +914,146 @@ void modifyGatewayIdCb(WM_MESSAGE* pMsg)
 	}
 }
 
+void userQueryGPRS(WM_HWIN hDlg)
+{
+	WM_HWIN hObj;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	U8 apnId[3] = { 0 };
+	U8 serverIp[20] = { 0 };
+	U8 port[5] = { 0 };
+
+	hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);//集中器id
+	EDIT_GetText(hObj, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+	if (logic_readGPRSParam(gatewayId, apnId, serverIp, port) == ERROR) {
+		GUI_MessageBox("\n读取参数\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);//ip地址
+		EDIT_SetText(hObj, (const char*)serverIp);
+		hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);//端口号
+		EDIT_SetText(hObj, (const char*)port);
+		hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);//apn编号
+		EDIT_SetText(hObj, (const char*)apnId);
+	}
+}
+
+void userModifyGPRS(WM_HWIN hDlg)
+{
+	WM_HWIN hObj;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	U8 apnId[3] = { 0 };
+	U8 serverIp[20] = { 0 };
+	U8 port[5] = { 0 };
+
+	hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);//集中器id
+	EDIT_GetText(hObj, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);//ip地址
+	EDIT_GetText(hObj, (char*)serverIp, 20);
+	hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);//端口号
+	EDIT_GetText(hObj, (char*)port, 5);
+	hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);//apn编号
+	EDIT_GetText(hObj, (char*)apnId, 3);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR \
+		|| isNumber(port, STRLEN(port)) == ERROR \
+		|| isNumber(apnId, STRLEN(apnId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	if (IpLegal(serverIp, STRLEN(serverIp)) == ERROR) {
+		GUI_MessageBox("\nIP地址非法\n", "非法", GUI_MESSAGEBOX_CF_MODAL);
+		hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);//ip地址
+		EDIT_SetText(hObj, "");
+		return;
+	}
+	supplementTo12(gatewayId);
+	if(logic_modifyGPRSParam(gatewayId, apnId, serverIp, port) == ERROR)
+		GUI_MessageBox("\n修改GPRS参数失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	else
+		GUI_MessageBox("\n修改GPRS参数成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+}
+
+void modifyGPRSCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		modifyGPRSInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://查询现有参数
+				userQueryGPRS(hDlg);
+				break;
+			case GUI_ID_BUTTON2://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON3://修改参数
+				userModifyGPRS(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT2));
+			break;
+		case GUI_KEY_NUM2://查询现有参数
+			userQueryGPRS(hDlg);
+			break;
+		case GUI_KEY_NUM3://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM4://修改参数
+			userModifyGPRS(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
+/************************************************************************/
+/* 创建界面函数群                                                       */
+/************************************************************************/
 void setTimeConfig()
 {
 	int iRet;
@@ -929,6 +1104,16 @@ void modifyGatewayId()
 	}
 }
 
+void modifyGPRS()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetModifyGPRS, GUI_COUNTOF(widgetModifyGPRS), &modifyGPRSCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
 int dispConfig(){
     int iRet;
     while(1){
@@ -944,6 +1129,7 @@ int dispConfig(){
 			modifyGatewayId();
             break;
         case GUI_ID_BUTTON3://GPRS参数
+			modifyGPRS();
             break;
         case GUI_ID_BUTTON4://补抄设置
             break;

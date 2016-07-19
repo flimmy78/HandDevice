@@ -43,4 +43,6 @@ extern U8 timeStrToBin(U8* timeStr, U8 timeSize, time_node_ptr pRes);
 extern U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt, time_node_ptr pTimeNodes);
 extern U8 timeStrToBCD(time_node_ptr pTimeStr);
 extern U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt);
+extern U8 IpLegal(U8* buf, U16 bufSize);
+extern U8 strIpToHex(U8* svrStr, gprs_param_ptr pGPRSParam);
 #endif//LIB_H

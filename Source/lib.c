@@ -442,3 +442,70 @@ U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt)
 	}
 	return NO_ERR;
 }
+
+U8 IpLegal(U8* buf, U16 bufSize)
+{
+	U8* p = buf;
+	U16 i = 0, j = 0;
+	U8	delimCnt = 0;
+	U8	value[10] = { 0 };
+
+	for (i = 0; i < bufSize ; p++, i++) {
+		if (*p == IP_DELIM) {
+			delimCnt++;
+			if (Lib_atoi((const char*)value) > 255) {
+				return ERROR;
+			}
+			j = 0;
+			memset(value, 0, 10);
+		} else if (isdigit(*p)) {
+			value[j] = *p;
+			j++;
+		} else{
+			return ERROR;
+		}
+	}
+	if (delimCnt != 3)
+		return ERROR;
+	if (Lib_atoi((const char*)value) > 255) {
+		return ERROR;
+	}
+	return NO_ERR;
+}
+
+U8 strIpToHex(U8* svrStr, gprs_param_ptr pGPRSParam)
+{
+	U16 value = 0;
+	U8	j = 3, delimCnt = 0;
+	U8* p = svrStr;
+	U8* q = svrStr;
+
+	while ( *p != '\0') {
+		if (*p == IP_DELIM) {
+			*p = '\0';
+			value = Lib_atoi((const char*)q);
+			if (value > 255) {
+				return ERROR;
+			} else {
+				pGPRSParam->IPAddr[j] = (U8)value;
+				j--;
+			}
+			delimCnt++;
+			if (delimCnt>3)//多于3个分隔符, 返回错误
+				return ERROR;
+
+			q = p + 1;
+		}
+		p++;
+	}
+	if (delimCnt == 3) {
+		value = Lib_atoi((const char*)q);
+		if (value > 255) {
+			return ERROR;
+		}
+		else {
+			pGPRSParam->IPAddr[j] = (U8)value;
+		}
+	}
+	return NO_ERR;
+}

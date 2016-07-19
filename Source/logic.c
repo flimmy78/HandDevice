@@ -217,7 +217,46 @@ U8 logic_modifyGatewayId(U8* originalId, U8* targetId)
 		return ERROR;
 	if (db_modifyGatewayId(targetId) == ERROR)
 		return ERROR; 
-	PRINT_LINE()
 	return NO_ERR;
 }
 
+U8 logic_readGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+	U16 lu16port = 0;
+	gateway_params_str paramStr = { 0 };
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	protoR_GPRSParam(buf, &bufSize, lu8gatewayId);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	protoA_GPRSParam(buf, bufSize, &paramStr);
+	memcpy((U8*)&lu16port, paramStr.Port, 2);
+	sprintf((char*)apnId, "%d", paramStr.u8APN);
+	sprintf((char*)port, "%d", lu16port);
+	sprintf((char*)svrId, "%d.%d.%d.%d", \
+		paramStr.Ip[3], paramStr.Ip[2], paramStr.Ip[1], paramStr.Ip[0]);
+	return NO_ERR;
+}
+
+U8 logic_modifyGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+	U16 lu16port = Lib_atoi((const char *)port);
+	gprs_param_str gprsStr = { 0 };
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	gprsStr.APN = Lib_atoi((const char*)apnId);
+	strIpToHex(svrId, &gprsStr);
+	gprsStr.HostPor[0] = lu16port >> 8;
+	gprsStr.HostPor[1] = lu16port;
+	protoW_modifyGPRS(buf, &bufSize, lu8gatewayId, &gprsStr);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+
+	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_CHIP, 0);
+}

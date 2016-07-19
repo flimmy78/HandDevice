@@ -30,6 +30,8 @@
 #define GATEWAY_FRAME_MAX_LEN	1024//每帧协议最大长度
 #define GATEWAY_METERINFO_LEN	40//仪表信息的长度
 #define GATEWAY_MAX_METERINFO_CNT	24//集中器协议中每行最大下发多少行数据
+#define GATEWAY_BODY_OFFSET	27//消息体偏移量
+#define GATEWAY_BODYLEN_OFFSET	17//消息体长度偏移量
 //#define GATEWAY_MAX_METERINFO_CNT	2//集中器协议中每行最大下发多少行数据
 #define GATEWAY_ISSUE_BODY_HEAD	3//下发表地址消息头的长度
 
@@ -72,9 +74,6 @@
 
 #define GAT_MT_SVR_TIME_RD      0x26//读取集中器时钟时间(0x26)
 #define GAT_MT_CLT_TIME_RD      0x27//集中器响应设置时间(0x27)
-
-#define GAT_MT_CLT_LOGIN        0x2C//GPRS登陆帧(0x2C)
-#define GAT_MT_SVR_LOGIN        0x2D//主站回应GPRS登录(0x2D)
 
 #define GAT_MT_CLT_HB           0x2E//GPRS心跳(0x2E)
 #define GAT_MT_SVR_HB           0x2F//GPRS心跳回应(0x2F)
@@ -146,13 +145,36 @@ typedef struct{//集中器仪表基础信息结构
 }meter_row_str;
 typedef meter_row_str* meter_row_ptr;
 
-typedef struct
-{
+typedef struct {
 	U8 totalRows;			//一共有多少行表地址
 	U8 seq;					//本帧的索引号
 	U8 thisRows;			//本帧包含多少行表地址
 }meterinfo_bodyHead_str;
 typedef meterinfo_bodyHead_str* meterinfo_bodyHead_ptr;
+
+typedef struct {
+	U8 Method;			// 超声波热计量表20H;电子式热分配表A0H;时间通断面积法B0H;
+	U8 DataSource;		//0X0A 上位机，0X0B本地抄表
+	U8 Period[2];			// 分摊周期（分钟）
+	U8 LogReportTime; //0x00 :打开 ，0x01:不打开
+	U8 LogOpenType; 		// 0X00: 打开 ，0X01 ：不打开
+	U8 APN;             // GPRS网络APN接入点选择.
+	U8 IPAddr[4];			//0是低位IP  3是高位IP 16进制下发
+	U8 HostPor[2];  // 主站端口号高8位  (注：端口号高低字节顺序和0x90、0x91读取时顺序相反！)
+}gprs_param_str;
+typedef gprs_param_str* gprs_param_ptr;
+
+typedef struct {
+	U8 Ip[4];//服务器IP, 倒序
+	U8 Port[2];//服务器端口
+	U8 Address[6];// 集中器地址
+	U8 HostAddress[6];// 主站地址
+	U8 SoftVer[2];/*例如：0x0232代表2.32*/
+	U8 HardwareVer[2];/*例如：0x0232代表2.32*/
+	U8 u8APN;  //GPRS模块APN接入点，0-cmnet公网，1-联通M2M物联网，2-威海热电。
+	U8 u8Reserved[6];//保留
+} gateway_params_str;
+typedef gateway_params_str* gateway_params_ptr;
 
 extern U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq);
 extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
@@ -161,7 +183,10 @@ extern U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
 extern U8 protoW_issueMinfo(U8*, U16*, U8*, meterinfo_bodyHead_ptr, meter_row_ptr);
 extern U8 protoW_modifyOneMinfo(U8* buf, U16* bufSize, U8* gatewayId, meter_row_ptr pProtoInfo);
 extern U8 protoW_tmNode(U8* buf, U16* bufSize, U8* gatewayId, U8 timeCnt, U8* pTimeNode);
+extern U8 protoR_GPRSParam(U8* buf, U16* bufSize, U8* gatewayId);
+extern U8 protoA_GPRSParam(U8* buf, U16 bufSize, gateway_params_ptr pParam);
 extern U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targetId);
+extern U8 protoW_modifyGPRS(U8* buf, U16* bufSize, U8* gatewayId, gprs_param_ptr pGPRSParam);
 
 #endif
 

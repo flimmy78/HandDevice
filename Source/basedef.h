@@ -17,7 +17,7 @@
 #define MINUTES_PERDAY	1440//一天有多少分钟
 
 #define STRLEN(c)	strlen((const char*)(c))
-
+#define IP_DELIM	'.'
 typedef struct{//系统时间结构, 倒序存储以方便使用
 	U8 u8second;	//秒
 	U8 u8minute;	//分

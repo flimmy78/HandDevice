@@ -287,3 +287,56 @@ U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targe
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }
+
+U8 protoR_GPRSParam(U8* buf, U16* bufSize, U8* gatewayId)
+{
+	gateway_protocol_str protoStr = { 0 };
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_RD_CONFIG;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = NULL;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
+U8 protoA_GPRSParam(U8* buf, U16 bufSize, gateway_params_ptr pParam)
+{
+	U16 msgLen = 0;
+
+	memcpy((U8*)&msgLen, buf + GATEWAY_BODYLEN_OFFSET, GATEWAY_MSGL_LEN);
+	memcpy((U8*)pParam, buf + GATEWAY_BODY_OFFSET, msgLen);
+	return NO_ERR;
+}
+
+U8 protoW_modifyGPRS(U8* buf, U16* bufSize, U8* gatewayId, gprs_param_ptr pGPRSParam)
+{
+	gateway_protocol_str protoStr;
+	U16 msgLen = sizeof(gprs_param_str);
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	memcpy(protoStr.MsgLen, (U8*)&msgLen, GATEWAY_MSGL_LEN);
+	protoStr.MsgType = GAT_MT_SVR_CHIP;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = (U8*)pGPRSParam;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
+U8 protoX_reboot(U8* buf, U16* bufSize, U8* gatewayId)
+{
+	gateway_protocol_str protoStr = {0};
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_REBOOT;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = NULL;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
