@@ -143,6 +143,21 @@ static const GUI_WIDGET_CREATE_INFO widgetReboot[] = {
 	{ BUTTON_CreateIndirect, "重启", GUI_ID_BUTTON2, 130, 245, 80, 20, 0, 0 }
 };
 
+static const GUI_WIDGET_CREATE_INFO widgetRereadParam[] = {
+	{ FRAMEWIN_CreateIndirect, "补抄设置", CONFIG_REREAD_PARASET_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 15, 20, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 20, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 13, 245, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "下发", GUI_ID_BUTTON2, 130, 245, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "热表补抄次数", GUI_ID_TEXT0, 15, 60, 110, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "热表补抄间隔", GUI_ID_TEXT1, 15, 100, 110, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀控补抄次数", GUI_ID_TEXT2, 15, 140, 110, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀控补抄间隔", GUI_ID_TEXT3, 15, 180, 110, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 130, 60, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT2, 130, 100, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT3, 130, 140, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT4, 130, 180, 80, 20, 0, 0 }
+};
 /************************************************************************/
 /* Init函数群                                                           */
 /************************************************************************/
@@ -212,6 +227,8 @@ static void modifyGPRSInit(WM_HWIN hDlg)
 }
 
 static void rebootInit(WM_HWIN hDlg){}
+
+static void rereadInit(WM_HWIN hDlg) {}
 /************************************************************************/
 /* CallBack函数群                                                       */
 /************************************************************************/
@@ -1067,11 +1084,15 @@ void userReboot(WM_HWIN hDlg)
 
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
 	supplementTo12(gatewayId);
 	if (logic_reboot(gatewayId) == ERROR) {
 		GUI_MessageBox("\n重启集中器失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	} else {
-		GUI_MessageBox("\n3秒后重启集中器\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+		GUI_MessageBox("\n5秒后重启集中器\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
 }
 
@@ -1126,6 +1147,111 @@ void rebootCb(WM_MESSAGE* pMsg)
 			break;
 		case GUI_KEY_NUM3://重启
 			userReboot(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
+void userIssueRereadParam(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	U8 mReadCnt[3] = { 0 };//热表补抄次数
+	U8 mReadIntv[7] = { 0 };//热表补抄间隔
+	U8 vReadCnt[3] = { 0 };//阀控补抄次数
+	U8 vReadIntv[7] = { 0 };//阀控补抄间隔
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+	EDIT_GetText(hItem, (char*)mReadCnt, 3);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
+	EDIT_GetText(hItem, (char*)mReadIntv, 7);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);
+	EDIT_GetText(hItem, (char*)vReadCnt, 3);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT4);
+	EDIT_GetText(hItem, (char*)vReadIntv, 7);
+
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR ||\
+		isNumber(mReadCnt, STRLEN(mReadCnt)) == ERROR || \
+		isNumber(mReadIntv, STRLEN(mReadIntv)) == ERROR || \
+		isNumber(vReadCnt, STRLEN(vReadCnt)) == ERROR || \
+		isNumber(vReadIntv, STRLEN(vReadIntv)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+	if (logit_issueRereadParam(gatewayId, mReadCnt, mReadIntv, vReadCnt, vReadIntv) == ERROR) {
+		GUI_MessageBox("\n设置失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		GUI_MessageBox("\n设置成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
+void rereadCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		rereadInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://下发
+				userIssueRereadParam(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM3://下发
+			userIssueRereadParam(hDlg);
 			break;
 		case GUI_KEY_ENTER:
 			break;
@@ -1217,6 +1343,16 @@ void reboot()
 	}
 }
 
+void rereadParam()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetRereadParam, GUI_COUNTOF(widgetRereadParam), &rereadCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
 int dispConfig(){
     int iRet;
     while(1){
@@ -1235,6 +1371,7 @@ int dispConfig(){
 			modifyGPRS();
             break;
         case GUI_ID_BUTTON4://补抄设置
+			rereadParam();
             break;
         case GUI_ID_BUTTON5://基础信息下发
             baseinfoIssue();

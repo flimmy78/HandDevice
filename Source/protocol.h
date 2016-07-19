@@ -78,6 +78,9 @@
 #define GAT_MT_CLT_HB           0x2E//GPRS心跳(0x2E)
 #define GAT_MT_SVR_HB           0x2F//GPRS心跳回应(0x2F)
 
+#define GAT_MT_SVR_REREAD       0x3A//主站更改补抄表相关参数(0x3A)单位ms
+#define GAT_MT_CLT_REREAD       0x3B//集中器响应主站更改补抄表相关参数(0x3B)单位ms
+
 #define GAT_MT_SVR_REBOOT       0x34//集中器重启指令(0x34)
 #define GAT_MT_CLT_REBOOT       0x35//对重启指令的回应(0x35)集中器收到重启指令后, 会先回应上位机, 5秒后重启
 
@@ -116,6 +119,8 @@
 #define PROTO_LEN_ROOMID	2//协议中房间编号长度
 #define PROTO_LEN_RSV		8//保留字段
 
+#pragma pack(push)
+#pragma pack(1)
 //为避免编译器字节对齐, 全部使用单字节结构
 typedef struct {//集中器协议体结构
 	U8 SourceAddr[GATEWAY_SADD_LEN];//源地址, LE=Little Ending
@@ -176,6 +181,15 @@ typedef struct {
 } gateway_params_str;
 typedef gateway_params_str* gateway_params_ptr;
 
+typedef struct {
+	U8	mReadCnt;//热表补抄次数
+	U16 mReadIntv;//热表补抄时间间隔ms
+	U8	vReadCnt;//阀控补抄次数
+	U16 vReadIntv;//阀控补抄时间间隔ms
+}reread_param_str;
+typedef reread_param_str* reread_param_ptr;
+#pragma pack(pop)
+
 extern U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq);
 extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
 extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
@@ -188,5 +202,6 @@ extern U8 protoA_GPRSParam(U8* buf, U16 bufSize, gateway_params_ptr pParam);
 extern U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targetId);
 extern U8 protoW_modifyGPRS(U8* buf, U16* bufSize, U8* gatewayId, gprs_param_ptr pGPRSParam);
 extern U8 protoX_reboot(U8* buf, U16* bufSize, U8* gatewayId);
+extern U8 protoW_rereadParam(U8* buf, U16* bufSize, U8* gatewayId, reread_param_ptr pParam);
 #endif
 

@@ -273,3 +273,22 @@ U8 logic_reboot(U8* gatewayId)
 		return ERROR;
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_REBOOT, 0);
 }
+
+U8 logit_issueRereadParam(U8* gatewayId, U8* mReadCnt, U8* mReadIntv, U8* vReadCnt, U8* vReadIntv)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+	reread_param_str rereadParam = { 0 };
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	rereadParam.mReadCnt	= Lib_atoi((const char*)mReadCnt);
+	rereadParam.mReadIntv	= Lib_atoi((const char*)mReadIntv);
+	rereadParam.vReadCnt	= Lib_atoi((const char*)vReadCnt);
+	rereadParam.vReadIntv	= Lib_atoi((const char*)vReadIntv);
+	protoW_rereadParam(buf, &bufSize, lu8gatewayId, &rereadParam);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+
+	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_REREAD, 0);
+}

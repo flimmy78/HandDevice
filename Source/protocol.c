@@ -114,7 +114,7 @@ U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
 U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize)
 {
 	gateway_protocol_str protoStr;
-
+	U16 MsgLen = GATEWAY_TS_LEN;
 	if (idLen != GATEWAY_OADD_LEN)
 		return ERROR;
 
@@ -125,8 +125,7 @@ U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize)
 
 	db_getCongfig(config_server_id, protoStr.SourceAddr);
 	protoStr.MsgIndex = 0x00;
-	protoStr.MsgLen[0] = GATEWAY_TS_LEN;
-	protoStr.MsgLen[1] = 0x00;
+	memcpy(protoStr.MsgLen, (U8*)&MsgLen, GATEWAY_MSGL_LEN);
 	protoStr.MsgType  = GAT_MT_SVR_TIME_SET;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 	protoStr.pMsgBody = protoStr.ssmmhhDDMMYY;
@@ -142,12 +141,12 @@ U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize)
 U8 protoR_radioReadId(U8* buf, U16* bufSize)
 {
 	gateway_protocol_str protoStr;
+	U16 MsgLen = GATEWAY_TS_LEN;
 
 	memset(protoStr.DestAddr, 0, GATEWAY_OADD_LEN);
 	memset(protoStr.SourceAddr, 0, GATEWAY_SADD_LEN);
 	protoStr.MsgIndex = 0x00;
-	protoStr.MsgLen[0] = GATEWAY_TS_LEN;
-	protoStr.MsgLen[1] = 0x00;
+	memcpy(protoStr.MsgLen, (U8*)&MsgLen, GATEWAY_MSGL_LEN);
 	protoStr.MsgType = GAT_MT_SVR_TIME_SET;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 	protoStr.pMsgBody = protoStr.ssmmhhDDMMYY;
@@ -250,15 +249,14 @@ U8 protoW_tmNode(U8* buf, U16* bufSize, U8* gatewayId, U8 timeCnt, U8* pTimeNode
 {
 	gateway_protocol_str protoStr;
 	U8	bodyBuf[GATEWAY_TIMENODE_MAX_CNT + 1] = { 0 };
-
+	U16 msgLen = GATEWAY_TIMENODE_CNT_LEN + timeCnt*GATEWAY_TIMENODE_LEN;
 	if (gatewayId == NULL)
 		return ERROR;
 
 	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
 	db_getCongfig(config_server_id, protoStr.SourceAddr);
 	protoStr.MsgIndex = 0x00;
-	protoStr.MsgLen[0] = GATEWAY_TIMENODE_CNT_LEN + timeCnt*GATEWAY_TIMENODE_LEN;
-	protoStr.MsgLen[1] = 0x00;
+	memcpy(protoStr.MsgLen, (U8*)&msgLen, GATEWAY_MSGL_LEN);
 	protoStr.MsgType = GAT_MT_SVR_TIME_POINT;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 
@@ -273,12 +271,12 @@ U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targe
 {
 	gateway_protocol_str protoStr;
 	U8	bodyBuf[2*GATEWAY_OADD_LEN] = { 0 };
+	U16 msgLen = GATEWAY_SADD_LEN + GATEWAY_OADD_LEN;
 
 	memcpy(protoStr.DestAddr, lu8originalId, GATEWAY_OADD_LEN);
 	db_getCongfig(config_server_id, protoStr.SourceAddr);
 	protoStr.MsgIndex = 0x00;
-	protoStr.MsgLen[0] = GATEWAY_SADD_LEN + GATEWAY_OADD_LEN;
-	protoStr.MsgLen[1] = 0x00;
+	memcpy(protoStr.MsgLen, (U8*)&msgLen, GATEWAY_MSGL_LEN);
 	protoStr.MsgType = GAT_MT_SVR_MID;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 	memcpy(bodyBuf, protoStr.SourceAddr, GATEWAY_SADD_LEN);
@@ -337,6 +335,22 @@ U8 protoX_reboot(U8* buf, U16* bufSize, U8* gatewayId)
 	protoStr.MsgType = GAT_MT_SVR_REBOOT;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
 	protoStr.pMsgBody = NULL;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
+U8 protoW_rereadParam(U8* buf, U16* bufSize, U8* gatewayId, reread_param_ptr pParam)
+{
+	gateway_protocol_str protoStr = { 0 };
+	U16 msgLen = sizeof(reread_param_str);
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_REREAD;
+	memcpy(protoStr.MsgLen, (U8*)&msgLen, GATEWAY_MSGL_LEN);
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = (U8*)pParam;
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }

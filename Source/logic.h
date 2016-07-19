@@ -15,4 +15,5 @@ extern U8 logic_modifyGatewayId(U8* originalId, U8* targetId);
 extern U8 logic_readGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port);
 extern U8 logic_modifyGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port);
 extern U8 logic_reboot(U8* gatewayId);
+extern U8 logit_issueRereadParam(U8* gatewayId, U8* mReadCnt, U8* mReadIntv, U8* vReadCnt, U8* vReadIntv);
 #endif
