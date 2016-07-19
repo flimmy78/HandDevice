@@ -14,4 +14,5 @@ extern U8 logic_issueTimeNodes(U8* buf, U16 bufSize, U8* gatewayId);
 extern U8 logic_modifyGatewayId(U8* originalId, U8* targetId);
 extern U8 logic_readGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port);
 extern U8 logic_modifyGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port);
+extern U8 logic_reboot(U8* gatewayId);
 #endif

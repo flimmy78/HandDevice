@@ -121,7 +121,7 @@ static const GUI_WIDGET_CREATE_INFO widgetModifyGatewayId[] = {
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetModifyGPRS[] = {
-	{ FRAMEWIN_CreateIndirect, "修改GPRS参数", CONFIG_GPRS_PARASET_FRAME_IDX, 0, 0, 240, 320, 0, 0 },
+	{ FRAMEWIN_CreateIndirect, "修改GPRS参数", CONFIG_GPRS_PARASET_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 15, 12, 80, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "IP", GUI_ID_TEXT0, 30, 45, 50, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "端口号", GUI_ID_TEXT1, 15, 75, 80, 20, 0, 0 },
@@ -133,6 +133,14 @@ static const GUI_WIDGET_CREATE_INFO widgetModifyGPRS[] = {
 	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 80, 45, 130, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", GUI_ID_EDIT2, 130, 75, 80, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", GUI_ID_EDIT3, 130, 105, 80, 20, 0, 0 }
+};
+
+static const GUI_WIDGET_CREATE_INFO widgetReboot[] = {
+	{ FRAMEWIN_CreateIndirect, "重启集中器", CONFIG_REBOOT_GATEWAY_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 15, 20, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 20, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 13, 245, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "重启", GUI_ID_BUTTON2, 130, 245, 80, 20, 0, 0 }
 };
 
 /************************************************************************/
@@ -203,6 +211,7 @@ static void modifyGPRSInit(WM_HWIN hDlg)
 	EDIT_SetMaxLen(hItem, 20);
 }
 
+static void rebootInit(WM_HWIN hDlg){}
 /************************************************************************/
 /* CallBack函数群                                                       */
 /************************************************************************/
@@ -1051,6 +1060,90 @@ void modifyGPRSCb(WM_MESSAGE* pMsg)
 	}
 }
 
+void userReboot(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	supplementTo12(gatewayId);
+	if (logic_reboot(gatewayId) == ERROR) {
+		GUI_MessageBox("\n重启集中器失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		GUI_MessageBox("\n3秒后重启集中器\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
+void rebootCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		rebootInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://重启
+				userReboot(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM3://重启
+			userReboot(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
 /************************************************************************/
 /* 创建界面函数群                                                       */
 /************************************************************************/
@@ -1114,6 +1207,16 @@ void modifyGPRS()
 	}
 }
 
+void reboot()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetReboot, GUI_COUNTOF(widgetReboot), &rebootCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
 int dispConfig(){
     int iRet;
     while(1){
@@ -1140,6 +1243,7 @@ int dispConfig(){
 			modifyOneInfo();
             break;
         case GUI_ID_BUTTON7://重启集中器
+			reboot();
             break;
         case 0:
             return 0;

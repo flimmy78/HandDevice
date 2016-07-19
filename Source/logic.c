@@ -260,3 +260,16 @@ U8 logic_modifyGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port)
 
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_CHIP, 0);
 }
+
+U8 logic_reboot(U8* gatewayId)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	protoX_reboot(buf, &bufSize, lu8gatewayId);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_REBOOT, 0);
+}
