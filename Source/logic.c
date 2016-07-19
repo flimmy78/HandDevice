@@ -292,3 +292,16 @@ U8 logit_issueRereadParam(U8* gatewayId, U8* mReadCnt, U8* mReadIntv, U8* vReadC
 
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_REREAD, 0);
 }
+
+U8 logic_readMeterImmd(U8* gatewayId)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	protoX_readMeterImmd(buf, &bufSize, lu8gatewayId);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_CPY_IMMDT, 0);
+}

@@ -203,5 +203,6 @@ extern U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* l
 extern U8 protoW_modifyGPRS(U8* buf, U16* bufSize, U8* gatewayId, gprs_param_ptr pGPRSParam);
 extern U8 protoX_reboot(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoW_rereadParam(U8* buf, U16* bufSize, U8* gatewayId, reread_param_ptr pParam);
+extern U8 protoX_readMeterImmd(U8* buf, U16* bufSize, U8* gatewayId);
 #endif
 

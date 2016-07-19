@@ -158,6 +158,23 @@ static const GUI_WIDGET_CREATE_INFO widgetRereadParam[] = {
 	{ EDIT_CreateIndirect, "", GUI_ID_EDIT3, 130, 140, 80, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", GUI_ID_EDIT4, 130, 180, 80, 20, 0, 0 }
 };
+
+static const GUI_WIDGET_CREATE_INFO widgetQueryEditInfo[] = {
+	{ FRAMEWIN_CreateIndirect, "信息查询与编辑", INFOQ_EDIT_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ BUTTON_CreateIndirect, "立即抄表", GUI_ID_BUTTON0, 15, 30, 80, 60, 0, 0 },
+	{ BUTTON_CreateIndirect, "历史数据", GUI_ID_BUTTON1, 130, 30, 80, 60, 0, 0 },
+	{ BUTTON_CreateIndirect, "表地址", GUI_ID_BUTTON2, 15, 120, 80, 60, 0, 0 },
+	{ BUTTON_CreateIndirect, "单抄历\n史数据", GUI_ID_BUTTON3, 130, 120, 80, 60, 0, 0 },
+	{ BUTTON_CreateIndirect, "版本查询", GUI_ID_BUTTON4, 15, 210, 80, 60, 0, 0 }
+};
+
+static const GUI_WIDGET_CREATE_INFO widgetReadMeterImmd[] = {
+	{ FRAMEWIN_CreateIndirect, "立即抄表", INFOQ_READ_IMDT_FRAME_IDX, 0, 0, 240, 320, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 15, 30, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 30, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 15, 260, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "立即抄表", GUI_ID_BUTTON2, 132, 260, 80, 20, 0, 0 }
+};
 /************************************************************************/
 /* Init函数群                                                           */
 /************************************************************************/
@@ -229,6 +246,8 @@ static void modifyGPRSInit(WM_HWIN hDlg)
 static void rebootInit(WM_HWIN hDlg){}
 
 static void rereadInit(WM_HWIN hDlg) {}
+
+static void queryEditInfoInit(WM_HWIN hDlg) {}
 /************************************************************************/
 /* CallBack函数群                                                       */
 /************************************************************************/
@@ -1270,6 +1289,146 @@ void rereadCb(WM_MESSAGE* pMsg)
 	}
 }
 
+//参数设置与控制界面的回调函数
+void queryEditInfoCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id, keyId;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		queryEditInfoInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			GUI_EndDialog(hDlg, Id);
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		keyId = ((WM_KEY_INFO*)(pMsg->Data.p))->Key;
+		switch (keyId)
+		{
+		case GUI_KEY_ESCAPE:
+			GUI_EndDialog(hDlg, -1);
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			if (keyId >= GUI_KEY_NUM1 && keyId <= GUI_KEY_NUM8)
+				GUI_EndDialog(hDlg, keyId + (GUI_ID_BUTTON0 - GUI_KEY_NUM0) - 1);//让按键"1"对应button0
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
+void userReadMeterImmd(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+	if (logic_readMeterImmd(gatewayId) == ERROR) {
+		GUI_MessageBox("\n立即抄表失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		GUI_MessageBox("\n立即抄表成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
+void readMeterImmdCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		rereadInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://立即抄表
+				userReadMeterImmd(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM3://立即抄表
+			userReadMeterImmd(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
 /************************************************************************/
 /* 创建界面函数群                                                       */
 /************************************************************************/
@@ -1392,6 +1551,43 @@ int dispConfig(){
     }
 }
 
+void readMeterImmd()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetReadMeterImmd, GUI_COUNTOF(widgetReadMeterImmd), &readMeterImmdCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
+int queryEditInfo()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetQueryEditInfo, GUI_COUNTOF(widgetQueryEditInfo), &queryEditInfoCb, WM_HBKWIN, 0, 0);
+		switch (iRet) {
+		case GUI_ID_BUTTON0://立即抄表
+			readMeterImmd();
+			break;
+		case GUI_ID_BUTTON1://查询历史数据
+			break;
+		case GUI_ID_BUTTON2://读取表信息
+			break;
+		case GUI_ID_BUTTON3://读取一个计量点的历史数据
+			break;
+		case GUI_ID_BUTTON4://软硬件版本查询
+			break;
+		case 0:
+			return 0;
+		case -1:
+			return -1;
+		default:
+			break;
+		}
+	}
+}
+
 int maingui( void ){
     int iRet;
 
@@ -1402,6 +1598,7 @@ int maingui( void ){
             dispConfig();
 			break;
         case GUI_ID_BUTTON1:
+			queryEditInfo();
 			break;
         case GUI_ID_BUTTON2:
 			break;

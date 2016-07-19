@@ -354,3 +354,17 @@ U8 protoW_rereadParam(U8* buf, U16* bufSize, U8* gatewayId, reread_param_ptr pPa
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }
+
+U8 protoX_readMeterImmd(U8* buf, U16* bufSize, U8* gatewayId)
+{
+	gateway_protocol_str protoStr = { 0 };
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_CPY_IMMDT;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = NULL;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
