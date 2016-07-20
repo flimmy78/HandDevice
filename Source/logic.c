@@ -371,3 +371,16 @@ resultErr:
 	closeDBF();
 	return ERROR;
 }
+
+logic_readNextTempInfo(db_meterinfo_ptr pDbInfo)
+{
+	if (openDBF(DB_TMP_BASEINFO) == ERROR)
+		return ERROR;
+	if (db_getNextTempMeterInfo(pDbInfo) == ERROR) {
+		return ERROR;
+	}
+	if (closeDBF() == ERROR)
+		return ERROR;
+
+	return NO_ERR;
+}

@@ -1624,9 +1624,39 @@ void userReadBaseinfo(WM_HWIN hDlg)
 	}
 }
 
-void userReadNext(WM_HWIN hDlg)
+void userReadNextBaseinfo(WM_HWIN hDlg)
 {
-
+	WM_HWIN hItem;
+	db_meterinfo_str dbBaseInfoStr = { 0 };
+	if (logic_readNextTempInfo(&dbBaseInfoStr) == ERROR) {
+		GUI_MessageBox("\n读取下一个失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROWID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.rowId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.meterAddr);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VENDORID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.vendorId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_PROTOVER);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.protoVer);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERTYPE);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.meterType);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CHANNEL);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.channel);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEPROTOVER);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.valveProtoVer);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.valveAddr);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.controlPanelAddr);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_BUILDID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.buildId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_UNITID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.unitId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROOMID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.roomId);
+	}
 }
 
 void ReadBaseInfoCb(WM_MESSAGE* pMsg)
@@ -1660,7 +1690,7 @@ void ReadBaseInfoCb(WM_MESSAGE* pMsg)
 				GUI_EndDialog(hDlg, WM_USER_EXIT);
 				break;
 			case GUI_ID_BUTTON3://下一个
-				userReadNext(hDlg);
+				userReadNextBaseinfo(hDlg);
 				break;
 			default:
 				break;
@@ -1685,7 +1715,7 @@ void ReadBaseInfoCb(WM_MESSAGE* pMsg)
 			GUI_EndDialog(hDlg, WM_USER_EXIT);
 			break;
 		case GUI_KEY_NUM4://下一个
-			userReadNext(hDlg);
+			userReadNextBaseinfo(hDlg);
 			break;
 		case GUI_KEY_ENTER:
 			break;

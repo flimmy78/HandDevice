@@ -296,3 +296,18 @@ U8 db_getOneTempMeterInfo(U16 rowId, db_meterinfo_ptr pDbInfo)
 	DBF_GETBASEFIELD(pDbInfo)
 	return NO_ERR;
 }
+
+U8 db_getNextTempMeterInfo(db_meterinfo_ptr pDbInfo)
+{
+	S32 iRet = 0;
+	S32 totalRow = DbfRecordCount(pDbf);
+	iRet = DbfGetCurrentRecord(pDbf);
+	if (iRet >=0) {
+		iRet = ((iRet + 1) % totalRow);//跳到下一行, 若到底部则归零
+		if (db_getOneTempMeterInfo(iRet, pDbInfo) == ERROR)
+			return ERROR;
+		return NO_ERR;
+	} else {
+		return ERROR;
+	}
+}

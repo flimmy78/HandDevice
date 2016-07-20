@@ -19,4 +19,5 @@ extern U8 logit_issueRereadParam(U8* gatewayId, U8* mReadCnt, U8* mReadIntv, U8*
 extern U8 logic_readMeterImmd(U8* gatewayId);
 extern U8 logic_readVersion(U8* gatewayId, U8* hardVer, U8* softVer);
 extern U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo);
+extern logic_readNextTempInfo(db_meterinfo_ptr pDbInfo);
 #endif

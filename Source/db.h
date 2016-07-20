@@ -117,4 +117,5 @@ extern U8 db_modifyGatewayId(U8* gatewayId);
 extern U8 reCreateBaseInfoDBF(void);
 extern U8 db_storeTempBaseInfo(meter_row_ptr pProtoInfo, U16 infoCnt, U8* gatewayId);
 extern U8 db_getOneTempMeterInfo(U16 rowId, db_meterinfo_ptr pDbInfo);
+extern U8 db_getNextTempMeterInfo(db_meterinfo_ptr pDbInfo);
 #endif // DB_H
