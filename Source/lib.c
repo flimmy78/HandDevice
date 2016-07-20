@@ -231,6 +231,42 @@ void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo)
 	memset(pProtoInfo->reserved, 0, PROTO_LEN_RSV);
 }
 
+void protoBinToAscii(meter_row_ptr pProtoInfo, db_meterinfo_ptr pDbInfo, U8* gatewayId)
+{
+	U16 i = 0;
+
+	memcpy((U8*)&i ,pProtoInfo->rowId, 2);
+	sprintf((char*)pDbInfo->rowId, "%d", i);
+
+	sprintf((char*)pDbInfo->meterAddr, "%02X%02X%02X%02X%02X%02X%02X", \
+		pProtoInfo->meterAddr[6], pProtoInfo->meterAddr[5], \
+		pProtoInfo->meterAddr[4], pProtoInfo->meterAddr[3], \
+		pProtoInfo->meterAddr[2], pProtoInfo->meterAddr[1], \
+		pProtoInfo->meterAddr[0]);
+	sprintf((char*)pDbInfo->vendorId, "%d", pProtoInfo->vendorId);
+	sprintf((char*)pDbInfo->protoVer, "%d", pProtoInfo->protoVer);
+	sprintf((char*)pDbInfo->meterType, "%02X", pProtoInfo->meterType);
+	sprintf((char*)pDbInfo->channel, "%d", pProtoInfo->channel);
+	sprintf((char*)pDbInfo->valveProtoVer, "%d", pProtoInfo->valveProtoVer);
+	sprintf((char*)pDbInfo->valveAddr, "%02X%02X%02X%02X%02X%02X%02X", \
+		pProtoInfo->valveAddr[6], pProtoInfo->valveAddr[5], \
+		pProtoInfo->valveAddr[4], pProtoInfo->valveAddr[3], \
+		pProtoInfo->valveAddr[2], pProtoInfo->valveAddr[1], \
+		pProtoInfo->valveAddr[0]);
+	sprintf((char*)pDbInfo->controlPanelAddr, "%02X%02X%02X%02X%02X%02X%02X", \
+		pProtoInfo->controlPanelAddr[6], pProtoInfo->controlPanelAddr[5], \
+		pProtoInfo->controlPanelAddr[4], pProtoInfo->controlPanelAddr[3], \
+		pProtoInfo->controlPanelAddr[2], pProtoInfo->controlPanelAddr[1], \
+		pProtoInfo->controlPanelAddr[0]);
+	sprintf((char*)pDbInfo->buildId, "%d", pProtoInfo->buildId);
+	sprintf((char*)pDbInfo->unitId, "%d", pProtoInfo->unitId);
+	memcpy((U8*)&i, pProtoInfo->roomId, 2);
+	sprintf((char*)pDbInfo->roomId, "%d", i);
+	sprintf((char*)pDbInfo->gatewayId, "%02X%02X%02X%02X%02X%02X", \
+		gatewayId[5], gatewayId[4], gatewayId[3], \
+		gatewayId[2], gatewayId[1], gatewayId[0]);
+}
+
 /*
 ** 计算时间字符串合法与否
 ** 字符串模式匹配: "\d[1-2](\:\d[1-2])?"

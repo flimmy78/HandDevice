@@ -368,3 +368,52 @@ U8 protoX_readMeterImmd(U8* buf, U16* bufSize, U8* gatewayId)
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }
+
+U8 protoR_readBaseInfo(U8* buf, U16* bufSize, U8* gatewayId)
+{
+	gateway_protocol_str protoStr = { 0 };
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_RD_ALLINFO;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = NULL;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
+U8 protoA_readBaseInfo(U8* buf, U16* bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo)
+{
+	protocol_head_str frameStr = { 0 };
+	U8* pMsgBody = NULL;
+	U8 i = 0;
+
+	memcpy((U8*)&frameStr, buf, sizeof(protocol_head_str));//复制消息头
+	pMsgBody = buf + sizeof(protocol_head_str);//指向消息体头部
+	memcpy((U8*)pBodyHead, pMsgBody, sizeof(base_info_head_str));
+	if (*infoCnt < pBodyHead->rowCnt)
+		return ERROR;
+	*infoCnt = pBodyHead->rowCnt;
+	pMsgBody += sizeof(base_info_head_str);//指向消息体
+	for (i = 0; i < *infoCnt ; i++)
+		memcpy((U8*)(pInfo+i), pMsgBody+i* sizeof(meter_row_str), sizeof(meter_row_str));
+	return NO_ERR;
+}
+
+U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq)
+{
+	gateway_protocol_str protoStr = { 0 };
+	U16 msgLen = 1;
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_1OF_MFRM;
+	memcpy(protoStr.MsgLen, (U8*)&msgLen, GATEWAY_MSGL_LEN);
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = seq;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+

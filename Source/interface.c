@@ -169,11 +169,58 @@ static const GUI_WIDGET_CREATE_INFO widgetQueryEditInfo[] = {
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetReadMeterImmd[] = {
-	{ FRAMEWIN_CreateIndirect, "立即抄表", INFOQ_READ_IMDT_FRAME_IDX, 0, 0, 240, 320, 0, 0 },
+	{ FRAMEWIN_CreateIndirect, "立即抄表", INFOQ_READ_IMDT_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 15, 30, 80, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 30, 80, 20, 0, 0 },
 	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 15, 260, 80, 20, 0, 0 },
 	{ BUTTON_CreateIndirect, "立即抄表", GUI_ID_BUTTON2, 132, 260, 80, 20, 0, 0 }
+};
+
+static const GUI_WIDGET_CREATE_INFO widgetQueryVersion[] = {
+	{ FRAMEWIN_CreateIndirect, "版本查询", INFOQ_VER_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 15, 30, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 15, 240, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "查询", GUI_ID_BUTTON2, 134, 240, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 30, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "软件版本", GUI_ID_TEXT0, 15, 85, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "硬件版本", GUI_ID_TEXT1, 15, 135, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 130, 85, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT2, 130, 135, 80, 20, 0, 0 }
+};
+
+//读取基础信息
+static const GUI_WIDGET_CREATE_INFO widgetReadBaseInfo[] = {
+	{ FRAMEWIN_CreateIndirect, "读取基础信息", CONFIG_BASE_INFO_MODIFY_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 95, 4, 66, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器", GUI_ID_BUTTON0, 4, 3, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "更新到本地", GUI_ID_BUTTON4, 4, 34, 130, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "读取", GUI_ID_BUTTON1, 172, 5, 48, 45, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON2, 4, 265, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "下一个", GUI_ID_BUTTON3, 141, 265, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "计量点", TEXT_MODIFY_1INFO_ROWID, 4, 67, 48, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_ROWID, 65, 66, 53, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "表号", TEXT_MODIFY_1INFO_METERADDR, 4, 93, 46, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_METERADDR, 65, 90, 145, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "厂商", TEXT_MODIFY_1INFO_VENDORID, 4, 115, 48, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VENDORID, 65, 114, 33, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "版本", TEXT_MODIFY_1INFO_PROTOVER, 128, 65, 42, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_PROTOVER, 181, 64, 30, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "表类型", TEXT_MODIFY_1INFO_METERTYPE, 109, 114, 50, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_METERTYPE, 180, 113, 29, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "通道", TEXT_MODIFY_1INFO_CHANNEL, 4, 141, 49, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_CHANNEL, 65, 140, 34, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀控版本", TEXT_MODIFY_1INFO_VALVEPROTOVER, 113, 140, 65, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VALVEPROTOVER, 180, 140, 30, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀控", TEXT_MODIFY_1INFO_VALVEADDR, 4, 166, 54, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_VALVEADDR, 65, 164, 145, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "面板", TEXT_MODIFY_1INFO_CONTROLPANELADDR, 4, 188, 36, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_CONTROLPANELADDR, 65, 190, 145, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "楼栋", TEXT_MODIFY_1INFO_BUILDID, 4, 211, 36, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_BUILDID, 65, 212, 42, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "单元", TEXT_MODIFY_1INFO_UNITID, 119, 214, 36, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_UNITID, 162, 214, 48, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "房间", TEXT_MODIFY_1INFO_ROOMID, 4, 238, 42, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_ROOMID, 65, 235, 53, 20, 0, 0 }
 };
 /************************************************************************/
 /* Init函数群                                                           */
@@ -248,6 +295,15 @@ static void rebootInit(WM_HWIN hDlg){}
 static void rereadInit(WM_HWIN hDlg) {}
 
 static void queryEditInfoInit(WM_HWIN hDlg) {}
+
+static void queryVersionInit(WM_HWIN hDlg) {}
+
+static void queryBaseInfoInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_BUTTON4);
+	BUTTON_SetBkColor(hItem, BUTTON_CI_UNPRESSED, GUI_RED);
+}
 /************************************************************************/
 /* CallBack函数群                                                       */
 /************************************************************************/
@@ -1429,6 +1485,225 @@ void readMeterImmdCb(WM_MESSAGE* pMsg)
 	}
 }
 
+void userQueryVersion(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	U8 softVersion[10] = { 0 };//热表补抄次数
+	U8 hardVersion[10] = { 0 };//热表补抄间隔
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+
+	if (logic_readVersion(gatewayId, hardVersion, softVersion) == ERROR) {
+		GUI_MessageBox("\n查询版本失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+		EDIT_SetText(hItem, (char*)softVersion);
+		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
+		EDIT_SetText(hItem, (char*)hardVersion);
+	}
+}
+
+void queryVersionCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		queryVersionInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://查询版本
+				userQueryVersion(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM3://查询版本
+			userQueryVersion(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
+void userReadBaseinfo(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	db_meterinfo_str dbBaseInfoStr = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+
+	if (logic_readBaseInfo(gatewayId, &dbBaseInfoStr) == ERROR) {
+		GUI_MessageBox("\n读取表地址失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROWID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.rowId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.meterAddr);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VENDORID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.vendorId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_PROTOVER);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.protoVer);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERTYPE);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.meterType);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CHANNEL);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.channel);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEPROTOVER);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.valveProtoVer);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.valveAddr);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.controlPanelAddr);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_BUILDID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.buildId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_UNITID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.unitId);
+		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROOMID);
+		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.roomId);
+	}
+}
+
+void userReadNext(WM_HWIN hDlg)
+{
+
+}
+
+void ReadBaseInfoCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		queryBaseInfoInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://读取基础信息
+				userReadBaseinfo(hDlg);
+				break;
+			case GUI_ID_BUTTON2://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON3://下一个
+				userReadNext(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://读取基础信息
+			userReadBaseinfo(hDlg);
+			break;
+		case GUI_KEY_NUM3://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM4://下一个
+			userReadNext(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
 /************************************************************************/
 /* 创建界面函数群                                                       */
 /************************************************************************/
@@ -1561,6 +1836,26 @@ void readMeterImmd()
 	}
 }
 
+void queryVersion()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetQueryVersion, GUI_COUNTOF(widgetQueryVersion), &queryVersionCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
+void queryBaseInfo()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetReadBaseInfo, GUI_COUNTOF(widgetReadBaseInfo), &ReadBaseInfoCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
 int queryEditInfo()
 {
 	int iRet;
@@ -1573,10 +1868,12 @@ int queryEditInfo()
 		case GUI_ID_BUTTON1://查询历史数据
 			break;
 		case GUI_ID_BUTTON2://读取表信息
+			queryBaseInfo();
 			break;
 		case GUI_ID_BUTTON3://读取一个计量点的历史数据
 			break;
 		case GUI_ID_BUTTON4://软硬件版本查询
+			queryVersion();
 			break;
 		case 0:
 			return 0;

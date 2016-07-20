@@ -15,6 +15,25 @@ static sUART gComConfig;//com config
 static U8 gu8svrAdd[GATEWAY_SADD_LEN] = {0};//主站编号, 反序的
 static U8 gu8gwyAdd[GATEWAY_OADD_LEN] = {0};//集中器编号, 反序的
 
+S8* fieldname[] = { "id", "maddr", "venderid", "protover", "mtype",\
+					"channel", "vproto", "vaddr", "caddr", "build", \
+					"unit", "room", "gateway" };
+U8 fieldsize[] = {
+	DB_MINFO_LEN_ROWID,
+	DB_MINFO_LEN_METERADDR,
+	DB_MINFO_LEN_VENDORID,
+	DB_MINFO_LEN_PROTOVER,
+	DB_MINFO_LEN_METERTYPE,
+	DB_MINFO_LEN_CHANNEL,
+	DB_MINFO_LEN_VALVEPROTOVER,
+	DB_MINFO_LEN_VALVEADDR,
+	DB_MINFO_LEN_CTLPANELADDR,
+	DB_MINFO_LEN_BUILDID,
+	DB_MINFO_LEN_UNITID,
+	DB_MINFO_LEN_ROOMID,
+	DB_MINFO_LEN_GATEWAYID
+};
+
 static U8 gu8hasInitConfig = CONFIG_NOT_INITTED;
 U8 db_hasInitConfig()
 {
@@ -179,7 +198,7 @@ U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* last
 		if (DbfFieldGet(minfo_field_gatewayId, (char*)lu8gatewayBuf, pDbf) < 0)
 			return ERROR;
 		if (strcmp((const char*)lu8gatewayBuf, (const char*)gatewayId) == 0) {
-			DBF_GETFIELD()
+			DBF_GETBASEFIELD(pInfo)
 			actualCnt++;
 			pInfo++;
 		}
@@ -218,7 +237,7 @@ U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo)
 			DbfFieldGet(minfo_field_rowId, (char*)lu8MeterId, pDbf);
 			lu16MeterId = Lib_atoi((const char*)lu8MeterId);
 			if (meterId == lu16MeterId) {
-				DBF_GETFIELD()
+				DBF_GETBASEFIELD(pInfo)
 				return NO_ERR;
 			}
 		}
@@ -239,5 +258,41 @@ U8 db_modifyGatewayId(U8* gatewayId)
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, gu8gwyAdd, GATEWAY_OADD_LEN);
 	if (closeDBF() == ERROR)
 		return ERROR;
+	return NO_ERR;
+}
+
+U8 reCreateBaseInfoDBF()
+{
+	sFILE* fp = NULL;
+
+	fp = FileOpen(DB_TMP_BASEINFO, "war");
+	if (fp != NULL) {
+		FileDelete(fp);
+		FileClose(fp);
+	}
+	PRINT_LINE()
+	if (DbfCreate(DB_TMP_BASEINFO, DB_MINFO_FIELD_CNT, fieldname, fieldsize) != DBF_OPER_OK)
+		return ERROR;
+	PRINT_LINE()
+	return NO_ERR;
+}
+
+U8 db_storeTempBaseInfo(meter_row_ptr pProtoInfo, U16 infoCnt, U8* gatewayId)
+{
+	U16 i = 0;
+	db_meterinfo_str dbInfoStr = { 0 };
+
+	for (i = 0; i < infoCnt ; i++) {
+		DbfRecordAppend(pDbf);
+		protoBinToAscii(pProtoInfo+i, &dbInfoStr, gatewayId);
+		DBF_SETBASEFIELD((&dbInfoStr))
+	}
+	return NO_ERR;
+}
+
+U8 db_getOneTempMeterInfo(U16 rowId, db_meterinfo_ptr pDbInfo)
+{
+	DbfGotoRecord(rowId, pDbf);
+	DBF_GETBASEFIELD(pDbInfo)
 	return NO_ERR;
 }

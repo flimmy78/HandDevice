@@ -37,6 +37,7 @@ extern void inverseArray(U8* s, U16 sLen);
 extern void trimZero(U8* buf, U8 bufSize);
 extern void supplementTo12(U8* data);
 extern void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo);
+extern void protoBinToAscii(meter_row_ptr pProtoInfo, db_meterinfo_ptr pDbInfo, U8* gatewayId);
 extern U8 timeLegal(U8* timeStr, U16 strLen, em_time_state* pState);
 extern U8 addTime(time_node_ptr pT1, time_node_ptr pT2, time_node_ptr pRes);
 extern U8 timeStrToBin(U8* timeStr, U8 timeSize, time_node_ptr pRes);

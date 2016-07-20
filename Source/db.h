@@ -3,12 +3,14 @@
 
 #include "user.h"
 #include "basedef.h"
+#include "protocol.h"
 
 #define CONFIG_INITTED		0x01//手持机参数已经被初始化
 #define CONFIG_NOT_INITTED	0x00//手持机参数还没被初始化
 
 #define DB_CONFIG_NAME		"手持机配置.DBF"
 #define DB_BASEINFO_NAME	"表地址信息.DBF"
+#define DB_TMP_BASEINFO		"tmp_baseinfo.DBF"//临时存储从集中器读取的表地址信息
 
 #define CONFIG_FILED_CNT		2
 #define CONFIG_FIELD_NAME_ID	"f_id"
@@ -30,18 +32,37 @@
 #define DB_MINFO_LEN_ROOMID			4	//数据库中房间号长度
 #define DB_MINFO_LEN_GATEWAYID		12	//集中器编号长度
 
-#define DBF_GETFIELD()	if(DbfFieldGet(minfo_field_rowId, (char*)pInfo->rowId, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_meterAddr, (char*)pInfo->meterAddr, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_vendorId, (char*)pInfo->vendorId, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_protoVer, (char*)pInfo->protoVer, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_meterType, (char*)pInfo->meterType, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_channel, (char*)pInfo->channel, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_valveProtoVer, (char*)pInfo->valveProtoVer, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_valveAddr, (char*)pInfo->valveAddr, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_controlPanelAddr, (char*)pInfo->controlPanelAddr, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_buildId, (char*)pInfo->buildId, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_unitId, (char*)pInfo->unitId, pDbf) < 0) return ERROR;\
-						if(DbfFieldGet(minfo_field_roomId, (char*)pInfo->roomId, pDbf) < 0) return ERROR;
+#define DB_MINFO_FIELD_CNT			13	//表基础信息DBF的字段数量
+
+#define DBF_GETBASEFIELD(pInfo)	\
+if(DbfFieldGet(minfo_field_rowId, (char*)pInfo->rowId, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_meterAddr, (char*)pInfo->meterAddr, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_vendorId, (char*)pInfo->vendorId, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_protoVer, (char*)pInfo->protoVer, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_meterType, (char*)pInfo->meterType, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_channel, (char*)pInfo->channel, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_valveProtoVer, (char*)pInfo->valveProtoVer, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_valveAddr, (char*)pInfo->valveAddr, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_controlPanelAddr, (char*)pInfo->controlPanelAddr, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_buildId, (char*)pInfo->buildId, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_unitId, (char*)pInfo->unitId, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_roomId, (char*)pInfo->roomId, pDbf) < 0) return ERROR;
+
+#define DBF_SETBASEFIELD(pInfo) \
+if(DbfFieldSet(minfo_field_rowId, (char*)pInfo->rowId, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_meterAddr, (char*)pInfo->meterAddr, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_vendorId, (char*)pInfo->vendorId, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_protoVer, (char*)pInfo->protoVer, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_meterType, (char*)pInfo->meterType, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_channel, (char*)pInfo->channel, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_valveProtoVer, (char*)pInfo->valveProtoVer, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_valveAddr, (char*)pInfo->valveAddr, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_controlPanelAddr, (char*)pInfo->controlPanelAddr, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_buildId, (char*)pInfo->buildId, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_unitId, (char*)pInfo->unitId, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_roomId, (char*)pInfo->roomId, pDbf) < 0) return ERROR;\
+if(DbfFieldSet(minfo_field_gatewayId, (char*)pInfo->gatewayId, pDbf) < 0) return ERROR;
+
 
 typedef enum
 {
@@ -93,4 +114,7 @@ extern U8 db_getMatchCnt(U8* gatewayId, S32* cnt);
 extern U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* lastRecId);
 extern U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo);
 extern U8 db_modifyGatewayId(U8* gatewayId);
+extern U8 reCreateBaseInfoDBF(void);
+extern U8 db_storeTempBaseInfo(meter_row_ptr pProtoInfo, U16 infoCnt, U8* gatewayId);
+extern U8 db_getOneTempMeterInfo(U16 rowId, db_meterinfo_ptr pDbInfo);
 #endif // DB_H

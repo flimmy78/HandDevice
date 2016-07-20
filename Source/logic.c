@@ -305,3 +305,69 @@ U8 logic_readMeterImmd(U8* gatewayId)
 		return ERROR;
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_CPY_IMMDT, 0);
 }
+
+U8 logic_readVersion(U8* gatewayId, U8* hardVer, U8* softVer)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+	gateway_params_str paramStr = { 0 };
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	protoR_GPRSParam(buf, &bufSize, lu8gatewayId);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	protoA_GPRSParam(buf, bufSize, &paramStr);
+	sprintf((char*)hardVer, "%02d.%02d", paramStr.HardwareVer[1], paramStr.HardwareVer[0]);
+	sprintf((char*)softVer, "%02d.%02d", paramStr.SoftVer[1], paramStr.SoftVer[0]);
+	return NO_ERR;
+}
+
+U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+	base_info_head_str BodyHeadStr;
+	meter_row_str baseInfoStr[48] = { { 0 } };
+	U16 infoCnt = sizeof(baseInfoStr) / sizeof(meter_row_str);
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	protoR_readBaseInfo(buf, &bufSize, lu8gatewayId);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	if (protoA_readBaseInfo(buf, &bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR) {
+		Lib_printf("[%s][%s][%d]protoA_readBaseInfo fail\n", FILE_LINE);
+		return ERROR;
+	}
+	if (reCreateBaseInfoDBF() == ERROR) {
+		Lib_printf("[%s][%s][%d]reCreateBaseInfoDBF fail\n", FILE_LINE);
+		return ERROR;
+	}
+	if (openDBF(DB_TMP_BASEINFO) == ERROR)
+		return ERROR;
+	if (db_storeTempBaseInfo(&baseInfoStr[0], infoCnt, lu8gatewayId) == ERROR)
+		goto resultErr;
+	PRINT_LINE()
+	while (BodyHeadStr.succeed == 0x01)	{
+		BodyHeadStr.seq++;
+		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
+		if (logic_sendAndRead(buf, &bufSize) == ERROR)
+			goto resultErr;
+		if (protoA_readBaseInfo(buf, &bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR)
+			goto resultErr;
+		Lib_printf("BodyHeadStr.seq: %d\n", BodyHeadStr.seq);
+		if (db_storeTempBaseInfo(&baseInfoStr[0], infoCnt, lu8gatewayId) == ERROR)
+			goto resultErr;
+	}
+	PRINT_LINE()
+	if (db_getOneTempMeterInfo(0, pDbInfo) == ERROR) {
+		return ERROR;
+	}
+	if (closeDBF() == ERROR)
+		goto resultErr;
+	return NO_ERR;
+resultErr:
+	closeDBF();
+	return ERROR;
+}

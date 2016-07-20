@@ -27,7 +27,7 @@
                             +GATEWAY_MSGL_LEN+GATEWAY_MT_LEN+GATEWAY_TS_LEN)
 #define GATEWAY_RETID_OFFSET	(GATEWAY_PREFIX_CNT+GATEWAY_START_CNT+GATEWAY_VER_LEN)//offset that gatewayId in return frame
 #define GATEWAY_MAIN_FRAME_LEN	30	//集中器协议中 排除消息体部分的帧长度(包括消息体校验)
-#define GATEWAY_FRAME_MAX_LEN	1024//每帧协议最大长度
+#define GATEWAY_FRAME_MAX_LEN	2048//每帧协议最大长度
 #define GATEWAY_METERINFO_LEN	40//仪表信息的长度
 #define GATEWAY_MAX_METERINFO_CNT	24//集中器协议中每行最大下发多少行数据
 #define GATEWAY_BODY_OFFSET	27//消息体偏移量
@@ -39,6 +39,7 @@
 #define GATEWAY_TIMENODE_LEN		2//每个抄表时间点的长度
 #define GATEWAY_TIMENODE_MAX_CNT	24//现在ARM7最多支持多少个抄表时间点
 
+#define GATEWAY_MSGTYPE_OFFSET		
 #define GATEWAY_ASWCODE_OFFSET		19//集中器返回帧中应答码的偏移量
 #define GATEWAY_STATCODE_OFFSET		27//集中器返回帧中成功状态码的偏移量
 #define GATEWAY_SEQCODE_OFFSET		28//集中器返回帧中服务器发送的序列码的偏移量
@@ -188,6 +189,29 @@ typedef struct {
 	U16 vReadIntv;//阀控补抄时间间隔ms
 }reread_param_str;
 typedef reread_param_str* reread_param_ptr;
+
+typedef struct {//消息头部结构体
+	U8 prefix[GATEWAY_PREFIX_CNT];//前导符FB
+	U8 start;			//开始符7B
+	U8 Ver;				//协议版本号
+	U8 SourceAddr[GATEWAY_SADD_LEN];	//源地址, 发送方地址
+	U8 DestAddr[GATEWAY_OADD_LEN];		//目的地址, 接收方地址
+	U8 MsgID;			//消息序列
+	U16 MsgLength;		//消息体长度
+	U8 MsgType;			//消息类型
+	U8 TimeSmybol[GATEWAY_TS_LEN];//TS时间标签
+	U8 HeadCheck;		//消息头校验
+} protocol_head_str;
+typedef protocol_head_str* protocol_type_ptr;
+
+typedef struct {
+	U8 succeed;//是否有后继帧, 0-没有, 1-有, 10-异常
+	U8 seq;		//本包序号
+	U8 meterType;//仪表类型, 固定为0x20
+	U8 rowCnt;//本帧包含的表地址数量
+} base_info_head_str;
+typedef base_info_head_str* base_info_head_ptr;
+
 #pragma pack(pop)
 
 extern U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq);
@@ -204,5 +228,8 @@ extern U8 protoW_modifyGPRS(U8* buf, U16* bufSize, U8* gatewayId, gprs_param_ptr
 extern U8 protoX_reboot(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoW_rereadParam(U8* buf, U16* bufSize, U8* gatewayId, reread_param_ptr pParam);
 extern U8 protoX_readMeterImmd(U8* buf, U16* bufSize, U8* gatewayId);
+extern U8 protoR_readBaseInfo(U8* buf, U16* bufSize, U8* gatewayId);
+extern U8 protoA_readBaseInfo(U8* buf, U16* bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo);
+extern U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq);
 #endif
 
