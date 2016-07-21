@@ -344,7 +344,7 @@ U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId)
 	totalRow = DbfRecordCount(pDbf);
 	if (closeDBF() == ERROR)
 		return ERROR;
-	while (lastRecId != (totalRow-1)) {
+	while (lastRecId != (totalRow-1)) {//每次只复制30行数据, 以免占用太多内存
 		if (openDBF(DB_TMP_BASEINFO) == ERROR)
 			return ERROR;
 		db_getMeterInfo(gatewayId, &dbBaseInfo[0], &rowCnt, &lastRecId);

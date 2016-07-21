@@ -127,7 +127,7 @@ typedef struct {//集中器协议体结构
 	U8 SourceAddr[GATEWAY_SADD_LEN];//源地址, LE=Little Ending
 	U8 DestAddr[GATEWAY_OADD_LEN];  //目标地址, LE
 	U8 MsgIndex;                    //消息序列号
-	U8 MsgLen[GATEWAY_MSGL_LEN];    //消息体长度, LE
+	U16 MsgLen;						//消息体长度, LE
 	U8 MsgType;                     //消息类型
 	U8 ssmmhhDDMMYY[GATEWAY_TS_LEN];//秒分时日月年, LE
 	U8 *pMsgBody;                    //消息体指针
@@ -214,6 +214,8 @@ typedef base_info_head_str* base_info_head_ptr;
 
 #pragma pack(pop)
 
+extern U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
+		U8 MsgIndex, U8 MsgType, U8 MsgLen, U8* pMsgBody);
 extern U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq);
 extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
 extern U8 protoR_radioReadId(U8* buf, U16* bufSize);

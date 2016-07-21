@@ -99,24 +99,19 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 	if (db_getMatchCnt(gatewayId, &totalRowCnt) == ERROR) {
 		return ERROR;
 	}
-	if (db_gotoRecord0() == ERROR) {
-		return ERROR;
-	}
 
 	totalFrames = (totalRowCnt / GATEWAY_MAX_METERINFO_CNT) + ((totalRowCnt%GATEWAY_MAX_METERINFO_CNT) ? 1 : 0);
 	if (db_gotoRecord0() == ERROR) {
 		return ERROR;
 	}
 
-	Lib_printf("totalFrames: %d\n", totalFrames);
 	for (currentFrame = 0, lastRecId = 0, alreadySendRows = 0;currentFrame < totalFrames;\
 		currentFrame++, alreadySendRows += rowCntPerFrame) {
 		leftRows = totalRowCnt - alreadySendRows;
 		rowCntPerFrame = leftRows>GATEWAY_MAX_METERINFO_CNT ? GATEWAY_MAX_METERINFO_CNT: leftRows;
-		Lib_printf("rowCntPerFrame: %d\n", rowCntPerFrame);
 		if (db_getMeterInfo(gatewayId, pDbInfo, &rowCntPerFrame, &lastRecId) == ERROR)
 			return ERROR;
-		
+
 		//dbInfo to protoInfo
 		for (j = 0;j < rowCntPerFrame;j++) {
 			asciiToProtoBin(pDbInfo + j, pProtoInfo + j);
@@ -133,7 +128,7 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 		//return analyse result, if result is fail, return to user
 		if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_SEND_MINFO, pBodyHead->seq) == ERROR)
 			return ERROR;
-		
+
 		//init dbInfo and protoInfo to 0
 		memset(pDbInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(db_meterinfo_str));
 		memset(pProtoInfo, 0, GATEWAY_MAX_METERINFO_CNT*sizeof(meter_row_str));
