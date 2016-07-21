@@ -54,22 +54,6 @@
 
 #define LISTVIEW_COL_ITEM	0//修改单行基础信息时, 表头列索引
 #define LISTVIEW_COL_VALUE	1//修改单行基础信息时, 值列索引
-#define LISTVIEW_TO_DBSTR(db_field, db_field_len, db_field_idx, err_pos)		memset(l8buf, 0, EDIT_MAX_LEN); \
-		LISTVIEW_GetItemText(hObjListview, LISTVIEW_COL_VALUE, db_field_idx, l8buf, EDIT_MAX_LEN); \
-		lu16strLen = strlen(l8buf); \
-		trimSpace((U8*)l8buf, lu16strLen); \
-		lu16strLen = strlen(l8buf); \
-		sprintf(msgBuf, "\n请在%s处输入数字!\n", (err_pos)); \
-		if (isNumber((U8*)l8buf, lu16strLen)) {\
-			GUI_MessageBox(msgBuf, "失败", GUI_MESSAGEBOX_CF_MODAL); \
-			return ERROR; \
-		}\
-		sprintf(msgBuf, "\n%s过长!\n", (err_pos)); \
-		if (lu16strLen > DB_MINFO_LEN_METERADDR) {\
-			GUI_MessageBox(msgBuf, "失败", GUI_MESSAGEBOX_CF_MODAL); \
-			return ERROR; \
-		}\
-		memcpy(pInfo->db_field, (U8*)l8buf, (db_field_len));
 
 extern int maingui(void);
 

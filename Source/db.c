@@ -184,6 +184,8 @@ U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* last
 	U8	lu8gatewayBuf[2 * GATEWAY_OADD_LEN + 1] = { 0 };
 	S32 actualCnt = 0, totalRows = 0;
 
+	if (rowCnt == NULL || lastRecId == NULL)
+		return ERROR;
 	if (*lastRecId<0)
 		return ERROR;
 
@@ -219,8 +221,8 @@ U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* last
 /*
 **	从数据库定位一行基础信息.
 **	@gatewayId:	数据库中的信息指针
-**	@pInfo:		用于缓存仪表信息(数组)
-**	@rowCnt:	欲读取的行数, 程序返回实际读取的行数
+**	@meterId:	计量点编号
+**	@pInfo:		存储一行信息
 */
 U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo)
 {
@@ -263,17 +265,8 @@ U8 db_modifyGatewayId(U8* gatewayId)
 
 U8 reCreateBaseInfoDBF()
 {
-	sFILE* fp = NULL;
-
-	fp = FileOpen(DB_TMP_BASEINFO, "war");
-	if (fp != NULL) {
-		FileDelete(fp);
-		FileClose(fp);
-	}
-	PRINT_LINE()
-	if (DbfCreate(DB_TMP_BASEINFO, DB_MINFO_FIELD_CNT, fieldname, fieldsize) != DBF_OPER_OK)
+	if (DbfCopy(DB_TMP_BASEINFO, DB_BASEINFO_NAME) < 0)
 		return ERROR;
-	PRINT_LINE()
 	return NO_ERR;
 }
 
@@ -310,4 +303,61 @@ U8 db_getNextTempMeterInfo(db_meterinfo_ptr pDbInfo)
 	} else {
 		return ERROR;
 	}
+}
+
+U8 db_deleteAllRecord(U8* gatewayId)
+{
+	S32	totalRow = 0;
+	S32 iRow = 0;
+	U8	lu8gatewayStr[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+
+	if (openDBF(DB_BASEINFO_NAME) == ERROR)
+		return ERROR;
+	totalRow = DbfRecordCount(pDbf);
+	for (iRow=0;iRow<totalRow;iRow++) {
+		DbfGotoRecord(iRow, pDbf);
+		DbfFieldGet(minfo_field_gatewayId, (S8*)lu8gatewayStr, pDbf);
+		if (strcmp((const char*)lu8gatewayStr, (const char*)gatewayId) == 0) {
+			DbfRecordDelete(pDbf);
+		}
+	}
+	if (DbfRecordErase(pDbf) == ERROR)
+		goto err;
+	if (closeDBF() == ERROR)
+		return ERROR;
+	return NO_ERR;
+err:
+	closeDBF();
+	return ERROR;
+}
+
+U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId)
+{
+	db_meterinfo_str dbBaseInfo[30];
+	S32 rowCnt = 30;
+	S32 lastRecId = 0;
+	S32 i = 0;
+	S32 totalRow = DbfRecordCount(pDbf);
+
+	if (openDBF(DB_TMP_BASEINFO) == ERROR)
+		return ERROR;
+	totalRow = DbfRecordCount(pDbf);
+	if (closeDBF() == ERROR)
+		return ERROR;
+	while (lastRecId != (totalRow-1)) {
+		if (openDBF(DB_TMP_BASEINFO) == ERROR)
+			return ERROR;
+		db_getMeterInfo(gatewayId, &dbBaseInfo[0], &rowCnt, &lastRecId);
+		if (closeDBF() == ERROR)
+			return ERROR;
+		if (openDBF(DB_BASEINFO_NAME) == ERROR)
+			return ERROR;
+		for (i = 0; i < rowCnt; i++) {
+			DbfRecordAppend(pDbf);
+			DBF_SETBASEFIELD((&dbBaseInfo[i]))
+		}
+		if (closeDBF() == ERROR)
+			return ERROR;
+	}
+	return NO_ERR;
 }

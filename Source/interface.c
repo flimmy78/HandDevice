@@ -525,10 +525,10 @@ void userIssueInfo(WM_HWIN hObj)
 	supplementTo12(lu8InputBuf);
 
 	if (logic_issueMeterInfo(lu8InputBuf) == NO_ERR) {
-		//GUI_MessageBox("\n下发表地址成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+		GUI_MessageBox("\n下发表地址成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
 	else {
-		//GUI_MessageBox("\n下发表地址失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		GUI_MessageBox("\n下发表地址失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	}
 }
 
@@ -1659,6 +1659,25 @@ void userReadNextBaseinfo(WM_HWIN hDlg)
 	}
 }
 
+void userUpdateDbf(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+	if (logic_updateBaseInfo(gatewayId) == ERROR) {
+		GUI_MessageBox("\n更新表地址失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		GUI_MessageBox("\n更新表地址成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
 void ReadBaseInfoCb(WM_MESSAGE* pMsg)
 {
 	int NCode, Id;
@@ -1692,6 +1711,9 @@ void ReadBaseInfoCb(WM_MESSAGE* pMsg)
 			case GUI_ID_BUTTON3://下一个
 				userReadNextBaseinfo(hDlg);
 				break;
+			case GUI_ID_BUTTON4:
+				userUpdateDbf(hDlg);
+				break;
 			default:
 				break;
 			}
@@ -1716,6 +1738,9 @@ void ReadBaseInfoCb(WM_MESSAGE* pMsg)
 			break;
 		case GUI_KEY_NUM4://下一个
 			userReadNextBaseinfo(hDlg);
+			break;
+		case GUI_KEY_NUM5:
+			userUpdateDbf(hDlg);
 			break;
 		case GUI_KEY_ENTER:
 			break;

@@ -341,14 +341,12 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 		return ERROR;
 	}
 	if (reCreateBaseInfoDBF() == ERROR) {
-		Lib_printf("[%s][%s][%d]reCreateBaseInfoDBF fail\n", FILE_LINE);
 		return ERROR;
 	}
 	if (openDBF(DB_TMP_BASEINFO) == ERROR)
 		return ERROR;
 	if (db_storeTempBaseInfo(&baseInfoStr[0], infoCnt, lu8gatewayId) == ERROR)
 		goto resultErr;
-	PRINT_LINE()
 	while (BodyHeadStr.succeed == 0x01)	{
 		BodyHeadStr.seq++;
 		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
@@ -356,11 +354,9 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 			goto resultErr;
 		if (protoA_readBaseInfo(buf, &bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR)
 			goto resultErr;
-		Lib_printf("BodyHeadStr.seq: %d\n", BodyHeadStr.seq);
 		if (db_storeTempBaseInfo(&baseInfoStr[0], infoCnt, lu8gatewayId) == ERROR)
 			goto resultErr;
 	}
-	PRINT_LINE()
 	if (db_getOneTempMeterInfo(0, pDbInfo) == ERROR) {
 		return ERROR;
 	}
@@ -372,7 +368,7 @@ resultErr:
 	return ERROR;
 }
 
-logic_readNextTempInfo(db_meterinfo_ptr pDbInfo)
+U8 logic_readNextTempInfo(db_meterinfo_ptr pDbInfo)
 {
 	if (openDBF(DB_TMP_BASEINFO) == ERROR)
 		return ERROR;
@@ -382,5 +378,14 @@ logic_readNextTempInfo(db_meterinfo_ptr pDbInfo)
 	if (closeDBF() == ERROR)
 		return ERROR;
 
+	return NO_ERR;
+}
+
+U8 logic_updateBaseInfo(U8* gatewayId)
+{
+	if (db_deleteAllRecord(gatewayId) == ERROR)
+		return ERROR;
+	if (db_cpRecTo(DB_TMP_BASEINFO, DB_BASEINFO_NAME, gatewayId) == ERROR)
+		return ERROR;
 	return NO_ERR;
 }

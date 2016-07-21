@@ -46,7 +46,8 @@ if(DbfFieldGet(minfo_field_valveAddr, (char*)pInfo->valveAddr, pDbf) < 0) return
 if(DbfFieldGet(minfo_field_controlPanelAddr, (char*)pInfo->controlPanelAddr, pDbf) < 0) return ERROR;\
 if(DbfFieldGet(minfo_field_buildId, (char*)pInfo->buildId, pDbf) < 0) return ERROR;\
 if(DbfFieldGet(minfo_field_unitId, (char*)pInfo->unitId, pDbf) < 0) return ERROR;\
-if(DbfFieldGet(minfo_field_roomId, (char*)pInfo->roomId, pDbf) < 0) return ERROR;
+if(DbfFieldGet(minfo_field_roomId, (char*)pInfo->roomId, pDbf) < 0) return ERROR;\
+if(DbfFieldGet(minfo_field_gatewayId, (char*)pInfo->gatewayId, pDbf) < 0) return ERROR;
 
 #define DBF_SETBASEFIELD(pInfo) \
 if(DbfFieldSet(minfo_field_rowId, (char*)pInfo->rowId, pDbf) < 0) return ERROR;\
@@ -118,4 +119,6 @@ extern U8 reCreateBaseInfoDBF(void);
 extern U8 db_storeTempBaseInfo(meter_row_ptr pProtoInfo, U16 infoCnt, U8* gatewayId);
 extern U8 db_getOneTempMeterInfo(U16 rowId, db_meterinfo_ptr pDbInfo);
 extern U8 db_getNextTempMeterInfo(db_meterinfo_ptr pDbInfo);
+extern U8 db_deleteAllRecord(U8* gatewayId);
+extern U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId);
 #endif // DB_H
