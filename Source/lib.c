@@ -1,7 +1,7 @@
-/***************************************************
-**	Ä£¿é¹¦ÄÜ£º	³£ÓÃº¯Êý
-**	Ä£¿éÃû×Ö:	lib.c
-**	×÷Õß£º		ËÎ±¦ÉÆ
+ï»¿/***************************************************
+**	æ¨¡å—åŠŸèƒ½ï¼š	å¸¸ç”¨å‡½æ•°
+**	æ¨¡å—åå­—:	lib.c
+**	ä½œè€…ï¼š		å®‹å®å–„
 ****************************************************
 */
 #include "basedef.h"
@@ -39,7 +39,7 @@ U8 lib_printBufToUart(U8* buf, U16 bufSize, const char* file, const char* func, 
 		strcat((char*)debugStr, (char*)oneByte);
 	}
 	strcat((char*)debugStr,"\n");
-	pu = UartOpen(comConfig.baud, comConfig.mode, comConfig.device);//´ò¿ª´®¿Ú
+	pu = UartOpen(comConfig.baud, comConfig.mode, comConfig.device);//æ‰“å¼€ä¸²å£
 	if (!pu)
 		return ERROR;
 	UartWrite(debugStr, STRLEN(debugStr), 0, pu);
@@ -48,7 +48,7 @@ U8 lib_printBufToUart(U8* buf, U16 bufSize, const char* file, const char* func, 
 	return NO_ERR;
 }
 
-//¶ÁÈ¡ÏµÍ³Ê±¼ä
+//è¯»å–ç³»ç»Ÿæ—¶é—´
 U8 readSysTime(sys_time_ptr pTime)
 {
 	RtcGetDate(&(pTime->u8year), &(pTime->u8month), &(pTime->u8day));
@@ -64,7 +64,7 @@ U8 readSysTime(sys_time_ptr pTime)
 	return 0;
 }
 
-//Ð£Ñé, ÀÛ¼ÓºÍÈ¡·´¼ÓÒ»
+//æ ¡éªŒ, ç´¯åŠ å’Œå–ååŠ ä¸€
 U8 countCheck(U8 *data, U16 len)
 {
 	U8 cs = 0;
@@ -76,8 +76,8 @@ U8 countCheck(U8 *data, U16 len)
 }
 
 /*
-**	ÅÐ¶Ï×Ö·ûÊÇ·ñÊÇ¿Õ¸ñ.
-**	@s:	×Ö·û
+**	åˆ¤æ–­å­—ç¬¦æ˜¯å¦æ˜¯ç©ºæ ¼.
+**	@s:	å­—ç¬¦
 */
 U8 isSpace(U8 s)
 {
@@ -90,9 +90,9 @@ U8 isSpace(U8 s)
 }
 
 /*
-**	È¥µô×Ö·û´®ÖÐµÄ¿Õ¸ñ.
-**	@s:		×Ö·û´®
-**	@len:	×Ö·û´®³¤¶È
+**	åŽ»æŽ‰å­—ç¬¦ä¸²ä¸­çš„ç©ºæ ¼.
+**	@s:		å­—ç¬¦ä¸²
+**	@len:	å­—ç¬¦ä¸²é•¿åº¦
 */
 U8 trimSpace(U8* s, U16 len)
 {
@@ -111,9 +111,9 @@ U8 trimSpace(U8* s, U16 len)
 }
 
 /*
-**	¼ì²é×Ö·û´®ÊÇ·ñ¶¼ÊÇÊý×Ö.
-**	@s:		×Ö·û´®
-**	@len:	×Ö·û´®³¤¶È
+**	æ£€æŸ¥å­—ç¬¦ä¸²æ˜¯å¦éƒ½æ˜¯æ•°å­—.
+**	@s:		å­—ç¬¦ä¸²
+**	@len:	å­—ç¬¦ä¸²é•¿åº¦
 */
 U8 isNumber(U8* s, U16 len)
 {
@@ -128,11 +128,11 @@ U8 isNumber(U8* s, U16 len)
 }
 
 /*
-**	·´ÐòÊäÈëµÄ×Ö·û´®ÖÁBCDÂë.
-**	@s:		Ô´×Ö·û´®
-**	@sLen:	Ô´×Ö·û´®³¤¶È
-**	@t:		Ä¿±ê×Ö·û´®
-**	@tLen:	Ä¿±ê×Ö·û´®³¤¶È
+**	ååºè¾“å…¥çš„å­—ç¬¦ä¸²è‡³BCDç .
+**	@s:		æºå­—ç¬¦ä¸²
+**	@sLen:	æºå­—ç¬¦ä¸²é•¿åº¦
+**	@t:		ç›®æ ‡å­—ç¬¦ä¸²
+**	@tLen:	ç›®æ ‡å­—ç¬¦ä¸²é•¿åº¦
 */
 U8 inverseStrToBCD(U8* s, U16 sLen, U8* t, U16 tLen)
 {
@@ -160,9 +160,9 @@ void inverseArray(U8* buf, U16 bufSize)
 }
 
 /*
-**	½«Êý×Ö×Ö·û´®µÄ×îÇ°ÃæµÄ'0'È¥µô.
-**	@buf:		×Ö·û´®
-**	@bufSize:	×Ö·û´®³¤¶È
+**	å°†æ•°å­—å­—ç¬¦ä¸²çš„æœ€å‰é¢çš„'0'åŽ»æŽ‰.
+**	@buf:		å­—ç¬¦ä¸²
+**	@bufSize:	å­—ç¬¦ä¸²é•¿åº¦
 */
 void trimZero(U8* buf, U8 bufSize)
 {
@@ -179,8 +179,8 @@ void trimZero(U8* buf, U8 bufSize)
 }
 
 /*
-**	½«²»×ã12Î»µÄ¼¯ÖÐÆ÷ºÅÇ°Ãæ²¹Áã.
-**	@data:	ÓÃ»§ÊäÈëµÄ¼¯ÖÐÆ÷ºÅ
+**	å°†ä¸è¶³12ä½çš„é›†ä¸­å™¨å·å‰é¢è¡¥é›¶.
+**	@data:	ç”¨æˆ·è¾“å…¥çš„é›†ä¸­å™¨å·
 */
 void supplementTo12(U8* data)
 {
@@ -204,9 +204,9 @@ void supplementTo12(U8* data)
 }
 
 /*
-**	½«Êý¾Ý¿â¶ÁÈ¡ÉÏÀ´µÄ±íµØÖ·Êý¾Ý½á¹¹×ª»¯ÎªÐ­Òé½á¹¹.
-**	@pDbInfo:	Êý¾Ý¿âÖÐµÄÐÅÏ¢Ö¸Õë
-**	@pProtoInfo:	Ð­ÒéÖ¡Ö¸Õë
+**	å°†æ•°æ®åº“è¯»å–ä¸Šæ¥çš„è¡¨åœ°å€æ•°æ®ç»“æž„è½¬åŒ–ä¸ºåè®®ç»“æž„.
+**	@pDbInfo:	æ•°æ®åº“ä¸­çš„ä¿¡æ¯æŒ‡é’ˆ
+**	@pProtoInfo:	åè®®å¸§æŒ‡é’ˆ
 */
 void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo)
 {
@@ -268,13 +268,13 @@ void protoBinToAscii(meter_row_ptr pProtoInfo, db_meterinfo_ptr pDbInfo, U8* gat
 }
 
 /*
-** ¼ÆËãÊ±¼ä×Ö·û´®ºÏ·¨Óë·ñ
-** ×Ö·û´®Ä£Ê½Æ¥Åä: "\d[1-2](\:\d[1-2])?"
-** ¼´ÓÐ1µ½2¸öÊý×Ö±íÊ¾Ð¡Ê±, Èç¹ûÓÐÊ±¼ä·Ö¸ô·û(Èç':'»ò'.')
-** Ôò·Ö¸ô·ûºó±ØÐë½Ó1µ½2¸öÊý×ÖµÄ·ÖÖÓ.
-** @timeStr:	Ê±¼ä×Ö·û´®
-** @strLen:		Ê±¼ä×Ö·û´®³¤¶È
-** @pState:		·µ»ØÉ¨ÃèÍêÊ±¼ä×Ö·û´®ºóµÄÍ£Áô×´Ì¬
+** è®¡ç®—æ—¶é—´å­—ç¬¦ä¸²åˆæ³•ä¸Žå¦
+** å­—ç¬¦ä¸²æ¨¡å¼åŒ¹é…: "\d[1-2](\:\d[1-2])?"
+** å³æœ‰1åˆ°2ä¸ªæ•°å­—è¡¨ç¤ºå°æ—¶, å¦‚æžœæœ‰æ—¶é—´åˆ†éš”ç¬¦(å¦‚':'æˆ–'.')
+** åˆ™åˆ†éš”ç¬¦åŽå¿…é¡»æŽ¥1åˆ°2ä¸ªæ•°å­—çš„åˆ†é’Ÿ.
+** @timeStr:	æ—¶é—´å­—ç¬¦ä¸²
+** @strLen:		æ—¶é—´å­—ç¬¦ä¸²é•¿åº¦
+** @pState:		è¿”å›žæ‰«æå®Œæ—¶é—´å­—ç¬¦ä¸²åŽçš„åœç•™çŠ¶æ€
 */
 U8 timeLegal(U8* timeStr, U16 strLen, em_time_state* pState)
 {
@@ -351,7 +351,7 @@ U8 timeLegal(U8* timeStr, U16 strLen, em_time_state* pState)
 result:
 	if(pState)
 		*pState = state;
-	//É¨ÃèÍê×Ö·û´®ºó, Èç¹û×´Ì¬Í£ÔÚÐ¡Ê±»ò·Ö¸ô·û×´Ì¬, ÔòºÏ·¨
+	//æ‰«æå®Œå­—ç¬¦ä¸²åŽ, å¦‚æžœçŠ¶æ€åœåœ¨å°æ—¶æˆ–åˆ†éš”ç¬¦çŠ¶æ€, åˆ™åˆæ³•
 	if (state == tm_state_hour || state == tm_state_min)
 		return NO_ERR;
 	else
@@ -359,10 +359,10 @@ result:
 }
 
 /*
-**	Ê±¼äÏà¼Ó(Ê±:·Ö + Ê±:·Ö).
-**	@pT1:	µÚÒ»¸öÊ±¼ä
-**	@pT2:	µÚ¶þ¸öÊ±¼ä
-**	@pRes:	½á¹û
+**	æ—¶é—´ç›¸åŠ (æ—¶:åˆ† + æ—¶:åˆ†).
+**	@pT1:	ç¬¬ä¸€ä¸ªæ—¶é—´
+**	@pT2:	ç¬¬äºŒä¸ªæ—¶é—´
+**	@pRes:	ç»“æžœ
 */
 U8 addTime(time_node_ptr pT1, time_node_ptr pT2, time_node_ptr pRes)
 {
@@ -381,10 +381,10 @@ U8 addTime(time_node_ptr pT1, time_node_ptr pT2, time_node_ptr pRes)
 }
 
 /*
-**	°Ñ×Ö·ûÐÎÊ½µÄÊ±¼ä×ª»¯Îª¶þ½øÖÆÐÎÊ½µÄÊ±¼ä.
-**	@timeStr:	Ê±¼ä×Ö·û´®
-**	@timeSize:	×Ö·û´®³¤¶È
-**	@pRes:		½á¹û
+**	æŠŠå­—ç¬¦å½¢å¼çš„æ—¶é—´è½¬åŒ–ä¸ºäºŒè¿›åˆ¶å½¢å¼çš„æ—¶é—´.
+**	@timeStr:	æ—¶é—´å­—ç¬¦ä¸²
+**	@timeSize:	å­—ç¬¦ä¸²é•¿åº¦
+**	@pRes:		ç»“æžœ
 */
 U8 timeStrToBin(U8* timeStr, U8 timeSize, time_node_ptr pRes)
 {
@@ -392,27 +392,27 @@ U8 timeStrToBin(U8* timeStr, U8 timeSize, time_node_ptr pRes)
 	em_time_state state;
 	if (timeLegal(timeStr, timeSize, &state) == ERROR)
 		return ERROR;
-	if (state == tm_state_hour) {//Èç¹û×´Ì¬Í£ÔÚÐ¡Ê±×´Ì¬, Ôò×Ö·û´®±ØÈ«ÎªÊý×Ö
+	if (state == tm_state_hour) {//å¦‚æžœçŠ¶æ€åœåœ¨å°æ—¶çŠ¶æ€, åˆ™å­—ç¬¦ä¸²å¿…å…¨ä¸ºæ•°å­—
 		pRes->u8hour = Lib_atoi((const char*)timeStr);
 		pRes->u8minute = 0;
 	} else if (state==tm_state_min) {
-		//ÏÈ°Ñ·Ö¸ô·ûÐÞ¸ÄÎª×Ö·û´®µÄ½áÊø·û'\0'
+		//å…ˆæŠŠåˆ†éš”ç¬¦ä¿®æ”¹ä¸ºå­—ç¬¦ä¸²çš„ç»“æŸç¬¦'\0'
 		while (!isDelim(*p) && (*p != '\0')) p++;
 		*p = 0;
-		//ÇóÐ¡Ê±
+		//æ±‚å°æ—¶
 		pRes->u8hour = Lib_atoi((const char*)timeStr);
-		p++;//ÓÉÓÚpÖ¸ÏòµÄÎ»ÖÃÎª'\0', ËùÒÔÏòºóÒÆ¶¯Ò»Î»²ÅÄÜµ½´ï·ÖÖÓ
-		pRes->u8minute = Lib_atoi((const char*)p);//pÖ¸ÏòÁË·ÖÖÓÎ»ÖÃ, ¶øtimeStrµÄ½áÊø·ûÒ²ÊÇpµÄ½áÊø·û
+		p++;//ç”±äºŽpæŒ‡å‘çš„ä½ç½®ä¸º'\0', æ‰€ä»¥å‘åŽç§»åŠ¨ä¸€ä½æ‰èƒ½åˆ°è¾¾åˆ†é’Ÿ
+		pRes->u8minute = Lib_atoi((const char*)p);//pæŒ‡å‘äº†åˆ†é’Ÿä½ç½®, è€ŒtimeStrçš„ç»“æŸç¬¦ä¹Ÿæ˜¯pçš„ç»“æŸç¬¦
 	}
 
 	return NO_ERR;
 }
 
 /*
-**	ÓÃ»§Éè¶¨µÄÊ±¼äµã×ª»¯Îª×Ö·û´®.
-**	@buf:		×Ö·û´®»º´æ
-**	@startTime:	¿ªÊ¼Ê±¼ä
-**	@timeCnt:	Ê±¼äµã¸öÊý
+**	ç”¨æˆ·è®¾å®šçš„æ—¶é—´ç‚¹è½¬åŒ–ä¸ºå­—ç¬¦ä¸².
+**	@buf:		å­—ç¬¦ä¸²ç¼“å­˜
+**	@startTime:	å¼€å§‹æ—¶é—´
+**	@timeCnt:	æ—¶é—´ç‚¹ä¸ªæ•°
 */
 U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt, time_node_ptr pTimeNodes)
 {
@@ -425,7 +425,7 @@ U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt, time_node_ptr p
 
 	if (timeCnt > MAX_TIME_NODE)
 		return ERROR;
-	//24¸öÐ¡Ê±²»ÄÜ±»ÏÂÁÐÊýÕû³ý
+	//24ä¸ªå°æ—¶ä¸èƒ½è¢«ä¸‹åˆ—æ•°æ•´é™¤
 	if (timeCnt == 7 || timeCnt == 11 || timeCnt == 13 || timeCnt == 14 || timeCnt == 17 || timeCnt == 19 || timeCnt == 21 || timeCnt == 23)
 		return ERROR;
 	if (timeLegal(startTime, STRLEN(startTime), &state) == ERROR)
@@ -449,9 +449,9 @@ U8 timeStrToBCD(time_node_ptr pTimeStr)
 }
 
 /*
-**	½«ÓÃ';'·Ö¸ôµÄÊ±¼äµã×Ö·û´®×ª»¯Îª¼¯ÖÐÆ÷ÓÃµÄÊ±¼äµã¸ñÊ½(BCD).
-**	@buf:		×Ö·û´®»º´æ
-**	@pTimeNode:	Ê±¼äµãÐòÁÐ
+**	å°†ç”¨';'åˆ†éš”çš„æ—¶é—´ç‚¹å­—ç¬¦ä¸²è½¬åŒ–ä¸ºé›†ä¸­å™¨ç”¨çš„æ—¶é—´ç‚¹æ ¼å¼(BCD).
+**	@buf:		å­—ç¬¦ä¸²ç¼“å­˜
+**	@pTimeNode:	æ—¶é—´ç‚¹åºåˆ—
 */
 U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt)
 {
@@ -527,7 +527,7 @@ U8 strIpToHex(U8* svrStr, gprs_param_ptr pGPRSParam)
 				j--;
 			}
 			delimCnt++;
-			if (delimCnt>3)//¶àÓÚ3¸ö·Ö¸ô·û, ·µ»Ø´íÎó
+			if (delimCnt>3)//å¤šäºŽ3ä¸ªåˆ†éš”ç¬¦, è¿”å›žé”™è¯¯
 				return ERROR;
 
 			q = p + 1;
@@ -545,3 +545,93 @@ U8 strIpToHex(U8* svrStr, gprs_param_ptr pGPRSParam)
 	}
 	return NO_ERR;
 }
+
+U32 ChangeEndianness(U32 value)
+{
+	U32 result = 0;
+	result |= (value & 0x000000FF) << 24;
+	result |= (value & 0x0000FF00) << 8;
+	result |= (value & 0x00FF0000) >> 8;
+	result |= (value & 0xFF000000) >> 24;
+	return result;
+}
+
+U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr pBinHisData)
+{
+	U8 lu8str[20] = { 0 };
+	U8 lu8unit[12] = { 0 };
+
+	sprintf((char*)pDbHisData->id, "%d", pBinHisData->meterId);
+	sprintf((char*)pDbHisData->maddr, "%02X%02X%02X%02X%02X%02X%02X", \
+		pBinHisData->meterAddr[6], pBinHisData->meterAddr[5], pBinHisData->meterAddr[4], \
+		pBinHisData->meterAddr[3], pBinHisData->meterAddr[2], pBinHisData->meterAddr[1], \
+		pBinHisData->meterAddr[0]);
+	sprintf((char*)pDbHisData->build, "%d", pBinHisData->buildId);
+	sprintf((char*)pDbHisData->unit, "%d", pBinHisData->unitId);
+	sprintf((char*)pDbHisData->room, "%d", pBinHisData->roomId);
+	sprintf((char*)lu8str, "%02X%02X.%02X", pBinHisData->MeterData.WaterInTemp[2], \
+		pBinHisData->MeterData.WaterInTemp[1], pBinHisData->MeterData.WaterInTemp[0]);
+	sprintf((char*)pDbHisData->intemp, "%fâ„ƒ", Lib_atof((const char*)lu8str));
+	sprintf((char*)lu8str, "%02X%02X.%02X", pBinHisData->MeterData.WaterOutTemp[2], \
+		pBinHisData->MeterData.WaterOutTemp[1], pBinHisData->MeterData.WaterOutTemp[0]);
+	sprintf((char*)pDbHisData->outtemp, "%fâ„ƒ", Lib_atof((const char*)lu8str));
+
+	sprintf((char*)lu8str, "%02X%02X%02X.%02X", pBinHisData->MeterData.AccumulateFlow[3], \
+		pBinHisData->MeterData.AccumulateFlow[2], pBinHisData->MeterData.AccumulateFlow[1], \
+		pBinHisData->MeterData.AccumulateFlow[0]);
+	switch (pBinHisData->MeterData.AccumulateFlowUnit)
+	{
+	case 0x29:
+		strcpy((char*)lu8unit, "L");
+		break;
+	case 0x2C:
+		strcpy((char*)lu8unit, "m3");
+		break;
+	default:
+		break;
+	}
+	sprintf((char*)pDbHisData->flow, "%f%s", Lib_atof((const char*)lu8str), lu8unit);
+	switch (pBinHisData->MeterData.CurrentHeatUnit)
+	{
+	case 0x02:
+		strcpy((char*)lu8unit, "Wh");
+		break;
+	case 0x05:
+		strcpy((char*)lu8unit, "kWh");
+		break;
+	case 0x08:
+		strcpy((char*)lu8unit, "MWh");
+		break;
+	case 0x0A:
+		strcpy((char*)lu8unit, "MWhX100");
+		break;
+	case 0x01:
+		strcpy((char*)lu8unit, "J");
+		break;
+	case 0x0B:
+		strcpy((char*)lu8unit, "KJ");
+		break;
+	case 0x0E:
+		strcpy((char*)lu8unit, "MJ");
+		break;
+	case 0x11:
+		strcpy((char*)lu8unit, "GJ");
+		break;
+	case 0x13:
+		strcpy((char*)lu8unit, "GJX100");
+		break;
+	default:
+		break;
+	}
+	sprintf((char*)lu8str, "%02X%02X%02X.%02X", pBinHisData->MeterData.CurrentHeat[3], \
+		pBinHisData->MeterData.CurrentHeat[2], pBinHisData->MeterData.CurrentHeat[1], \
+		pBinHisData->MeterData.CurrentHeat[0]);
+	sprintf((char*)pDbHisData->heat, "%f%s", Lib_atof((const char*)lu8str), lu8unit);
+	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X%â„ƒ", pBinHisData->RoomTempBCD[1], pBinHisData->RoomTempBCD[0]);
+	sprintf((char*)pDbHisData->vopen, "%02X", pBinHisData->vOpen);
+	sprintf((char*)pDbHisData->fsuc, "%02X", pBinHisData->vState);
+	return NO_ERR;
+}
+
+
+

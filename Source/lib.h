@@ -46,4 +46,7 @@ extern U8 timeStrToBCD(time_node_ptr pTimeStr);
 extern U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt);
 extern U8 IpLegal(U8* buf, U16 bufSize);
 extern U8 strIpToHex(U8* svrStr, gprs_param_ptr pGPRSParam);
+extern U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr pBinHisData);
+
+
 #endif//LIB_H

@@ -63,6 +63,23 @@ static void createFrame(U8 *sendBuf, U16 *sendLen, gateway_protocol_ptr pProto)
 	*sendLen = lenFrame;
 }
 
+
+U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
+	U8 MsgIndex, U8 MsgType, U8 MsgLen, U8* pMsgBody)
+{
+	gateway_protocol_str protoStr = { 0 };
+
+	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
+	db_getCongfig(config_server_id, protoStr.SourceAddr);
+	protoStr.MsgIndex = MsgIndex;
+	protoStr.MsgType = MsgType;
+	protoStr.MsgLen = MsgLen;
+	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
+	protoStr.pMsgBody = pMsgBody;
+	createFrame(buf, bufSize, &protoStr);
+	return NO_ERR;
+}
+
 /*
 **	分析集中器的返回帧.
 **	@buf:		返回帧
@@ -373,7 +390,7 @@ U8 protoA_readBaseInfo(U8* buf, U16* bufSize, U16* infoCnt, base_info_head_ptr p
 	U8 i = 0;
 
 	memcpy((U8*)&frameStr, buf, sizeof(protocol_head_str));//复制消息头
-	pMsgBody = buf + sizeof(protocol_head_str);//指向消息体头部
+	pMsgBody = buf + sizeof(protocol_head_str);//指向消息体
 	memcpy((U8*)pBodyHead, pMsgBody, sizeof(base_info_head_str));
 	if (*infoCnt < pBodyHead->rowCnt)
 		return ERROR;
@@ -399,32 +416,44 @@ U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq)
 	return NO_ERR;
 }
 
-U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId)
-{
-	gateway_protocol_str protoStr = { 0 };//固定
-
-	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);//固定
-	db_getCongfig(config_server_id, protoStr.SourceAddr);//固定
-	protoStr.MsgIndex = 0x00;//可固定
-	protoStr.MsgType = GAT_MT_SVR_HISDATA;//可设置
-	protoStr.MsgLen = 1;//可设置
-	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);//固定
-	protoStr.pMsgBody = NULL;//可设置
-	createFrame(buf, bufSize, &protoStr);//固定
-	return NO_ERR;
-}
-
-U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, U8 MsgIndex, U8 MsgType, U8 MsgLen, U8* pMsgBody)
+U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId, U8* timeNode)
 {
 	gateway_protocol_str protoStr = { 0 };
 
 	memcpy(protoStr.DestAddr, gatewayId, GATEWAY_OADD_LEN);
 	db_getCongfig(config_server_id, protoStr.SourceAddr);
-	protoStr.MsgIndex = MsgIndex;
-	protoStr.MsgType = MsgType;
-	protoStr.MsgLen = MsgLen;
+	protoStr.MsgIndex = 0x00;
+	protoStr.MsgType = GAT_MT_SVR_HISDATA;
+	protoStr.MsgLen = GATEWAY_TS_LEN;
 	readSysTime((sys_time_ptr)protoStr.ssmmhhDDMMYY);
-	protoStr.pMsgBody = pMsgBody;
+	if (timeNode == NULL) {
+		protoStr.pMsgBody = protoStr.ssmmhhDDMMYY;
+	} else {
+		protoStr.pMsgBody = timeNode;
+	}
 	createFrame(buf, bufSize, &protoStr);
 	return NO_ERR;
 }
+
+U8 protoA_hisData(U8* buf, U16* bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData)
+{
+	protocol_head_str protoFrameStr = { 0 };
+	U8* pMsgBody = NULL;
+	U8 i = 0;
+	U16 rowCnt = 0;
+
+	memcpy((U8*)&protoFrameStr, buf, sizeof(protocol_head_str));//复制消息头
+	pMsgBody = buf + sizeof(protocol_head_str);//指向消息体
+	memcpy((U8*)pBodyHead, pMsgBody, sizeof(hisdata_head_str));
+	rowCnt = (protoFrameStr.MsgLength - sizeof(hisdata_head_str)) / sizeof(tempControl_messure_hisdata_str);
+	if (*hisDataCnt < rowCnt)
+		return ERROR;
+	*hisDataCnt = rowCnt;
+	pMsgBody += sizeof(hisdata_head_str);//指向消息体
+	for (i = 0; i < rowCnt; i++)
+		memcpy((pHisData + i), (tempControl_messure_hisdata_ptr)pMsgBody + i, \
+			sizeof(tempControl_messure_hisdata_str));
+	return NO_ERR;
+}
+
+

@@ -222,6 +222,33 @@ static const GUI_WIDGET_CREATE_INFO widgetReadBaseInfo[] = {
 	{ TEXT_CreateIndirect, "房间", TEXT_MODIFY_1INFO_ROOMID, 4, 238, 42, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", EDIT_MODIFY_1INFO_ROOMID, 65, 235, 53, 20, 0, 0 }
 };
+
+static const GUI_WIDGET_CREATE_INFO widgetHisData[] = {
+	{ FRAMEWIN_CreateIndirect, "历史数据查询", INFOQ_HISDATA_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 10, 10, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 10, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 10, 275, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "读取", GUI_ID_BUTTON2, 134, 275, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "成功数", GUI_ID_TEXT0, 10, 45, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "失败数", GUI_ID_TEXT1, 10, 80, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "成功率", GUI_ID_TEXT2, 10, 115, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 130, 45, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT2, 130, 80, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT3, 130, 115, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "成功\n详单", GUI_ID_BUTTON3, 10, 190, 60, 60, 0, 0 },
+	{ BUTTON_CreateIndirect, "失败\n详单", GUI_ID_BUTTON4, 150, 190, 60, 60, 0, 0 }
+};
+
+static const GUI_WIDGET_CREATE_INFO widgetHisSheet[] = {
+	{ FRAMEWIN_CreateIndirect, "详细清单", INFOQ_HISDATA_SHEET_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 130, 10, 80, 20, 0, 0 },
+	{ LISTVIEW_CreateIndirect, "详单", GUI_ID_LISTVIEW0, 5, 35, 220, 227, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON0, 10, 275, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "下一个", GUI_ID_BUTTON1, 134, 275, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "个数", GUI_ID_TEXT0, 10, 10, 80, 20, 0, 0 }
+};
+
+static U8 success = NO_ERR;
 /************************************************************************/
 /* Init函数群                                                           */
 /************************************************************************/
@@ -303,6 +330,49 @@ static void queryBaseInfoInit(WM_HWIN hDlg)
 	WM_HWIN hItem;
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_BUTTON4);
 	BUTTON_SetBkColor(hItem, BUTTON_CI_UNPRESSED, GUI_RED);
+}
+
+static void queryHisDataInit(WM_HWIN hDlg){}
+
+static void hisSheetInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT0);
+	if (success == NO_ERR) {
+		TEXT_SetText(hItem, "成功个数");
+	} else {
+		TEXT_SetText(hItem, "失败个数");
+	}
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
+	LISTVIEW_AddColumn(hItem, 80, "项目", GUI_TA_HCENTER | GUI_TA_VCENTER);
+	LISTVIEW_AddColumn(hItem, 135, "值", GUI_TA_HCENTER | GUI_TA_VCENTER);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_id, "计量点");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_maddr, "表号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_build, "楼号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_unit, "单元号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_room, "房间号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_intemp, "进水温度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_outtemp, "回水温度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_flow, "流量");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_heat, "热量");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_roomtemp, "室内温度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_vopen, "阀门开度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_fsuc, "成功标志");
+	LISTVIEW_SetGridVis(hItem, 1);
 }
 /************************************************************************/
 /* CallBack函数群                                                       */
@@ -1759,6 +1829,184 @@ void ReadBaseInfoCb(WM_MESSAGE* pMsg)
 	}
 }
 
+void userReadAllHisData(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+	if (logic_readHisData(gatewayId) == ERROR) {
+		GUI_MessageBox("\n读取历史数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		GUI_MessageBox("\n读取历史数据成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
+void hisSheetCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		hisSheetInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON1://下一个
+				break;
+			case GUI_ID_BUTTON4:
+				userUpdateDbf(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM2://下一个
+			break;
+		case GUI_KEY_NUM5:
+			userUpdateDbf(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
+void userReadHisSheet(U8 suc)
+{
+	int iRet;
+	success = suc;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetHisSheet, GUI_COUNTOF(widgetHisSheet), &hisSheetCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
+void queryHisDataCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		queryHisDataInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://读取历史数据
+				userReadAllHisData(hDlg);
+				break;
+			case GUI_ID_BUTTON3://成功详单
+				userReadHisSheet(NO_ERR);
+				break;
+			case GUI_ID_BUTTON4://失败详单
+				userReadHisSheet(ERROR);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM3://读取历史数据
+			userReadAllHisData(hDlg);
+			break;
+		case GUI_KEY_NUM4://成功详单
+			userReadHisSheet(NO_ERR);
+			break;
+		case GUI_KEY_NUM5://失败详单
+			userReadHisSheet(ERROR);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
 /************************************************************************/
 /* 创建界面函数群                                                       */
 /************************************************************************/
@@ -1911,6 +2159,25 @@ void queryBaseInfo()
 	}
 }
 
+void queryHisData()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetHisData, GUI_COUNTOF(widgetHisData), &queryHisDataCb, WM_HBKWIN, 0, 0);
+
+		switch (iRet) {
+		case GUI_ID_BUTTON3://成功详单
+			break;
+		case GUI_ID_BUTTON4://失败详单
+			break;
+		case WM_USER_EXIT:
+			return;
+		default:
+			break;
+		}
+	}
+}
+
 int queryEditInfo()
 {
 	int iRet;
@@ -1921,11 +2188,12 @@ int queryEditInfo()
 			readMeterImmd();
 			break;
 		case GUI_ID_BUTTON1://查询历史数据
+			queryHisData();
 			break;
 		case GUI_ID_BUTTON2://读取表信息
 			queryBaseInfo();
 			break;
-		case GUI_ID_BUTTON3://读取一个计量点的历史数据
+		case GUI_ID_BUTTON3://透传一个计量点的数据
 			break;
 		case GUI_ID_BUTTON4://软硬件版本查询
 			queryVersion();

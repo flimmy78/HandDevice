@@ -335,7 +335,7 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 		Lib_printf("[%s][%s][%d]protoA_readBaseInfo fail\n", FILE_LINE);
 		return ERROR;
 	}
-	if (reCreateBaseInfoDBF() == ERROR) {
+	if (db_reCreateBaseInfoDBF() == ERROR) {
 		return ERROR;
 	}
 	if (openDBF(DB_TMP_BASEINFO) == ERROR)
@@ -384,3 +384,49 @@ U8 logic_updateBaseInfo(U8* gatewayId)
 		return ERROR;
 	return NO_ERR;
 }
+
+U8 logic_readHisData(U8* gatewayId)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+	hisdata_head_str BodyHeadStr;
+	tempControl_messure_hisdata_str hisDataStr[48] = { { 0 } };
+	U16 hisDataCnt = sizeof(hisDataStr) / sizeof(meter_row_str);
+	sys_time_str sysTime = { 0 };
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	readSysTime(&sysTime);
+	protoR_readHisData(buf, &bufSize, lu8gatewayId, (U8*)&sysTime);
+	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		return ERROR;
+	if (protoA_hisData(buf, &bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR) {
+		return ERROR;
+	}
+	if (db_createHisTempDb() == ERROR) {
+		return ERROR;
+	}
+	if (openDBF(DB_TMP_HIS_DATA) == ERROR)
+		return ERROR;
+	//if (db_storeTempHisData(&hisDataStr[0], hisDataCnt) == ERROR)
+	//	goto resultErr;
+	while (BodyHeadStr.succeed == 0x01) {
+		BodyHeadStr.seq++;
+		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
+		if (logic_sendAndRead(buf, &bufSize) == ERROR)
+			goto resultErr;
+		if (protoA_hisData(buf, &bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR)
+			goto resultErr;
+		//if (db_storeTempHisData(&hisDataStr[0], hisDataCnt, lu8gatewayId) == ERROR)
+		//	goto resultErr;
+	}
+
+	if (closeDBF() == ERROR)
+		goto resultErr;
+	return NO_ERR;
+resultErr:
+	closeDBF();
+	return ERROR;
+}
+
+

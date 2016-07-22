@@ -11,6 +11,7 @@
 #define DB_CONFIG_NAME		"手持机配置.DBF"
 #define DB_BASEINFO_NAME	"表地址信息.DBF"
 #define DB_TMP_BASEINFO		"tmp_baseinfo.DBF"//临时存储从集中器读取的表地址信息
+#define DB_TMP_HIS_DATA		"tmp_hisdata.DBF"//集中器历史数据暂存区
 
 #define CONFIG_FILED_CNT		2
 #define CONFIG_FIELD_NAME_ID	"f_id"
@@ -33,6 +34,14 @@
 #define DB_MINFO_LEN_GATEWAYID		12	//集中器编号长度
 
 #define DB_MINFO_FIELD_CNT			13	//表基础信息DBF的字段数量
+
+#define DB_HIS_LEN_TEMP				7	//历史数据中, 温度字段的长度
+#define DB_HIS_LEN_FLOW				13	//历史数据中, 流量字段的长度
+#define DB_HIS_LEN_HEAT				13	//历史数据中, 热量字段的长度
+#define DB_HIS_LEN_VOPEN			10	//历史数据中, 阀门开度字段的长度
+#define DB_HIS_LEN_FSUC				7	//历史数据中, 阀门状态字段的长度
+
+#define HISDATA_FIELD_CNT	12//历史数据库列数量
 
 #define DBF_GETBASEFIELD(pInfo)	\
 if(DbfFieldGet(minfo_field_rowId, (char*)pInfo->rowId, pDbf) < 0) return ERROR;\
@@ -103,8 +112,23 @@ typedef struct{//在数据库中的仪表信息结构. 以数值字符串存储的值, 长度必须加1, 以
 	U8 roomId[DB_MINFO_LEN_ROOMID+1];				//房间号
 	U8 gatewayId[DB_MINFO_LEN_GATEWAYID+1];			//集中器编号
 } db_meterinfo_str;
-
 typedef db_meterinfo_str* db_meterinfo_ptr;
+
+typedef struct {
+	U8 id[DB_MINFO_LEN_ROWID + 1];
+	U8 maddr[DB_MINFO_LEN_METERADDR + 1];
+	U8 build[DB_MINFO_LEN_BUILDID + 1];
+	U8 unit[DB_MINFO_LEN_UNITID + 1];
+	U8 room[DB_MINFO_LEN_ROOMID + 1];
+	U8 intemp[DB_HIS_LEN_TEMP + 1];
+	U8 outtemp[DB_HIS_LEN_TEMP + 1];
+	U8 flow[DB_HIS_LEN_FLOW + 1];
+	U8 heat[DB_HIS_LEN_HEAT + 1];
+	U8 roomtemp[DB_HIS_LEN_TEMP + 1];
+	U8 vopen[DB_HIS_LEN_VOPEN + 1];
+	U8 fsuc[DB_HIS_LEN_FSUC+1];
+} db_hisdata_str;
+typedef db_hisdata_str* db_hisdata_ptr;
 
 extern U8 openDBF(U8* dbfName);
 extern U8 closeDBF(void);
@@ -115,10 +139,11 @@ extern U8 db_getMatchCnt(U8* gatewayId, S32* cnt);
 extern U8 db_getMeterInfo(U8* gatewayId, db_meterinfo_ptr pInfo, S32* rowCnt, S32* lastRecId);
 extern U8 db_getOneMeterInfo(U8* gatewayId, U16 meterId, db_meterinfo_ptr pInfo);
 extern U8 db_modifyGatewayId(U8* gatewayId);
-extern U8 reCreateBaseInfoDBF(void);
+extern U8 db_reCreateBaseInfoDBF(void);
 extern U8 db_storeTempBaseInfo(meter_row_ptr pProtoInfo, U16 infoCnt, U8* gatewayId);
 extern U8 db_getOneTempMeterInfo(U16 rowId, db_meterinfo_ptr pDbInfo);
 extern U8 db_getNextTempMeterInfo(db_meterinfo_ptr pDbInfo);
 extern U8 db_deleteAllRecord(U8* gatewayId);
 extern U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId);
+extern U8 db_createHisTempDb(void);
 #endif // DB_H

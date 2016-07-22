@@ -1,4 +1,4 @@
-#ifndef BASEDEF_H
+ï»¿#ifndef BASEDEF_H
 #define BASEDEF_H
 
 #include "user.h"
@@ -7,40 +7,61 @@
 
 #define	FILE_LINE   __FILE__,__FUNCTION__,__LINE__
 #define	PRINT_LINE()	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
-#define NO_ERR	0x00//ÎŞ´í
-#define ERROR	0x01//ÓĞ´í
+#define NO_ERR	0x00//æ— é”™
+#define ERROR	0x01//æœ‰é”™
 
 #define WM_USER_EXIT	-1
 #define EDIT_MAX_LEN	128
 
-#define MAX_TIME_NODE	24//³­±íÊ±¼äµã²»³¬¹ı24¸öµã
-#define MINUTES_PERDAY	1440//Ò»ÌìÓĞ¶àÉÙ·ÖÖÓ
+#define MAX_TIME_NODE	24//æŠ„è¡¨æ—¶é—´ç‚¹ä¸è¶…è¿‡24ä¸ªç‚¹
+#define MINUTES_PERDAY	1440//ä¸€å¤©æœ‰å¤šå°‘åˆ†é’Ÿ
 
 #define STRLEN(c)	strlen((const char*)(c))
 #define IP_DELIM	'.'
-typedef struct{//ÏµÍ³Ê±¼ä½á¹¹, µ¹Ğò´æ´¢ÒÔ·½±ãÊ¹ÓÃ
-	U8 u8second;	//Ãë
-	U8 u8minute;	//·Ö
-	U8 u8hour;		//Ê±
-	U8 u8day;		//ÈÕ
-	U8 u8month;		//ÔÂ
-	U8 u8year;		//Äê
+
+#pragma pack(push)
+#pragma pack(1)
+typedef struct{//ç³»ç»Ÿæ—¶é—´ç»“æ„, å€’åºå­˜å‚¨ä»¥æ–¹ä¾¿ä½¿ç”¨
+	U8 u8second;	//ç§’
+	U8 u8minute;	//åˆ†
+	U8 u8hour;		//æ—¶
+	U8 u8day;		//æ—¥
+	U8 u8month;		//æœˆ
+	U8 u8year;		//å¹´
 }sys_time_str;
 typedef sys_time_str* sys_time_ptr;
 
-typedef struct{//ÓÃÒ»¸ö×Ö½Ú±íÊ¾·ÖÖÓ, ³¬¹ı60Ôò½øÎ», ¶ÔÓÚÒ»°ãµÄÊ±¼äÏà¼Ó×ã¹»
-	U8 u8minute;	//·Ö, Hex
-	U8 u8hour;		//Ê±, Hex
+typedef struct{//ç”¨ä¸€ä¸ªå­—èŠ‚è¡¨ç¤ºåˆ†é’Ÿ, è¶…è¿‡60åˆ™è¿›ä½, å¯¹äºä¸€èˆ¬çš„æ—¶é—´ç›¸åŠ è¶³å¤Ÿ
+	U8 u8minute;	//åˆ†, Hex
+	U8 u8hour;		//æ—¶, Hex
 }time_node_str;
 typedef time_node_str* time_node_ptr;
 
-//ÊÖ³Ö»úÉèÖÃµÄË÷ÒıºÅ, ÔÚÊı¾İ¿âÖĞµÄĞĞºÅÒ²Óë´Ë¶ÔÓ¦
+//æ‰‹æŒæœºè®¾ç½®çš„ç´¢å¼•å·, åœ¨æ•°æ®åº“ä¸­çš„è¡Œå·ä¹Ÿä¸æ­¤å¯¹åº”
 typedef enum {
-	config_com_para = 0,//¶Ë¿ÚÏà¹Ø²ÎÊı
-	config_gateway_id,	//¼¯ÖĞÆ÷ºÅ
-	config_server_id	//Ö÷Õ¾ºÅ
+	config_com_para = 0,//ç«¯å£ç›¸å…³å‚æ•°
+	config_gateway_id,	//é›†ä¸­å™¨å·
+	config_server_id	//ä¸»ç«™å·
 }config_rowidx;
 
+
+typedef enum {//å†å²ä¿¡æ¯æ•°æ®åº“ä¸­å­—æ®µçš„ç´¢å¼•
+	em_filedidx_id = 0,		//è®¡é‡ç‚¹
+	em_filedidx_maddr,		//è¡¨å·
+	em_filedidx_build,		//æ¥¼å·
+	em_filedidx_unit,		//å•å…ƒå·
+	em_filedidx_room,		//æˆ¿é—´å·
+	em_filedidx_intemp,		//è¿›æ°´æ¸©åº¦
+	em_filedidx_outtemp,	//å›æ°´æ¸©åº¦
+	em_filedidx_flow,		//æµé‡
+	em_filedidx_heat,		//çƒ­é‡
+	em_filedidx_roomtemp,	//å®¤å†…æ¸©åº¦
+	em_filedidx_vopen,		//é˜€é—¨å¼€åº¦
+	em_filedidx_fsuc		//æˆåŠŸæ ‡å¿—
+} em_hisdata_idx;
+
+
+#pragma pack(pop)
 
 #endif
 

@@ -4,7 +4,7 @@
 #include "basedef.h"
 #include "user.h"
 
-
+#define CJ188_HEAT_METER
 #define PROTOCOL_VER 0x03	//协议版本号
 
 #if PROTOCOL_VER==0x03
@@ -212,6 +212,64 @@ typedef struct {
 } base_info_head_str;
 typedef base_info_head_str* base_info_head_ptr;
 
+typedef struct {
+	U8	DailyHeat[4];			//结算日热量
+	U8	DailyHeatUnit;			//一般为kWh, 0x05
+	U8	CurrentHeat[4];			//当前热量
+	U8	CurrentHeatUnit;		//一般为kWh, 0x05
+	U8	HeatPower[4];			//热功率
+	U8	HeatPowerUnit;			//一般为kW, 0x17
+	U8	Flow[4];				//流量流速
+	U8	FlowUnit;				//一般为m3/h, 0x35
+	U8	AccumulateFlow[4];		//累积流量
+	U8	AccumulateFlowUnit;		//一般为m3, 0x2C
+	U8	WaterInTemp[3];			//供水温度
+	U8 	WaterOutTemp[3];		//回水温度
+	U8 	AccumulateWorkTime[3];	//累计工作时间
+	U8	RealTime[7];		    //实时时间
+	U16	ST;					    //状态ST
+}CJ188_Format;
+typedef CJ188_Format* CJ188_Format_ptr;
+
+typedef struct {//温控计量一体化, 历史数据格式
+	U16 meterId;		//计量点号
+	U8	meterType;		//仪表类型
+	U8	meterAddr[7];	//仪表地址
+	U8	buildId;		//楼号
+	U8	unitId;			//单元号
+	U16	roomId;			//房间号
+	U8	mSecondBCD;		//抄热表秒BCD
+	U8	mMinuteBCD;		//抄热表分钟BCD
+	U8	mHourBCD;		//抄热表小时BCD
+	U8	meterDataLen;	//热表数据长度
+#ifdef CJ188_HEAT_METER
+	CJ188_Format	MeterData;		//热表数据指针
+#endif // CJ188_HEAT_METER
+	U8	vSecondBCD;		//抄阀秒BCD
+	U8	vMinuteBCD;		//抄阀分钟BCD
+	U8	vHourBCD;		//抄阀小时BCD
+	U8	RoomTempBCD[3];	//室内温度
+	U8	vOpen;			//阀门开度
+	U8	vState;			//阀门状态
+	U8	vReserve;		//保留
+} tempControl_messure_hisdata_str;
+typedef tempControl_messure_hisdata_str* tempControl_messure_hisdata_ptr;
+
+typedef struct {//温控计量一体化和通断时间面积法的历史数据头部结构
+	U8 succeed;//是否有后继帧, 0-没有, 1-有, 10-异常
+	U8 seq;		//本包序号
+	U8 u8second;	//存储时的秒
+	U8 u8minute;	//存储时的分
+	U8 u8hour;		//存储时的时
+	U8 u8day;		//存储时的日
+	U8 u8month;		//存储时的月
+	U8 u8year;		//存储时的年
+} hisdata_head_str;
+typedef hisdata_head_str*  hisdata_head_ptr;
+
+
+
+
 #pragma pack(pop)
 
 extern U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
@@ -233,5 +291,8 @@ extern U8 protoX_readMeterImmd(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoR_readBaseInfo(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoA_readBaseInfo(U8* buf, U16* bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo);
 extern U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq);
+extern U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId, U8* timeNode);
+extern U8 protoA_hisData(U8* buf, U16* bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData);
+
 #endif
 

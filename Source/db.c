@@ -15,23 +15,21 @@ static sUART gComConfig;//com config
 static U8 gu8svrAdd[GATEWAY_SADD_LEN] = {0};//主站编号, 反序的
 static U8 gu8gwyAdd[GATEWAY_OADD_LEN] = {0};//集中器编号, 反序的
 
-S8* fieldname[] = { "id", "maddr", "venderid", "protover", "mtype",\
-					"channel", "vproto", "vaddr", "caddr", "build", \
-					"unit", "room", "gateway" };
-U8 fieldsize[] = {
+S8* hisFieldName[] = { "id", "maddr", "build", "unit", "room", "intemp", \
+"outtemp", "flow", "heat", "roomtemp", "vopen", "fsuc"};
+U8 hisFieldSize[] = {
 	DB_MINFO_LEN_ROWID,
 	DB_MINFO_LEN_METERADDR,
-	DB_MINFO_LEN_VENDORID,
-	DB_MINFO_LEN_PROTOVER,
-	DB_MINFO_LEN_METERTYPE,
-	DB_MINFO_LEN_CHANNEL,
-	DB_MINFO_LEN_VALVEPROTOVER,
-	DB_MINFO_LEN_VALVEADDR,
-	DB_MINFO_LEN_CTLPANELADDR,
 	DB_MINFO_LEN_BUILDID,
 	DB_MINFO_LEN_UNITID,
 	DB_MINFO_LEN_ROOMID,
-	DB_MINFO_LEN_GATEWAYID
+	DB_HIS_LEN_TEMP,
+	DB_HIS_LEN_TEMP,
+	DB_HIS_LEN_FLOW,
+	DB_HIS_LEN_HEAT,
+	DB_HIS_LEN_TEMP,
+	DB_HIS_LEN_VOPEN,
+	DB_HIS_LEN_FSUC
 };
 
 static U8 gu8hasInitConfig = CONFIG_NOT_INITTED;
@@ -263,7 +261,7 @@ U8 db_modifyGatewayId(U8* gatewayId)
 	return NO_ERR;
 }
 
-U8 reCreateBaseInfoDBF()
+U8 db_reCreateBaseInfoDBF()
 {
 	if (DbfCopy(DB_TMP_BASEINFO, DB_BASEINFO_NAME) < 0)
 		return ERROR;
@@ -296,7 +294,7 @@ U8 db_getNextTempMeterInfo(db_meterinfo_ptr pDbInfo)
 	S32 totalRow = DbfRecordCount(pDbf);
 	iRet = DbfGetCurrentRecord(pDbf);
 	if (iRet >=0) {
-		iRet = ((iRet + 1) % totalRow);//跳到下一行, 若到底部则归零
+		iRet = ((iRet + 1) % totalRow);//跳到下一行, 若到最后一行, 则归零
 		if (db_getOneTempMeterInfo(iRet, pDbInfo) == ERROR)
 			return ERROR;
 		return NO_ERR;
@@ -317,11 +315,10 @@ U8 db_deleteAllRecord(U8* gatewayId)
 	for (iRow=0;iRow<totalRow;iRow++) {
 		DbfGotoRecord(iRow, pDbf);
 		DbfFieldGet(minfo_field_gatewayId, (S8*)lu8gatewayStr, pDbf);
-		if (strcmp((const char*)lu8gatewayStr, (const char*)gatewayId) == 0) {
-			DbfRecordDelete(pDbf);
-		}
+		if (strcmp((const char*)lu8gatewayStr, (const char*)gatewayId) == 0)
+			DbfRecordDelete(pDbf);//做删除标记
 	}
-	if (DbfRecordErase(pDbf) == ERROR)
+	if (DbfRecordErase(pDbf) == ERROR)//物理删除
 		goto err;
 	if (closeDBF() == ERROR)
 		return ERROR;
@@ -333,7 +330,7 @@ err:
 
 U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId)
 {
-	db_meterinfo_str dbBaseInfo[30];
+	db_meterinfo_str dbBaseInfo[30];//每次只复制30行数据, 以免占用太多内存
 	S32 rowCnt = 30;
 	S32 lastRecId = 0;
 	S32 i = 0;
@@ -344,7 +341,7 @@ U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId)
 	totalRow = DbfRecordCount(pDbf);
 	if (closeDBF() == ERROR)
 		return ERROR;
-	while (lastRecId != (totalRow-1)) {//每次只复制30行数据, 以免占用太多内存
+	while (lastRecId != (totalRow-1)) {
 		if (openDBF(DB_TMP_BASEINFO) == ERROR)
 			return ERROR;
 		db_getMeterInfo(gatewayId, &dbBaseInfo[0], &rowCnt, &lastRecId);
@@ -361,3 +358,37 @@ U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId)
 	}
 	return NO_ERR;
 }
+
+U8 db_createHisTempDb()
+{
+	sFILE *fp = FileOpen(DB_TMP_HIS_DATA, "war");
+	if (fp != NULL) {
+		FileDelete(fp);
+		FileClose(fp);
+	}
+	if (DbfCreate(DB_TMP_HIS_DATA, HISDATA_FIELD_CNT, hisFieldName, hisFieldSize) < 0)
+		return ERROR;
+	return NO_ERR;
+}
+
+U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 hisDataCnt)
+{
+	db_hisdata_str dbHisStr = { 0 };
+	U16 i = 0;
+	for (i = 0; i < hisDataCnt ; i++) {
+		binHisToAsciiHis(&dbHisStr, pHisDataStr);
+		DbfRecordAppend(pDbf);
+		DbfFieldSet(em_filedidx_id, dbHisStr.id, pDbf);
+	}
+	
+	return NO_ERR;
+}
+
+
+
+
+
+
+
+
+

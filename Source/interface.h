@@ -22,6 +22,7 @@
 #define INFOQ_READ_BASEINFO_FRAME_IDX   	(GUI_ID_USER+0x23)//读取基础信息界面的编号
 #define INFOQ_SIGLE_READ_FRAME_IDX      	(GUI_ID_USER+0x24)//单抄界面的编号
 #define INFOQ_VER_FRAME_IDX             	(GUI_ID_USER+0x25)//程序版本查询界面的编号
+#define INFOQ_HISDATA_SHEET_IDX				(GUI_ID_USER+0x26)//查询失败/成功详单界面的编号
 
 #define COM_CONFIG_FRAME_IDX  				(GUI_ID_USER+0x30)//手持机基本设置界面的编号
 

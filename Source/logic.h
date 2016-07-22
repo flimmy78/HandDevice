@@ -21,4 +21,7 @@ extern U8 logic_readVersion(U8* gatewayId, U8* hardVer, U8* softVer);
 extern U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo);
 extern U8 logic_readNextTempInfo(db_meterinfo_ptr pDbInfo);
 extern U8 logic_updateBaseInfo(U8* gatewayId);
+extern U8 logic_readHisData(U8* gatewayId);
+
+
 #endif
