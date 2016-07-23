@@ -249,6 +249,7 @@ static const GUI_WIDGET_CREATE_INFO widgetHisSheet[] = {
 };
 
 static U8 success = NO_ERR;
+static U8 hasReadHisData = ERROR;
 /************************************************************************/
 /* Init函数群                                                           */
 /************************************************************************/
@@ -337,6 +338,10 @@ static void queryHisDataInit(WM_HWIN hDlg){}
 static void hisSheetInit(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
+	db_hisdata_str dbHisStr = { 0 };
+	U16 cnt = 0;
+	U8	count[5] = { 0 };
+
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT0);
 	if (success == NO_ERR) {
 		TEXT_SetText(hItem, "成功个数");
@@ -373,6 +378,24 @@ static void hisSheetInit(WM_HWIN hDlg)
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_vopen, "阀门开度");
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_fsuc, "成功标志");
 	LISTVIEW_SetGridVis(hItem, 1);
+
+	logic_initHisView(&dbHisStr, success, &cnt);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_id, (const char*)dbHisStr.id);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_maddr, (const char*)dbHisStr.maddr);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_build, (const char*)dbHisStr.build);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_unit, (const char*)dbHisStr.unit);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_room, (const char*)dbHisStr.room);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_intemp, (const char*)dbHisStr.intemp);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_outtemp, (const char*)dbHisStr.outtemp);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_flow, (const char*)dbHisStr.flow);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_heat, (const char*)dbHisStr.heat);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_roomtemp, (const char*)dbHisStr.roomtemp);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_vopen, (const char*)dbHisStr.vopen);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_fsuc, (const char*)dbHisStr.fsuc);
+
+	sprintf((char*)count, "%d", cnt);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_SetText(hItem, (const char*)count);
 }
 /************************************************************************/
 /* CallBack函数群                                                       */
@@ -391,7 +414,7 @@ void mainCb( WM_MESSAGE* pMsg )
         mainFrameInit(hDlg);
     break;
     case WM_PAINT:
-        break;  
+        break;
     case WM_NOTIFY_PARENT:
         Id = WM_GetId(pMsg->hWinSrc);   
         NCode = pMsg->Data.v;        
@@ -1833,6 +1856,10 @@ void userReadAllHisData(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
 	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	U16	sucCnt = 0;
+	U16 failCnt = 0;
+	U8	cntStr[10] = { 0 };
+	float percent = 0.0;
 
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
@@ -1841,11 +1868,46 @@ void userReadAllHisData(WM_HWIN hDlg)
 		return;
 	}
 	supplementTo12(gatewayId);
-	if (logic_readHisData(gatewayId) == ERROR) {
+	if (logic_readHisData(gatewayId, &sucCnt, &failCnt) == ERROR) {
 		GUI_MessageBox("\n读取历史数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
-	}
-	else {
+	} else {
+		sprintf((char*)cntStr, "%d", sucCnt);
+		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+		EDIT_SetText(hItem, (const char*)cntStr);
+
+		sprintf((char*)cntStr, "%d", failCnt);
+		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
+		EDIT_SetText(hItem, (const char*)cntStr);
+
+		percent = (sucCnt + failCnt) == 0 ? 0.0 : (sucCnt * 100 / (sucCnt + failCnt));
+		sprintf((char*)cntStr, "%.01f", percent);
+		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);
+		EDIT_SetText(hItem, (const char*)cntStr);
+		hasReadHisData = NO_ERR;
 		GUI_MessageBox("\n读取历史数据成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+}
+
+void userReadNextHisData(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	db_hisdata_str dbHisStr = { 0 };
+	if (logic_nextHisData(&dbHisStr, success) == ERROR) {
+		GUI_MessageBox("\n读取下一条数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_id, (const char*)dbHisStr.id);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_maddr, (const char*)dbHisStr.maddr);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_build, (const char*)dbHisStr.build);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_unit, (const char*)dbHisStr.unit);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_room, (const char*)dbHisStr.room);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_intemp, (const char*)dbHisStr.intemp);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_outtemp, (const char*)dbHisStr.outtemp);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_flow, (const char*)dbHisStr.flow);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_heat, (const char*)dbHisStr.heat);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_roomtemp, (const char*)dbHisStr.roomtemp);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_vopen, (const char*)dbHisStr.vopen);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_fsuc, (const char*)dbHisStr.fsuc);
 	}
 }
 
@@ -1874,6 +1936,7 @@ void hisSheetCb(WM_MESSAGE* pMsg)
 				GUI_EndDialog(hDlg, WM_USER_EXIT);
 				break;
 			case GUI_ID_BUTTON1://下一个
+				userReadNextHisData(hDlg);
 				break;
 			case GUI_ID_BUTTON4:
 				userUpdateDbf(hDlg);
@@ -1895,6 +1958,7 @@ void hisSheetCb(WM_MESSAGE* pMsg)
 			GUI_EndDialog(hDlg, WM_USER_EXIT);
 			break;
 		case GUI_KEY_NUM2://下一个
+			userReadNextHisData(hDlg);
 			break;
 		case GUI_KEY_NUM5:
 			userUpdateDbf(hDlg);
@@ -1958,10 +2022,14 @@ void queryHisDataCb(WM_MESSAGE* pMsg)
 				userReadAllHisData(hDlg);
 				break;
 			case GUI_ID_BUTTON3://成功详单
-				userReadHisSheet(NO_ERR);
+				if (hasReadHisData == NO_ERR) {
+					userReadHisSheet(NO_ERR);
+				}
 				break;
 			case GUI_ID_BUTTON4://失败详单
-				userReadHisSheet(ERROR);
+				if (hasReadHisData == NO_ERR) {
+					userReadHisSheet(ERROR);
+				}
 				break;
 			default:
 				break;

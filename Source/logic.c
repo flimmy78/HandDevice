@@ -385,7 +385,7 @@ U8 logic_updateBaseInfo(U8* gatewayId)
 	return NO_ERR;
 }
 
-U8 logic_readHisData(U8* gatewayId)
+U8 logic_readHisData(U8* gatewayId, U16* sucCnt, U16* failCnt)
 {
 	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
 	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
@@ -408,8 +408,12 @@ U8 logic_readHisData(U8* gatewayId)
 	}
 	if (openDBF(DB_TMP_HIS_DATA) == ERROR)
 		return ERROR;
-	//if (db_storeTempHisData(&hisDataStr[0], hisDataCnt) == ERROR)
-	//	goto resultErr;
+	if (db_storeTempHisData(&hisDataStr[0], hisDataCnt, sucCnt, failCnt) == ERROR)
+		goto resultErr;
+	if (BodyHeadStr.succeed == GAT_EXCEP_FAIL) {
+		GUI_MessageBox("\n当前时间点无历史数据\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		return ERROR;
+	}
 	while (BodyHeadStr.succeed == 0x01) {
 		BodyHeadStr.seq++;
 		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
@@ -417,8 +421,8 @@ U8 logic_readHisData(U8* gatewayId)
 			goto resultErr;
 		if (protoA_hisData(buf, &bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR)
 			goto resultErr;
-		//if (db_storeTempHisData(&hisDataStr[0], hisDataCnt, lu8gatewayId) == ERROR)
-		//	goto resultErr;
+		if (db_storeTempHisData(&hisDataStr[0], hisDataCnt, sucCnt, failCnt) == ERROR)
+			goto resultErr;
 	}
 
 	if (closeDBF() == ERROR)
@@ -429,4 +433,15 @@ resultErr:
 	return ERROR;
 }
 
+U8 logic_initHisView(db_hisdata_ptr pDbHis, U8 suc, U16* cnt)
+{
+	U16 hisCnt = 1;
+	db_readSucHisData(pDbHis, &hisCnt, suc);
+	return NO_ERR;
+}
 
+U8 logic_nextHisData(db_hisdata_ptr pDbHis, U8 suc)
+{
+	if (db_getNextHisData(pDbHis, suc) == ERROR) return ERROR;
+	return NO_ERR;
+}

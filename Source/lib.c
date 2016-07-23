@@ -558,7 +558,6 @@ U32 ChangeEndianness(U32 value)
 
 U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr pBinHisData)
 {
-	U8 lu8str[20] = { 0 };
 	U8 lu8unit[12] = { 0 };
 
 	sprintf((char*)pDbHisData->id, "%d", pBinHisData->meterId);
@@ -569,16 +568,12 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	sprintf((char*)pDbHisData->build, "%d", pBinHisData->buildId);
 	sprintf((char*)pDbHisData->unit, "%d", pBinHisData->unitId);
 	sprintf((char*)pDbHisData->room, "%d", pBinHisData->roomId);
-	sprintf((char*)lu8str, "%02X%02X.%02X", pBinHisData->MeterData.WaterInTemp[2], \
+	sprintf((char*)pDbHisData->intemp, "%X%X.%02X C", pBinHisData->MeterData.WaterInTemp[2], \
 		pBinHisData->MeterData.WaterInTemp[1], pBinHisData->MeterData.WaterInTemp[0]);
-	sprintf((char*)pDbHisData->intemp, "%f℃", Lib_atof((const char*)lu8str));
-	sprintf((char*)lu8str, "%02X%02X.%02X", pBinHisData->MeterData.WaterOutTemp[2], \
+	sprintf((char*)pDbHisData->outtemp, "%X%X.%02X C", pBinHisData->MeterData.WaterOutTemp[2], \
 		pBinHisData->MeterData.WaterOutTemp[1], pBinHisData->MeterData.WaterOutTemp[0]);
-	sprintf((char*)pDbHisData->outtemp, "%f℃", Lib_atof((const char*)lu8str));
 
-	sprintf((char*)lu8str, "%02X%02X%02X.%02X", pBinHisData->MeterData.AccumulateFlow[3], \
-		pBinHisData->MeterData.AccumulateFlow[2], pBinHisData->MeterData.AccumulateFlow[1], \
-		pBinHisData->MeterData.AccumulateFlow[0]);
+	//流量
 	switch (pBinHisData->MeterData.AccumulateFlowUnit)
 	{
 	case 0x29:
@@ -590,7 +585,10 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	default:
 		break;
 	}
-	sprintf((char*)pDbHisData->flow, "%f%s", Lib_atof((const char*)lu8str), lu8unit);
+	sprintf((char*)pDbHisData->flow, "%X%X%X.%02X%s", pBinHisData->MeterData.AccumulateFlow[3], \
+		pBinHisData->MeterData.AccumulateFlow[2], pBinHisData->MeterData.AccumulateFlow[1], \
+		pBinHisData->MeterData.AccumulateFlow[0], lu8unit);
+	//热量
 	switch (pBinHisData->MeterData.CurrentHeatUnit)
 	{
 	case 0x02:
@@ -623,15 +621,12 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	default:
 		break;
 	}
-	sprintf((char*)lu8str, "%02X%02X%02X.%02X", pBinHisData->MeterData.CurrentHeat[3], \
+	sprintf((char*)pDbHisData->heat, "%X%X%X.%02X%s", pBinHisData->MeterData.CurrentHeat[3], \
 		pBinHisData->MeterData.CurrentHeat[2], pBinHisData->MeterData.CurrentHeat[1], \
-		pBinHisData->MeterData.CurrentHeat[0]);
-	sprintf((char*)pDbHisData->heat, "%f%s", Lib_atof((const char*)lu8str), lu8unit);
-	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X%℃", pBinHisData->RoomTempBCD[1], pBinHisData->RoomTempBCD[0]);
+		pBinHisData->MeterData.CurrentHeat[0], lu8unit);
+	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinHisData->RoomTempBCD[1], pBinHisData->RoomTempBCD[0]);
 	sprintf((char*)pDbHisData->vopen, "%02X", pBinHisData->vOpen);
 	sprintf((char*)pDbHisData->fsuc, "%02X", pBinHisData->vState);
 	return NO_ERR;
 }
-
-
 

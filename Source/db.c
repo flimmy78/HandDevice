@@ -371,24 +371,128 @@ U8 db_createHisTempDb()
 	return NO_ERR;
 }
 
-U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 hisDataCnt)
+U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 hisDataCnt, U16* sucCnt, U16* failCnt)
 {
 	db_hisdata_str dbHisStr = { 0 };
 	U16 i = 0;
-	for (i = 0; i < hisDataCnt ; i++) {
+	for (i = 0; i < hisDataCnt ; i++, pHisDataStr++) {
+		if (protoA_hisDataSuc(pHisDataStr) == ERROR) {
+			failCnt++;
+		} else	{
+			sucCnt++;
+		}
 		binHisToAsciiHis(&dbHisStr, pHisDataStr);
 		DbfRecordAppend(pDbf);
-		DbfFieldSet(em_filedidx_id, dbHisStr.id, pDbf);
+		DbfFieldSet(em_filedidx_id, (char*)dbHisStr.id, pDbf);
+		DbfFieldSet(em_filedidx_maddr, (char*)dbHisStr.maddr, pDbf);
+		DbfFieldSet(em_filedidx_build, (char*)dbHisStr.build, pDbf);
+		DbfFieldSet(em_filedidx_unit, (char*)dbHisStr.unit, pDbf);
+		DbfFieldSet(em_filedidx_room, (char*)dbHisStr.room, pDbf);
+		DbfFieldSet(em_filedidx_intemp, (char*)dbHisStr.intemp, pDbf);
+		DbfFieldSet(em_filedidx_outtemp, (char*)dbHisStr.outtemp, pDbf);
+		DbfFieldSet(em_filedidx_flow, (char*)dbHisStr.flow, pDbf);
+		DbfFieldSet(em_filedidx_heat, (char*)dbHisStr.heat, pDbf);
+		DbfFieldSet(em_filedidx_roomtemp, (char*)dbHisStr.roomtemp, pDbf);
+		DbfFieldSet(em_filedidx_vopen, (char*)dbHisStr.vopen, pDbf);
+		DbfFieldSet(em_filedidx_fsuc, (char*)dbHisStr.fsuc, pDbf);
 	}
 	
 	return NO_ERR;
 }
 
+U8 db_readOneHisData(db_hisdata_ptr pDbHis, U16 hisIdx)
+{
+	DbfGotoRecord(hisIdx, pDbf);
+	if(DbfFieldGet(em_filedidx_id, (char*)pDbHis->id, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_maddr, (char*)pDbHis->maddr, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_build, (char*)pDbHis->build, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_unit, (char*)pDbHis->unit, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_room, (char*)pDbHis->room, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_intemp, (char*)pDbHis->intemp, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_outtemp, (char*)pDbHis->outtemp, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_flow, (char*)pDbHis->flow, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_heat, (char*)pDbHis->heat, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_roomtemp, (char*)pDbHis->roomtemp, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_vopen, (char*)pDbHis->vopen, pDbf) < 0) return ERROR;
+	if(DbfFieldGet(em_filedidx_fsuc, (char*)pDbHis->fsuc, pDbf) < 0) return ERROR;
+	return NO_ERR;
+}
 
+U8 db_readSucHisData(db_hisdata_ptr pDbHis, U16* hisCnt, U8 suc)
+{
+	U16 i = 0;
+	U16 actCnt = 0;
+	S32 totalRow = 0;
+	U8	vState[20] = { 0 };
 
+	if (openDBF(DB_TMP_HIS_DATA) == ERROR)
+		return ERROR;
+	totalRow = DbfRecordCount(pDbf);
+	if (totalRow < 0) return ERROR;
+	for (i = 0, actCnt = 0; i < totalRow; i++) {
+		if (DbfGotoRecord(i, pDbf)< 0) return ERROR;
+		if (DbfFieldGet(em_filedidx_fsuc, (char*)vState, pDbf) < 0) return ERROR;
+		if (suc == NO_ERR) {
+			if (strcmp((const char*)vState, "EE")!=0) {
+				db_readOneHisData(pDbHis, i);
+				pDbHis++;
+				actCnt++;
+			}
+		} else {
+			if (strcmp((const char*)vState, "EE") == 0) {
+				db_readOneHisData(pDbHis, i);
+				pDbHis++;
+				actCnt++;
+			}
+		}
+		if ( actCnt == *hisCnt) {
+			break;
+		}
+	}
+	*hisCnt = actCnt;
 
+	if (closeDBF() == ERROR) {
+		return ERROR;
+	}
+	return NO_ERR;
+}
 
+U8 db_getNextHisData(db_hisdata_ptr pHisData, U8 suc)
+{
+	S32 iRet = 0;
+	U16 i = 0;
+	U8	vState[20] = { 0 };
+	S32 totalRow = 0;
 
+	if (openDBF(DB_TMP_HIS_DATA) == ERROR)
+		return ERROR;
 
+	totalRow = DbfRecordCount(pDbf);
+	for (i = 0; i < totalRow;i++) {
+		iRet = DbfGetCurrentRecord(pDbf);
+		if (iRet >= 0) {
+			iRet = ((iRet + 1) % totalRow);//跳到下一行, 若到最后一行, 则归零
+			if (DbfFieldGet(em_filedidx_fsuc, (char*)vState, pDbf) < 0) return ERROR;
+			if (suc == NO_ERR) {
+				if (strcmp((const char*)vState, "EE") != 0) {
+					if (db_readOneHisData(pHisData, iRet) == ERROR)	return ERROR;
+					break;
+				}
+			} else {
+				if (strcmp((const char*)vState, "EE") == 0) {
+					if (db_readOneHisData(pHisData, iRet) == ERROR)	return ERROR;
+					break;
+				}
+			}
+		}
+		else {
+			return ERROR;
+		}
+	}
 
+	if (closeDBF() == ERROR) {
+		return ERROR;
+	}
 
+	return NO_ERR;
+}

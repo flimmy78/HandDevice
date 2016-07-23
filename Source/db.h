@@ -35,9 +35,9 @@
 
 #define DB_MINFO_FIELD_CNT			13	//表基础信息DBF的字段数量
 
-#define DB_HIS_LEN_TEMP				7	//历史数据中, 温度字段的长度
-#define DB_HIS_LEN_FLOW				13	//历史数据中, 流量字段的长度
-#define DB_HIS_LEN_HEAT				13	//历史数据中, 热量字段的长度
+#define DB_HIS_LEN_TEMP				10	//历史数据中, 温度字段的长度
+#define DB_HIS_LEN_FLOW				15	//历史数据中, 流量字段的长度
+#define DB_HIS_LEN_HEAT				15	//历史数据中, 热量字段的长度
 #define DB_HIS_LEN_VOPEN			10	//历史数据中, 阀门开度字段的长度
 #define DB_HIS_LEN_FSUC				7	//历史数据中, 阀门状态字段的长度
 
@@ -146,4 +146,8 @@ extern U8 db_getNextTempMeterInfo(db_meterinfo_ptr pDbInfo);
 extern U8 db_deleteAllRecord(U8* gatewayId);
 extern U8 db_cpRecTo(U8* srcDbf, U8* destDbf, U8* gatewayId);
 extern U8 db_createHisTempDb(void);
+extern U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 hisDataCnt, U16* sucCnt, U16* failCnt);
+extern U8 db_readOneHisData(db_hisdata_ptr pDbHis, U16 hisCnt);
+extern U8 db_readSucHisData(db_hisdata_ptr pDbHis, U16* hisCnt, U8 suc);
+extern U8 db_getNextHisData(db_hisdata_ptr pHisData, U8 suc);
 #endif // DB_H

@@ -111,14 +111,22 @@
 #define GATEWAY_ASW_CODE_EXCEED				0x13//参数出允许范围
 #define GATEWAY_ASW_CODE_MSGBODY_VER_ERR	0x14//消息体版本号错误
 
-
-#endif
-
 #define PROTO_LEN_MADDR		7//协议中仪表地址长度
 #define PROTO_LEN_VADDR		7//协议中阀门地址长度
 #define PROTO_LEN_ROWID		2//协议中计量点编号长度
 #define PROTO_LEN_ROOMID	2//协议中房间编号长度
 #define PROTO_LEN_RSV		8//保留字段
+
+/************************************************************************/
+/*                       阀门开度                                       */
+/************************************************************************/
+#define PROTO_VOPEN_ZERO	0x99//全关
+#define PROTO_VOPEN_QUATER	0x88//四分之一开
+#define PROTO_VOPEN_HALF	0x77//半开
+#define PROTO_VOPEN_3QUATER	0x66//四分之三开
+#define PROTO_VOPEN_ALL		0x55//全开
+/************************************************************************/
+#endif
 
 #pragma pack(push)
 #pragma pack(1)
@@ -293,6 +301,7 @@ extern U8 protoA_readBaseInfo(U8* buf, U16* bufSize, U16* infoCnt, base_info_hea
 extern U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq);
 extern U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId, U8* timeNode);
 extern U8 protoA_hisData(U8* buf, U16* bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData);
+extern U8 protoA_hisDataSuc(tempControl_messure_hisdata_ptr pHisData);
 
 #endif
 

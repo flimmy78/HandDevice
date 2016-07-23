@@ -450,10 +450,17 @@ U8 protoA_hisData(U8* buf, U16* bufSize, U16* hisDataCnt, hisdata_head_ptr pBody
 		return ERROR;
 	*hisDataCnt = rowCnt;
 	pMsgBody += sizeof(hisdata_head_str);//指向消息体
-	for (i = 0; i < rowCnt; i++)
+	for (i = 0; i < rowCnt; i++) {
 		memcpy((pHisData + i), (tempControl_messure_hisdata_ptr)pMsgBody + i, \
 			sizeof(tempControl_messure_hisdata_str));
+	}
 	return NO_ERR;
 }
 
-
+U8 protoA_hisDataSuc(tempControl_messure_hisdata_ptr pHisData)
+{
+	if (pHisData->vState==0xEE) {
+		return ERROR;
+	}
+	return NO_ERR;
+}
