@@ -8,7 +8,7 @@
 #define	FILE_LINE   __FILE__,__FUNCTION__,__LINE__
 #define	PRINT_LINE()	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 #define NO_ERR	0x00//无错
-#define ERROR	0x01//有错
+#define ERROR	0xFF//有错
 
 #define WM_USER_EXIT	-1
 #define EDIT_MAX_LEN	128

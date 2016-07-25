@@ -5,9 +5,10 @@
 #include "user.h"
 
 #define CJ188_HEAT_METER
-#define PROTOCOL_VER 0x03	//协议版本号
+#define GATEWAY_PROTOCOL_VER 0x03	//协议版本号
 
-#if PROTOCOL_VER==0x03
+#ifdef GATEWAY_PROTOCOL_VER
+#if GATEWAY_PROTOCOL_VER==0x03
 #define GATEWAY_PREFIX      0xFB    //集中器通讯协议的前导符
 #define GATEWAY_SUFIX       0xFD    //集中器通讯协议的结束符
 #define GATEWAY_START       0x7B    //集中器通讯协议的起始符
@@ -46,9 +47,9 @@
 #define GATEWAY_WITHSEQ_LEN			32//集中器返回帧中带有服务器发送的序列号的帧长度
 #define GATEWAY_WITHOUTSEQ_LEN		31//集中器返回帧中不带有服务器发送的序列号的帧长度
 //异常回应代码--表示意义
-#define GAT_EXCEP_FAIL          0x10//失败、异常
-#define GAT_EXCEP_MEASURE_POINT 0x11//异常，查不到指定计量点号。
-#define GAT_EXCEP_CHANNEL_BUSY  0x12//异常，MBUS 通道正忙，现在不能抄表。
+#define GAT_EXCEP_FAIL          0x10//失败, 异常
+#define GAT_EXCEP_MEASURE_POINT 0x11//异常, 查不到指定计量点号。
+#define GAT_EXCEP_CHANNEL_BUSY  0x12//异常, 集中器正忙, 现在不能抄表.
 #define GAT_EXCEP_PARAM_EXCEED  0x13//参数超出允许范围
 #define GAT_EXCEP_PROTO_VER     0x14//消息体版本号错误
 
@@ -126,11 +127,10 @@
 #define PROTO_VOPEN_3QUATER	0x66//四分之三开
 #define PROTO_VOPEN_ALL		0x55//全开
 /************************************************************************/
-#endif
-
+#endif//GATEWAY_PROTOCOL_VER==0x03
+#endif // GATEWAY_PROTOCOL_VER
 #pragma pack(push)
 #pragma pack(1)
-//为避免编译器字节对齐, 全部使用单字节结构
 typedef struct {//集中器协议体结构
 	U8 SourceAddr[GATEWAY_SADD_LEN];//源地址, LE=Little Ending
 	U8 DestAddr[GATEWAY_OADD_LEN];  //目标地址, LE
@@ -142,7 +142,7 @@ typedef struct {//集中器协议体结构
 } gateway_protocol_str;//类型名用下划线分隔, 下同
 typedef gateway_protocol_str* gateway_protocol_ptr;
 
-typedef struct{//集中器仪表基础信息结构
+typedef struct{//下发集中器仪表基础信息结构
 	U8 rowId[PROTO_LEN_ROWID];		//计量点, 用作唯一标示一行(Little Ending, Hex)
 	U8 meterAddr[PROTO_LEN_MADDR];  //仪表(热量表,水表等)地址(Little Ending, BCD)
 	U8 vendorId;					//厂商代码(Hex)
@@ -159,68 +159,68 @@ typedef struct{//集中器仪表基础信息结构
 }meter_row_str;
 typedef meter_row_str* meter_row_ptr;
 
-typedef struct {
+typedef struct {//集中器表基础信息消息头
 	U8 totalRows;			//一共有多少行表地址
 	U8 seq;					//本帧的索引号
 	U8 thisRows;			//本帧包含多少行表地址
 }meterinfo_bodyHead_str;
 typedef meterinfo_bodyHead_str* meterinfo_bodyHead_ptr;
 
-typedef struct {
-	U8 Method;			// 超声波热计量表20H;电子式热分配表A0H;时间通断面积法B0H;
+typedef struct {//下发GPRS相关参数结构体
+	U8 Method;			//超声波热计量表20H;电子式热分配表A0H;时间通断面积法B0H;
 	U8 DataSource;		//0X0A 上位机，0X0B本地抄表
-	U8 Period[2];			// 分摊周期（分钟）
-	U8 LogReportTime; //0x00 :打开 ，0x01:不打开
-	U8 LogOpenType; 		// 0X00: 打开 ，0X01 ：不打开
-	U8 APN;             // GPRS网络APN接入点选择.
-	U8 IPAddr[4];			//0是低位IP  3是高位IP 16进制下发
-	U8 HostPor[2];  // 主站端口号高8位  (注：端口号高低字节顺序和0x90、0x91读取时顺序相反！)
+	U8 Period[2];		//分摊周期（分钟）
+	U8 LogReportTime;	//0x00 :打开 ，0x01:不打开
+	U8 LogOpenType; 	//0X00: 打开 ，0X01 ：不打开
+	U8 APN;             //GPRS网络APN接入点选择.
+	U8 IPAddr[4];		//0是低位IP  3是高位IP 16进制下发
+	U8 HostPor[2];		//主站端口号高8位  (注：端口号高低字节顺序和0x90、0x91读取时顺序相反！)
 }gprs_param_str;
 typedef gprs_param_str* gprs_param_ptr;
 
-typedef struct {
-	U8 Ip[4];//服务器IP, 倒序
-	U8 Port[2];//服务器端口
-	U8 Address[6];// 集中器地址
-	U8 HostAddress[6];// 主站地址
-	U8 SoftVer[2];/*例如：0x0232代表2.32*/
-	U8 HardwareVer[2];/*例如：0x0232代表2.32*/
-	U8 u8APN;  //GPRS模块APN接入点，0-cmnet公网，1-联通M2M物联网，2-威海热电。
-	U8 u8Reserved[6];//保留
+typedef struct {//读取GPRS以及软硬件版本等信息的结构体
+	U8 Ip[4];			//服务器IP, 倒序
+	U8 Port[2];			//服务器端口
+	U8 Address[6];		//集中器地址
+	U8 HostAddress[6];	//主站地址
+	U8 SoftVer[2];		//软件版本号, 例如：0x0232代表2.32
+	U8 HardwareVer[2];	//硬件版本号, 例如：0x0232代表2.32*/
+	U8 u8APN;			//GPRS模块APN接入点，0-cmnet公网，1-联通M2M物联网，2-威海热电。
+	U8 u8Reserved[6];	//保留
 } gateway_params_str;
 typedef gateway_params_str* gateway_params_ptr;
 
-typedef struct {
-	U8	mReadCnt;//热表补抄次数
-	U16 mReadIntv;//热表补抄时间间隔ms
-	U8	vReadCnt;//阀控补抄次数
-	U16 vReadIntv;//阀控补抄时间间隔ms
+typedef struct {//补抄相关参数结构体
+	U8	mReadCnt;	//热表补抄次数
+	U16 mReadIntv;	//热表补抄时间间隔ms
+	U8	vReadCnt;	//阀控补抄次数
+	U16 vReadIntv;	//阀控补抄时间间隔ms
 }reread_param_str;
 typedef reread_param_str* reread_param_ptr;
 
 typedef struct {//消息头部结构体
-	U8 prefix[GATEWAY_PREFIX_CNT];//前导符FB
-	U8 start;			//开始符7B
-	U8 Ver;				//协议版本号
+	U8 prefix[GATEWAY_PREFIX_CNT];		//前导符0xFB
+	U8 start;							//开始符0x7B
+	U8 protoVer;						//协议版本号
 	U8 SourceAddr[GATEWAY_SADD_LEN];	//源地址, 发送方地址
 	U8 DestAddr[GATEWAY_OADD_LEN];		//目的地址, 接收方地址
-	U8 MsgID;			//消息序列
-	U16 MsgLength;		//消息体长度
-	U8 MsgType;			//消息类型
-	U8 TimeSmybol[GATEWAY_TS_LEN];//TS时间标签
-	U8 HeadCheck;		//消息头校验
+	U8 MsgID;							//消息序列
+	U16 MsgLength;						//消息体长度
+	U8 MsgType;							//消息类型
+	U8 TimeSmybol[GATEWAY_TS_LEN];		//TS时间标签
+	U8 HeadCheck;						//消息头校验
 } protocol_head_str;
 typedef protocol_head_str* protocol_type_ptr;
 
-typedef struct {
-	U8 succeed;//是否有后继帧, 0-没有, 1-有, 10-异常
-	U8 seq;		//本包序号
-	U8 meterType;//仪表类型, 固定为0x20
-	U8 rowCnt;//本帧包含的表地址数量
+typedef struct {//读取集中器表地址信息, 消息头结构体
+	U8 succeed;		//是否有后继帧, 0-没有, 1-有, 10-异常
+	U8 seq;			//本包序号
+	U8 meterType;	//仪表类型, 固定为0x20
+	U8 rowCnt;		//本帧包含的表地址数量
 } base_info_head_str;
 typedef base_info_head_str* base_info_head_ptr;
 
-typedef struct {
+typedef struct {//读取集中器热表历史信息结构体
 	U8	DailyHeat[4];			//结算日热量
 	U8	DailyHeatUnit;			//一般为kWh, 0x05
 	U8	CurrentHeat[4];			//当前热量
@@ -240,32 +240,32 @@ typedef struct {
 typedef CJ188_Format* CJ188_Format_ptr;
 
 typedef struct {//温控计量一体化, 历史数据格式
-	U16 meterId;		//计量点号
-	U8	meterType;		//仪表类型
-	U8	meterAddr[7];	//仪表地址
-	U8	buildId;		//楼号
-	U8	unitId;			//单元号
-	U16	roomId;			//房间号
-	U8	mSecondBCD;		//抄热表秒BCD
-	U8	mMinuteBCD;		//抄热表分钟BCD
-	U8	mHourBCD;		//抄热表小时BCD
-	U8	meterDataLen;	//热表数据长度
+	U16 meterId;				//计量点号
+	U8	meterType;				//仪表类型
+	U8	meterAddr[7];			//仪表地址
+	U8	buildId;				//楼号
+	U8	unitId;					//单元号
+	U16	roomId;					//房间号
+	U8	mSecondBCD;				//抄热表秒BCD
+	U8	mMinuteBCD;				//抄热表分钟BCD
+	U8	mHourBCD;				//抄热表小时BCD
+	U8	meterDataLen;			//热表数据长度
 #ifdef CJ188_HEAT_METER
-	CJ188_Format	MeterData;		//热表数据指针
+	CJ188_Format	MeterData;	//热表数据
 #endif // CJ188_HEAT_METER
-	U8	vSecondBCD;		//抄阀秒BCD
-	U8	vMinuteBCD;		//抄阀分钟BCD
-	U8	vHourBCD;		//抄阀小时BCD
-	U8	RoomTempBCD[3];	//室内温度
-	U8	vOpen;			//阀门开度
-	U8	vState;			//阀门状态
-	U8	vReserve;		//保留
+	U8	vSecondBCD;				//抄阀秒BCD
+	U8	vMinuteBCD;				//抄阀分钟BCD
+	U8	vHourBCD;				//抄阀小时BCD
+	U8	RoomTempBCD[3];			//室内温度
+	U8	vOpen;					//阀门开度
+	U8	vState;					//阀门状态
+	U8	vReserve;				//保留
 } tempControl_messure_hisdata_str;
 typedef tempControl_messure_hisdata_str* tempControl_messure_hisdata_ptr;
 
 typedef struct {//温控计量一体化和通断时间面积法的历史数据头部结构
-	U8 succeed;//是否有后继帧, 0-没有, 1-有, 10-异常
-	U8 seq;		//本包序号
+	U8 succeed;		//是否有后继帧, 0-没有, 1-有, 10-异常
+	U8 seq;			//本包序号
 	U8 u8second;	//存储时的秒
 	U8 u8minute;	//存储时的分
 	U8 u8hour;		//存储时的时
@@ -281,7 +281,7 @@ typedef hisdata_head_str*  hisdata_head_ptr;
 #pragma pack(pop)
 
 extern U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
-		U8 MsgIndex, U8 MsgType, U8 MsgLen, U8* pMsgBody);
+		U8 MsgIndex, U8 MsgType, U16 MsgLen, U8* pMsgBody);
 extern U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq);
 extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
 extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
@@ -297,10 +297,10 @@ extern U8 protoX_reboot(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoW_rereadParam(U8* buf, U16* bufSize, U8* gatewayId, reread_param_ptr pParam);
 extern U8 protoX_readMeterImmd(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoR_readBaseInfo(U8* buf, U16* bufSize, U8* gatewayId);
-extern U8 protoA_readBaseInfo(U8* buf, U16* bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo);
+extern U8 protoA_readBaseInfo(U8* buf, U16 bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo);
 extern U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq);
 extern U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId, U8* timeNode);
-extern U8 protoA_hisData(U8* buf, U16* bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData);
+extern U8 protoA_hisData(U8* buf, U16 bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData);
 extern U8 protoA_hisDataSuc(tempControl_messure_hisdata_ptr pHisData);
 
 #endif

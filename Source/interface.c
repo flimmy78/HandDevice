@@ -248,8 +248,10 @@ static const GUI_WIDGET_CREATE_INFO widgetHisSheet[] = {
 	{ TEXT_CreateIndirect, "个数", GUI_ID_TEXT0, 10, 10, 80, 20, 0, 0 }
 };
 
-static U8 success = NO_ERR;
-static U8 hasReadHisData = ERROR;
+static U8 gu8success = NO_ERR;
+static U8 gu8hasReadHisData = ERROR;
+static U16	gu16sucCnt = 0;
+static U16	gu16failCnt = 0;
 /************************************************************************/
 /* Init函数群                                                           */
 /************************************************************************/
@@ -333,17 +335,28 @@ static void queryBaseInfoInit(WM_HWIN hDlg)
 	BUTTON_SetBkColor(hItem, BUTTON_CI_UNPRESSED, GUI_RED);
 }
 
-static void queryHisDataInit(WM_HWIN hDlg){}
+static void queryHisDataInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_SetMaxLen(hItem, 2*GATEWAY_OADD_LEN);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+	EDIT_SetMaxLen(hItem, 5);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
+	EDIT_SetMaxLen(hItem, 5);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);
+	EDIT_SetMaxLen(hItem, 6);
+}
 
 static void hisSheetInit(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
 	db_hisdata_str dbHisStr = { 0 };
-	U16 cnt = 0;
 	U8	count[5] = { 0 };
 
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT0);
-	if (success == NO_ERR) {
+	if (gu8success == NO_ERR) {
 		TEXT_SetText(hItem, "成功个数");
 	} else {
 		TEXT_SetText(hItem, "失败个数");
@@ -379,7 +392,7 @@ static void hisSheetInit(WM_HWIN hDlg)
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_fsuc, "成功标志");
 	LISTVIEW_SetGridVis(hItem, 1);
 
-	logic_initHisView(&dbHisStr, success, &cnt);
+	logic_initHisView(&dbHisStr, gu8success);
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_id, (const char*)dbHisStr.id);
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_maddr, (const char*)dbHisStr.maddr);
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_build, (const char*)dbHisStr.build);
@@ -393,7 +406,7 @@ static void hisSheetInit(WM_HWIN hDlg)
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_vopen, (const char*)dbHisStr.vopen);
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_fsuc, (const char*)dbHisStr.fsuc);
 
-	sprintf((char*)count, "%d", cnt);
+	sprintf((char*)count, "%d", gu8success == NO_ERR ? gu16sucCnt : gu16failCnt);
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 	EDIT_SetText(hItem, (const char*)count);
 }
@@ -1856,8 +1869,6 @@ void userReadAllHisData(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
 	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
-	U16	sucCnt = 0;
-	U16 failCnt = 0;
 	U8	cntStr[10] = { 0 };
 	float percent = 0.0;
 
@@ -1868,23 +1879,29 @@ void userReadAllHisData(WM_HWIN hDlg)
 		return;
 	}
 	supplementTo12(gatewayId);
-	if (logic_readHisData(gatewayId, &sucCnt, &failCnt) == ERROR) {
+	gu16sucCnt = gu16failCnt = 0;
+	if (logic_readHisData(gatewayId, &gu16sucCnt, &gu16failCnt) == ERROR) {
 		GUI_MessageBox("\n读取历史数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	} else {
-		sprintf((char*)cntStr, "%d", sucCnt);
+		sprintf((char*)cntStr, "%d", gu16sucCnt);
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
 		EDIT_SetText(hItem, (const char*)cntStr);
 
-		sprintf((char*)cntStr, "%d", failCnt);
+		sprintf((char*)cntStr, "%d", gu16failCnt);
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
 		EDIT_SetText(hItem, (const char*)cntStr);
 
-		percent = (sucCnt + failCnt) == 0 ? 0.0 : (sucCnt * 100 / (sucCnt + failCnt));
-		sprintf((char*)cntStr, "%.01f", percent);
+		if ((gu16sucCnt + gu16failCnt) == 0) {
+			percent = 0.0;
+		} else {
+			percent = (gu16sucCnt * 100 / (gu16sucCnt + gu16failCnt));
+		}
+
+		sprintf((char*)cntStr, "%.01f%%", percent);//不保留小数位, 原因不明
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);
 		EDIT_SetText(hItem, (const char*)cntStr);
-		hasReadHisData = NO_ERR;
-		GUI_MessageBox("\n读取历史数据成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+		gu8hasReadHisData = NO_ERR;
+		//GUI_MessageBox("\n读取历史数据成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
 }
 
@@ -1892,7 +1909,7 @@ void userReadNextHisData(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
 	db_hisdata_str dbHisStr = { 0 };
-	if (logic_nextHisData(&dbHisStr, success) == ERROR) {
+	if (logic_nextHisData(&dbHisStr, gu8success) == ERROR) {
 		GUI_MessageBox("\n读取下一条数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	} else {
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
@@ -1983,7 +2000,11 @@ void hisSheetCb(WM_MESSAGE* pMsg)
 void userReadHisSheet(U8 suc)
 {
 	int iRet;
-	success = suc;
+
+	if (gu8hasReadHisData == ERROR) {
+		GUI_MessageBox("\n请先读取历史数据\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	gu8success = suc;
 	while (1) {
 		iRet = GUI_ExecDialogBox(widgetHisSheet, GUI_COUNTOF(widgetHisSheet), &hisSheetCb, WM_HBKWIN, 0, 0);
 		if (iRet == WM_USER_EXIT)
@@ -2022,14 +2043,10 @@ void queryHisDataCb(WM_MESSAGE* pMsg)
 				userReadAllHisData(hDlg);
 				break;
 			case GUI_ID_BUTTON3://成功详单
-				if (hasReadHisData == NO_ERR) {
-					userReadHisSheet(NO_ERR);
-				}
+				userReadHisSheet(NO_ERR);
 				break;
 			case GUI_ID_BUTTON4://失败详单
-				if (hasReadHisData == NO_ERR) {
-					userReadHisSheet(ERROR);
-				}
+				userReadHisSheet(ERROR);
 				break;
 			default:
 				break;

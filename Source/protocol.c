@@ -34,7 +34,7 @@ static void createFrame(U8 *sendBuf, U16 *sendLen, gateway_protocol_ptr pProto)
 	pHeadStart = pTemp;
 	lenFrame += GATEWAY_PREFIX_CNT + GATEWAY_START_CNT;
 
-	*pTemp++ = PROTOCOL_VER;//版本号
+	*pTemp++ = GATEWAY_PROTOCOL_VER;//版本号
 
 	memcpy(pTemp, pProto->SourceAddr, GATEWAY_SADD_LEN);//源地址
 	pTemp += GATEWAY_SADD_LEN;
@@ -63,9 +63,8 @@ static void createFrame(U8 *sendBuf, U16 *sendLen, gateway_protocol_ptr pProto)
 	*sendLen = lenFrame;
 }
 
-
 U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
-	U8 MsgIndex, U8 MsgType, U8 MsgLen, U8* pMsgBody)
+	U8 MsgIndex, U8 MsgType, U16 MsgLen, U8* pMsgBody)
 {
 	gateway_protocol_str protoStr = { 0 };
 
@@ -81,6 +80,60 @@ U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
 }
 
 /*
+**	分析集中器的返回帧长度及校验的合法性.
+**	@buf:		返回帧
+**	@bufSize:	返回帧的长度
+**	return:		合法返回NO_ERR; 非法返回ERROR, 下同
+*/
+U8 protoA_retFrameLen(U8* buf, U16 bufSize)
+{
+	U8	lu8data = 0;
+	U16	lu16Length = 0;
+	protocol_head_str protoHeadStr = { 0 };
+
+	//检查消息头部长度
+	if (bufSize < sizeof(protocol_head_str)) {
+		return ERROR;
+	}
+
+	memcpy((U8*)&(protoHeadStr), buf, sizeof(protocol_head_str));
+
+	//检查整个buf的长度
+	lu16Length = sizeof(protocol_head_str) + protoHeadStr.MsgLength + GATEWAY_EC_LEN + GATEWAY_SUFIX_CNT;
+	if (bufSize != lu16Length) {
+		return ERROR;
+	}
+
+	//检查前导符, 开始符和协议版本
+	if (protoHeadStr.prefix[0] != GATEWAY_PREFIX || \
+		protoHeadStr.prefix[1] != GATEWAY_PREFIX || \
+		protoHeadStr.start != GATEWAY_START || \
+		protoHeadStr.protoVer != GATEWAY_PROTOCOL_VER) {
+		return ERROR;
+	}
+
+	//检查结束符
+	if (buf[bufSize-1] != GATEWAY_SUFIX ||\
+		buf[bufSize - 2] != GATEWAY_SUFIX) {
+		return ERROR;
+	}
+
+	//检查头部校验
+	lu8data = countCheck(buf + GATEWAY_PREFIX_CNT + GATEWAY_START_CNT, GATEWAY_HEAD_LEN);
+	if (lu8data != protoHeadStr.HeadCheck) {
+		return ERROR;
+	}
+
+	//检查消息体校验
+	lu8data = countCheck(buf + sizeof(protocol_head_str), protoHeadStr.MsgLength);
+	if (buf[bufSize - 3] != lu8data) {
+		return ERROR;
+	}
+
+	return NO_ERR;
+}
+
+/*
 **	分析集中器的返回帧.
 **	@buf:		返回帧
 **	@bufSize:	返回帧的长度
@@ -91,7 +144,10 @@ U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
 U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
 {
 	U8 data;
-	U16	retLen;
+
+	//检查消息合法性
+	if (protoA_retFrameLen(buf, bufSize) == ERROR)
+		return ERROR;
 
 	//成功状态
 	data = buf[GATEWAY_STATCODE_OFFSET];
@@ -101,19 +157,6 @@ U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq)
 	//消息类型
 	data = buf[GATEWAY_ASWCODE_OFFSET];
 	if (data != msgType)
-		return ERROR;
-
-	//消息长度
-	if ((data == GAT_MT_CLT_SEND_MINFO) || (data == GAT_MT_CLT_MODIFY_SINFO)) {
-		data = buf[GATEWAY_SEQCODE_OFFSET];//消息序列号
-		if (data != seq)
-			return ERROR;
-		retLen = GATEWAY_WITHSEQ_LEN;
-	}
-	else {
-		retLen = GATEWAY_WITHOUTSEQ_LEN;
-	}
-	if (bufSize != retLen)
 		return ERROR;
 
 	return NO_ERR;
@@ -169,18 +212,17 @@ U8 protoR_radioReadId(U8* buf, U16* bufSize)
 
 /*
 **	从集中器返回帧, 读取集中器号.
-**	@gatewatId: 集中器号
+**	@gatewatId: 集中器号, 从消息中的反序, 变为正序
 **	@idLen:		集中器号的长度
 **	@buf:		返回帧
 **	@bufSize:	返回帧的长度
 */
 U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize)
 {
-	if (bufSize<(GATEWAY_RETID_OFFSET+ GATEWAY_OADD_LEN) || idLen < GATEWAY_OADD_LEN) {
+	//检查消息合法性
+	if (protoA_retFrameLen(buf, bufSize) == ERROR)
 		return ERROR;
-	}
 	buf += GATEWAY_RETID_OFFSET;
-	memset(gatewayId, 0, idLen);
 	memcpy(gatewayId, buf, GATEWAY_OADD_LEN);
 	inverseArray(gatewayId, GATEWAY_OADD_LEN);
 
@@ -306,6 +348,9 @@ U8 protoA_GPRSParam(U8* buf, U16 bufSize, gateway_params_ptr pParam)
 {
 	U16 msgLen = 0;
 
+	//检查消息合法性
+	if (protoA_retFrameLen(buf, bufSize) == ERROR)
+		return ERROR;
 	memcpy((U8*)&msgLen, buf + GATEWAY_BODYLEN_OFFSET, GATEWAY_MSGL_LEN);
 	memcpy((U8*)pParam, buf + GATEWAY_BODY_OFFSET, msgLen);
 	return NO_ERR;
@@ -383,12 +428,15 @@ U8 protoR_readBaseInfo(U8* buf, U16* bufSize, U8* gatewayId)
 	return NO_ERR;
 }
 
-U8 protoA_readBaseInfo(U8* buf, U16* bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo)
+U8 protoA_readBaseInfo(U8* buf, U16 bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo)
 {
 	protocol_head_str frameStr = { 0 };
 	U8* pMsgBody = NULL;
 	U8 i = 0;
 
+	//检查消息合法性
+	if (protoA_retFrameLen(buf, bufSize) == ERROR)
+		return ERROR;
 	memcpy((U8*)&frameStr, buf, sizeof(protocol_head_str));//复制消息头
 	pMsgBody = buf + sizeof(protocol_head_str);//指向消息体
 	memcpy((U8*)pBodyHead, pMsgBody, sizeof(base_info_head_str));
@@ -435,13 +483,16 @@ U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId, U8* timeNode)
 	return NO_ERR;
 }
 
-U8 protoA_hisData(U8* buf, U16* bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData)
+U8 protoA_hisData(U8* buf, U16 bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData)
 {
 	protocol_head_str protoFrameStr = { 0 };
 	U8* pMsgBody = NULL;
 	U8 i = 0;
 	U16 rowCnt = 0;
 
+	//检查消息合法性
+	if (protoA_retFrameLen(buf, bufSize) == ERROR)
+		return ERROR;
 	memcpy((U8*)&protoFrameStr, buf, sizeof(protocol_head_str));//复制消息头
 	pMsgBody = buf + sizeof(protocol_head_str);//指向消息体
 	memcpy((U8*)pBodyHead, pMsgBody, sizeof(hisdata_head_str));
@@ -463,4 +514,10 @@ U8 protoA_hisDataSuc(tempControl_messure_hisdata_ptr pHisData)
 		return ERROR;
 	}
 	return NO_ERR;
+}
+
+U8 protoX_readOneMeter(U8* buf, U16* bufSize, U8* gatewayId, U16* pMeterId)
+{
+	return proto_assembleFrame(buf, bufSize, gatewayId, 0x00, \
+		GAT_MT_SVR_CP_1_METER, PROTO_LEN_ROWID, (U8*)pMeterId);
 }

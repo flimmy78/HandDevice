@@ -630,3 +630,4 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	return NO_ERR;
 }
 
+

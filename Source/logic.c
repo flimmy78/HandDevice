@@ -331,7 +331,7 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 	protoR_readBaseInfo(buf, &bufSize, lu8gatewayId);
 	if (logic_sendAndRead(buf, &bufSize) == ERROR)
 		return ERROR;
-	if (protoA_readBaseInfo(buf, &bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR) {
+	if (protoA_readBaseInfo(buf, bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR) {
 		Lib_printf("[%s][%s][%d]protoA_readBaseInfo fail\n", FILE_LINE);
 		return ERROR;
 	}
@@ -347,7 +347,7 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
 		if (logic_sendAndRead(buf, &bufSize) == ERROR)
 			goto resultErr;
-		if (protoA_readBaseInfo(buf, &bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR)
+		if (protoA_readBaseInfo(buf, bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR)
 			goto resultErr;
 		if (db_storeTempBaseInfo(&baseInfoStr[0], infoCnt, lu8gatewayId) == ERROR)
 			goto resultErr;
@@ -400,7 +400,7 @@ U8 logic_readHisData(U8* gatewayId, U16* sucCnt, U16* failCnt)
 	protoR_readHisData(buf, &bufSize, lu8gatewayId, (U8*)&sysTime);
 	if (logic_sendAndRead(buf, &bufSize) == ERROR)
 		return ERROR;
-	if (protoA_hisData(buf, &bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR) {
+	if (protoA_hisData(buf, bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR) {
 		return ERROR;
 	}
 	if (db_createHisTempDb() == ERROR) {
@@ -419,7 +419,7 @@ U8 logic_readHisData(U8* gatewayId, U16* sucCnt, U16* failCnt)
 		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
 		if (logic_sendAndRead(buf, &bufSize) == ERROR)
 			goto resultErr;
-		if (protoA_hisData(buf, &bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR)
+		if (protoA_hisData(buf, bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR)
 			goto resultErr;
 		if (db_storeTempHisData(&hisDataStr[0], hisDataCnt, sucCnt, failCnt) == ERROR)
 			goto resultErr;
@@ -433,7 +433,7 @@ resultErr:
 	return ERROR;
 }
 
-U8 logic_initHisView(db_hisdata_ptr pDbHis, U8 suc, U16* cnt)
+U8 logic_initHisView(db_hisdata_ptr pDbHis, U8 suc)
 {
 	U16 hisCnt = 1;
 	db_readSucHisData(pDbHis, &hisCnt, suc);

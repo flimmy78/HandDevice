@@ -377,9 +377,9 @@ U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 hisDataC
 	U16 i = 0;
 	for (i = 0; i < hisDataCnt ; i++, pHisDataStr++) {
 		if (protoA_hisDataSuc(pHisDataStr) == ERROR) {
-			failCnt++;
+			(*failCnt) += 1;
 		} else	{
-			sucCnt++;
+			(*sucCnt) += 1;
 		}
 		binHisToAsciiHis(&dbHisStr, pHisDataStr);
 		DbfRecordAppend(pDbf);
@@ -396,7 +396,6 @@ U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 hisDataC
 		DbfFieldSet(em_filedidx_vopen, (char*)dbHisStr.vopen, pDbf);
 		DbfFieldSet(em_filedidx_fsuc, (char*)dbHisStr.fsuc, pDbf);
 	}
-	
 	return NO_ERR;
 }
 
