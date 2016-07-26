@@ -248,6 +248,17 @@ static const GUI_WIDGET_CREATE_INFO widgetHisSheet[] = {
 	{ TEXT_CreateIndirect, "个数", GUI_ID_TEXT0, 10, 10, 80, 20, 0, 0 }
 };
 
+static const GUI_WIDGET_CREATE_INFO widgetRemote1Meter[] = {
+	{ FRAMEWIN_CreateIndirect, "透传单个计量点", INFOQ_SINGLE_READ_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ BUTTON_CreateIndirect, "集中器号", GUI_ID_BUTTON0, 10, 5, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 125, 5, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "计量点", GUI_ID_TEXT0, 10, 35, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 125, 35, 80, 20, 0, 0 },
+	{ LISTVIEW_CreateIndirect, "", GUI_ID_LISTVIEW0, 13, 78, 201, 169, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON1, 10, 270, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "读取", GUI_ID_BUTTON2, 130, 270, 80, 20, 0, 0 }
+};
+
 static U8 gu8success = NO_ERR;
 static U8 gu8hasReadHisData = ERROR;
 static U16	gu16sucCnt = 0;
@@ -416,6 +427,40 @@ static void hisSheetInit(WM_HWIN hDlg)
 	sprintf((char*)count, "%d", gu8success == NO_ERR ? gu16sucCnt : gu16failCnt);
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 	EDIT_SetText(hItem, (const char*)count);
+}
+
+static void remote1MeterInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
+	LISTVIEW_AddColumn(hItem, 80, "项目", GUI_TA_HCENTER | GUI_TA_VCENTER);
+	LISTVIEW_AddColumn(hItem, 135, "值", GUI_TA_HCENTER | GUI_TA_VCENTER);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_AddRow(hItem, NULL);
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_id, "计量点");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_maddr, "表号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_build, "楼号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_unit, "单元号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_room, "房间号");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_intemp, "进水温度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_outtemp, "回水温度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_flow, "流量");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_heat, "热量");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_roomtemp, "室内温度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_vopen, "阀门开度");
+	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_fsuc, "成功标志");
+	LISTVIEW_SetGridVis(hItem, 1);
 }
 /************************************************************************/
 /* CallBack函数群                                                       */
@@ -2099,6 +2144,115 @@ void queryHisDataCb(WM_MESSAGE* pMsg)
 		WM_DefaultProc(pMsg);
 	}
 }
+
+void userRemote1Meter(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	db_hisdata_str dbHisStr = { 0 };
+	U8 gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	U8	idStr[10] = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+	supplementTo12(gatewayId);
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+	EDIT_GetText(hItem, (char*)idStr, 5);
+	if (isNumber(idStr, STRLEN(idStr)) == ERROR) {
+		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+
+	if (logic_remoteOneMeterId(gatewayId, idStr, &dbHisStr) == ERROR) {
+		GUI_MessageBox("\n透传失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_id, (const char*)dbHisStr.id);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_maddr, (const char*)dbHisStr.maddr);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_build, (const char*)dbHisStr.build);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_unit, (const char*)dbHisStr.unit);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_room, (const char*)dbHisStr.room);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_intemp, (const char*)dbHisStr.intemp);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_outtemp, (const char*)dbHisStr.outtemp);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_flow, (const char*)dbHisStr.flow);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_heat, (const char*)dbHisStr.heat);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_roomtemp, (const char*)dbHisStr.roomtemp);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_vopen, (const char*)dbHisStr.vopen);
+		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_fsuc, (const char*)dbHisStr.fsuc);
+	}
+}
+void remote1MeterCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		remote1MeterInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON0://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON2://透传单个计量点数据
+				userRemote1Meter(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM3://透传单个计量点数据
+			userRemote1Meter(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
 /************************************************************************/
 /* 创建界面函数群                                                       */
 /************************************************************************/
@@ -2270,6 +2424,16 @@ void queryHisData()
 	}
 }
 
+void remoteOneMeter()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetRemote1Meter, GUI_COUNTOF(widgetRemote1Meter), &remote1MeterCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
 int queryEditInfo()
 {
 	int iRet;
@@ -2286,6 +2450,7 @@ int queryEditInfo()
 			queryBaseInfo();
 			break;
 		case GUI_ID_BUTTON3://透传一个计量点的数据
+			remoteOneMeter();
 			break;
 		case GUI_ID_BUTTON4://软硬件版本查询
 			queryVersion();

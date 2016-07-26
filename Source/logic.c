@@ -14,7 +14,7 @@
 **	@buf:		发送与接收数据缓冲区
 **	@bufSize:	缓冲区长度
 */
-U8 logic_sendAndRead(U8* buf, U16* bufSize)
+U8 logic_sendAndRead(U8* buf, U16* bufSize, U32 timeout)
 {
 	sUART *pu;
 	sUART comConfig;
@@ -25,7 +25,7 @@ U8 logic_sendAndRead(U8* buf, U16* bufSize)
 		return ERROR;
 
 	UartWrite(buf, *bufSize, 0, pu);
-	*bufSize = UartRead(buf, 512, 2000, pu);
+	*bufSize = UartRead(buf, 512, timeout, pu);
 	if (*bufSize == 0) {//如果超时后没有读到数据, 返回错误
 		UartClose(pu);
 		return ERROR;
@@ -46,7 +46,7 @@ U8 logic_setTime(U8* gatewayId)
 	U16 lu8bufSize = 0;
 
 	protoW_setTime(lu8buf, &lu8bufSize, gatewayId);
-	if (logic_sendAndRead(lu8buf, &lu8bufSize) == ERROR) {
+	if (logic_sendAndRead(lu8buf, &lu8bufSize, UART_WAIT_SHORT) == ERROR) {
 		return ERROR;
 	}
 	return protoA_retFrame(lu8buf, lu8bufSize, GAT_MT_CLT_TIME_SET, 0);
@@ -63,7 +63,7 @@ U8 logic_readGatewayId(U8* gatewayId)
 	U16 lu8bufSize = 0;
 
 	protoR_radioReadId(lu8buf, &lu8bufSize);
-	if (logic_sendAndRead(lu8buf, &lu8bufSize) == ERROR) {
+	if (logic_sendAndRead(lu8buf, &lu8bufSize, UART_WAIT_SHORT) == ERROR) {
 		return ERROR;
 	}
 	protoA_radioReadId(gatewayId, GATEWAY_OADD_LEN, lu8buf, lu8bufSize);
@@ -123,7 +123,7 @@ U8 logic_issueMeterInfo(U8* gatewayId)
 		inverseStrToBCD(gatewayId, 2*GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 		protoW_issueMinfo(buf, &bufSize, lu8gatewayId, pBodyHead, pProtoInfo);
 		//write and read frame
-		if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 			return ERROR;
 		//return analyse result, if result is fail, return to user
 		if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_SEND_MINFO, pBodyHead->seq) == ERROR)
@@ -162,7 +162,7 @@ U8 logic_issueOneMeterInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 	asciiToProtoBin(pDbInfo, &protoMeterInfo);
 	if (protoW_modifyOneMinfo(buf, &bufSize, lu8gatewayId, &protoMeterInfo) == ERROR)
 		return ERROR;
-	if(logic_sendAndRead(buf, &bufSize) == ERROR)
+	if(logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 	if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_MODIFY_SINFO, 0) == ERROR)
 		return ERROR;
@@ -190,7 +190,7 @@ U8 logic_issueTimeNodes(U8* buf, U16 bufSize, U8* gatewayId)
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	strToTimeNode(buf, bufSize, &timeNodeStr[0], &timeCnt);
 	protoW_tmNode(bufSend, &bufSendSize, lu8gatewayId, timeCnt, &timeNodeStr[0]);
-	logic_sendAndRead(bufSend, &bufSendSize);
+	logic_sendAndRead(bufSend, &bufSendSize, UART_WAIT_SHORT);
 	if (protoA_retFrame(bufSend, bufSendSize, GAT_MT_CLT_TIME_POINT, 0) == ERROR)
 		return ERROR;
 	return NO_ERR;
@@ -207,7 +207,7 @@ U8 logic_modifyGatewayId(U8* originalId, U8* targetId)
 	inverseStrToBCD(targetId, STRLEN(targetId), lu8targetId, GATEWAY_OADD_LEN);
 
 	protoW_modifyGatewayId(buf, &bufSize, lu8originalId, lu8targetId);
-	logic_sendAndRead(buf, &bufSize);
+	logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT);
 	if (protoA_retFrame(buf, bufSize, GAT_MT_CLT_MID, 0) == ERROR)
 		return ERROR;
 	if (db_modifyGatewayId(targetId) == ERROR)
@@ -225,7 +225,7 @@ U8 logic_readGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port)
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	protoR_GPRSParam(buf, &bufSize, lu8gatewayId);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 	protoA_GPRSParam(buf, bufSize, &paramStr);
 	memcpy((U8*)&lu16port, paramStr.Port, 2);
@@ -250,7 +250,7 @@ U8 logic_modifyGPRSParam(U8* gatewayId, U8* apnId, U8* svrId, U8* port)
 	gprsStr.HostPor[0] = lu16port >> 8;
 	gprsStr.HostPor[1] = lu16port;
 	protoW_modifyGPRS(buf, &bufSize, lu8gatewayId, &gprsStr);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_CHIP, 0);
@@ -264,7 +264,7 @@ U8 logic_reboot(U8* gatewayId)
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	protoX_reboot(buf, &bufSize, lu8gatewayId);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_REBOOT, 0);
 }
@@ -282,7 +282,7 @@ U8 logit_issueRereadParam(U8* gatewayId, U8* mReadCnt, U8* mReadIntv, U8* vReadC
 	rereadParam.vReadCnt	= Lib_atoi((const char*)vReadCnt);
 	rereadParam.vReadIntv	= Lib_atoi((const char*)vReadIntv);
 	protoW_rereadParam(buf, &bufSize, lu8gatewayId, &rereadParam);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_REREAD, 0);
@@ -296,7 +296,7 @@ U8 logic_readMeterImmd(U8* gatewayId)
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	protoX_readMeterImmd(buf, &bufSize, lu8gatewayId);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 	return protoA_retFrame(buf, bufSize, GAT_MT_CLT_CPY_IMMDT, 0);
 }
@@ -310,7 +310,7 @@ U8 logic_readVersion(U8* gatewayId, U8* hardVer, U8* softVer)
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	protoR_GPRSParam(buf, &bufSize, lu8gatewayId);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 	protoA_GPRSParam(buf, bufSize, &paramStr);
 	sprintf((char*)hardVer, "%02d.%02d", paramStr.HardwareVer[1], paramStr.HardwareVer[0]);
@@ -329,7 +329,7 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	protoR_readBaseInfo(buf, &bufSize, lu8gatewayId);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 	if (protoA_readBaseInfo(buf, bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR) {
 		Lib_printf("[%s][%s][%d]protoA_readBaseInfo fail\n", FILE_LINE);
@@ -347,7 +347,7 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 	while (BodyHeadStr.succeed == 0x01)	{
 		BodyHeadStr.seq++;
 		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
-		if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 			goto resultErr;
 		if (protoA_readBaseInfo(buf, bufSize, &infoCnt, &BodyHeadStr, &baseInfoStr[0]) == ERROR)
 			goto resultErr;
@@ -392,17 +392,23 @@ U8 logic_readHisData(U8* gatewayId, U16* sucCnt, U16* failCnt)
 	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
 	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
 	U16 bufSize = 0;
-	hisdata_head_str BodyHeadStr;
+	/*U8 buf[] = { 0xFB, 0xFB, 0x7B, 0x03, 0x17, 0x90, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0B, 0xAC, 0x01, 0x23, 0x34, 0x20, 0x15, 0x26, 0x07, 0x16, 0xCE, 0x01, 0x00, 0x34, 0x20, 0x15, 0x26, 0x07, 0x16, 0x01, 0x00, 0x20, 0x62, 0x49, 0x16, 0x21, 0x00, 0x11, 0x11, 0x01, 0x01, 0x65, 0x00, 0x00, 0x58, 0x14, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x16, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x35, 0x61, 0x00, 0x00, 0x00, 0x2C, 0x23, 0x25, 0x00, 0x12, 0x25, 0x00, 0x82, 0x66, 0x01, 0x49, 0x39, 0x15, 0x24, 0x07, 0x16, 0x20, 0x00, 0x00, 0x17, 0x59, 0x14, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0x02, 0x00, 0x20, 0x62, 0x49, 0x16, 0x21, 0x00, 0x11, 0x11, 0x02, 0x02, 0x66, 0x00, 0x02, 0x58, 0x14, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x16, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x35, 0x61, 0x00, 0x00, 0x00, 0x2C, 0x23, 0x25, 0x00, 0x12, 0x25, 0x00, 0x82, 0x66, 0x01, 0x52, 0x39, 0x15, 0x24, 0x07, 0x16, 0x20, 0x00, 0x00, 0x46, 0x59, 0x14, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0x03, 0x00, 0x20, 0x62, 0x49, 0x16, 0x21, 0x00, 0x11, 0x11, 0x03, 0x03, 0x67, 0x00, 0x05, 0x58, 0x14, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x16, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x35, 0x61, 0x00, 0x00, 0x00, 0x2C, 0x23, 0x25, 0x00, 0x12, 0x25, 0x00, 0x82, 0x66, 0x01, 0x55, 0x39, 0x15, 0x24, 0x07, 0x16, 0x20, 0x00, 0x00, 0x14, 0x00, 0x15, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0x04, 0x00, 0x20, 0x62, 0x49, 0x16, 0x21, 0x00, 0x11, 0x11, 0x04, 0x04, 0x68, 0x00, 0x08, 0x58, 0x14, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x16, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x35, 0x61, 0x00, 0x00, 0x00, 0x2C, 0x23, 0x25, 0x00, 0x12, 0x25, 0x00, 0x82, 0x66, 0x01, 0x58, 0x39, 0x15, 0x24, 0x07, 0x16, 0x20, 0x00, 0x00, 0x43, 0x00, 0x15, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0x05, 0x00, 0x20, 0x62, 0x49, 0x16, 0x21, 0x00, 0x11, 0x11, 0x05, 0x05, 0x69, 0x00, 0x10, 0x58, 0x14, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x16, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x35, 0x61, 0x00, 0x00, 0x00, 0x2C, 0x23, 0x25, 0x00, 0x12, 0x25, 0x00, 0x82, 0x66, 0x01, 0x00, 0x40, 0x15, 0x24, 0x07, 0x16, 0x20, 0x00, 0x00, 0x11, 0x01, 0x15, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0x06, 0x00, 0x20, 0x62, 0x49, 0x16, 0x21, 0x00, 0x11, 0x11, 0x06, 0x06, 0x6A, 0x00, 0x13, 0x58, 0x14, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x16, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x35, 0x61, 0x00, 0x00, 0x00, 0x2C, 0x23, 0x25, 0x00, 0x12, 0x25, 0x00, 0x82, 0x66, 0x01, 0x03, 0x40, 0x15, 0x24, 0x07, 0x16, 0x20, 0x00, 0x00, 0x42, 0x01, 0x15, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xAB, 0xFD, 0xFD };
+	U16 bufSize = sizeof(buf);*/
+	hisdata_head_str BodyHeadStr = { 0 };
 	tempControl_messure_hisdata_str hisDataStr[48] = { { 0 } };
-	U16 hisDataCnt = sizeof(hisDataStr) / sizeof(meter_row_str);
+	U16 hisDataCnt = 0;
 	sys_time_str sysTime = { 0 };
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	readSysTime(&sysTime);
 	protoR_readHisData(buf, &bufSize, lu8gatewayId, (U8*)&sysTime);
-	if (logic_sendAndRead(buf, &bufSize) == ERROR)
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 		return ERROR;
 	if (protoA_hisData(buf, bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR) {
+		if (BodyHeadStr.succeed == GAT_EXCEP_FAIL) {
+			GUI_MessageBox("\n当前时间点无历史数据\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+			return ERROR;
+		}
 		return ERROR;
 	}
 	if (db_createHisTempDb() == ERROR) {
@@ -412,14 +418,11 @@ U8 logic_readHisData(U8* gatewayId, U16* sucCnt, U16* failCnt)
 		return ERROR;
 	if (db_storeTempHisData(&hisDataStr[0], hisDataCnt, sucCnt, failCnt) == ERROR)
 		goto resultErr;
-	if (BodyHeadStr.succeed == GAT_EXCEP_FAIL) {
-		GUI_MessageBox("\n当前时间点无历史数据\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
-		return ERROR;
-	}
+
 	while (BodyHeadStr.succeed == 0x01) {
 		BodyHeadStr.seq++;
 		protoR_readMultiInfo(buf, &bufSize, lu8gatewayId, &(BodyHeadStr.seq));
-		if (logic_sendAndRead(buf, &bufSize) == ERROR)
+		if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR)
 			goto resultErr;
 		if (protoA_hisData(buf, bufSize, &hisDataCnt, &BodyHeadStr, &hisDataStr[0]) == ERROR)
 			goto resultErr;
@@ -445,5 +448,27 @@ U8 logic_initHisView(db_hisdata_ptr pDbHis, U8 suc)
 U8 logic_nextHisData(db_hisdata_ptr pDbHis, U8 suc)
 {
 	if (db_getNextHisData(pDbHis, suc) == ERROR) return ERROR;
+	return NO_ERR;
+}
+
+U8 logic_remoteOneMeterId(U8* gatewayId, U8* meterID, db_hisdata_ptr pDbHis)
+{
+	U8 lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
+	U8 buf[GATEWAY_FRAME_MAX_LEN] = { 0 };
+	U16 bufSize = 0;
+	U16	lu16meterId = Lib_atoi((const char*)meterID);
+	tempControl_messure_remote_str remoteDataStr;
+
+	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
+	protoX_readOneMeter(buf, &bufSize, lu8gatewayId, &lu16meterId);
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_LONG) == ERROR){
+		return ERROR;
+	}
+	if (protoA_readOneMeter(buf, bufSize, &remoteDataStr) == ERROR) {
+		return ERROR;
+	}
+	if (binRemoteToAsciiHis(pDbHis, &remoteDataStr) == ERROR) {
+		return ERROR;
+	}
 	return NO_ERR;
 }

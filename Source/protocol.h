@@ -281,7 +281,33 @@ typedef struct {//温控计量一体化和通断时间面积法的历史数据头部结构
 typedef hisdata_head_str*  hisdata_head_ptr;
 
 
+typedef struct {//透传计量点数据中的固定信息部分
+	U16 meterId;				//计量点号
+	U8	meterType;				//仪表类型
+	U8	meterAddr[7];			//仪表地址
+	U8	buildId;				//楼号
+	U8	unitId;					//单元号
+	U16	roomId;					//房间号
+	U8	meterDataLen;			//热表数据长度
+} remote_meter_fix_str;
+typedef remote_meter_fix_str* remote_meter_fix_ptr;
 
+typedef struct {
+	U8	RoomTempBCD[3];			//室内温度
+	U8	vOpen;					//阀门开度
+	U8	vState;					//阀门状态
+	U8	vReserve;				//保留
+} remote_valve_fix_str;
+typedef remote_valve_fix_str* remote_valve_fix_ptr;
+
+typedef struct {//温控计量一体化, 历史数据格式
+	remote_meter_fix_str	fixMeter;//热表的固定部分
+#ifdef CJ188_HEAT_METER
+	CJ188_Format	MeterData;		//热表数据
+#endif // CJ188_HEAT_METER
+	remote_valve_fix_str fixValve;	//阀控的固定部分
+} tempControl_messure_remote_str;
+typedef tempControl_messure_remote_str* tempControl_messure_remote_ptr;
 
 #pragma pack(pop)
 
@@ -307,6 +333,8 @@ extern U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq);
 extern U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId, U8* timeNode);
 extern U8 protoA_hisData(U8* buf, const U16 bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData);
 extern U8 protoA_isHisDataSuc(tempControl_messure_hisdata_ptr pHisData);
+extern U8 protoX_readOneMeter(U8* buf, U16* bufSize, U8* gatewayId, U16* pMeterId);
+extern U8 protoA_readOneMeter(U8* buf, const U16 bufSize, tempControl_messure_remote_ptr pHisData);
 
 #endif
 

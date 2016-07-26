@@ -16,11 +16,18 @@
 #define MAX_TIME_NODE	24//抄表时间点不超过24个点
 #define MINUTES_PERDAY	1440//一天有多少分钟
 
+#define UART_WAIT_SHORT	2000//串口等待时间-短-
+#define UART_WAIT_MID	7000//串口等待时间-中-
+#define UART_WAIT_LONG	40000//串口等待时间-长-
+
 #define STRLEN(c)	strlen((const char*)(c))
 #define IP_DELIM	'.'
 
 #pragma pack(push)
 #pragma pack(1)
+
+
+
 typedef struct{//系统时间结构, 倒序存储以方便使用
 	U8 u8second;	//秒
 	U8 u8minute;	//分
@@ -36,6 +43,13 @@ typedef struct{//用一个字节表示分钟, 超过60则进位, 对于一般的
 	U8 u8hour;		//时, Hex
 }time_node_str;
 typedef time_node_str* time_node_ptr;
+
+typedef struct {//时间(不包括日期)
+	U8 u8second;	//秒
+	time_node_str mmhh;//分钟, 小时
+}only_time_str;
+typedef only_time_str* only_time_ptr;
+
 #pragma pack(pop)
 
 

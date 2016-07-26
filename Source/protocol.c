@@ -358,8 +358,8 @@ U8 protoA_hisData(U8* buf, const U16 bufSize, U16* hisDataCnt, hisdata_head_ptr 
 {
 	protocol_head_str protoFrameStr = { 0 };
 	U8* pMsgBody = NULL;
-	U8 dataCnt = 0;
 	U8	idx = 0;
+	U16 dataCnt = 0;
 	U16	hisDataLen = 0;//历史数据长度计数(不包括历史信息头部: 后续标记, 序列号, 存储时间)
 	const U16	protoHeadLen = sizeof(protocol_head_str);
 	const U16	hisHeadLen = sizeof(hisdata_head_str);
@@ -371,6 +371,10 @@ U8 protoA_hisData(U8* buf, const U16 bufSize, U16* hisDataCnt, hisdata_head_ptr 
 	if (protoA_retFrameLen(buf, bufSize) == ERROR)
 		return ERROR;
 	memcpy((U8*)&protoFrameStr, buf, protoHeadLen);//复制消息头
+	if (protoFrameStr.bodyLen < fixMeterLen) {
+		pBodyHead->succeed = buf[protoHeadLen];
+		return ERROR;
+	}
 	pMsgBody = buf + protoHeadLen;//指向消息体
 	memcpy((U8*)pBodyHead, pMsgBody, hisHeadLen);
 
@@ -406,13 +410,30 @@ U8 protoX_readOneMeter(U8* buf, U16* bufSize, U8* gatewayId, U16* pMeterId)
 		GAT_MT_SVR_CP_1_METER, PROTO_LEN_ROWID, (U8*)pMeterId);
 }
 
-U8 protoA_readOneMeter(U8* buf, U16 bufSize, tempControl_messure_hisdata_ptr pHisData)
+U8 protoA_readOneMeter(U8* buf, const U16 bufSize, tempControl_messure_remote_ptr pHisData)
 {
+	U8* pMsgBody = NULL;
+	const U16	protoHeadLen = sizeof(protocol_head_str);
+	const U16	cj188Len = sizeof(CJ188_Format);
+	const U16	fixMeterLen = sizeof(remote_meter_fix_str);
+	const U16	fixValveLen = sizeof(remote_valve_fix_str);
 	//检查消息合法性
 	if (protoA_retFrameLen(buf, bufSize) == ERROR)
 		return ERROR;
 
-	memcpy((U8*)pHisData, buf+sizeof(protocol_head_str), sizeof(tempControl_messure_hisdata_str));
+	pMsgBody = buf + protoHeadLen;//指向透传数据
+
+	memcpy((U8*)&(pHisData->fixMeter), pMsgBody, fixMeterLen);
+	if (pHisData->fixMeter.meterDataLen == 0) {
+		memset((U8*)&(pHisData->MeterData), ERROR, cj188Len);
+	}
+	else {
+		memcpy((U8*)&(pHisData->MeterData), pMsgBody + fixMeterLen, cj188Len);
+	}
+	memcpy((U8*)(pHisData->fixValve.RoomTempBCD), \
+		pMsgBody + fixMeterLen + pHisData->fixMeter.meterDataLen, \
+		fixValveLen);
+
 	return NO_ERR;
 }
 

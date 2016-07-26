@@ -633,4 +633,80 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	return NO_ERR;
 }
 
+U8 binRemoteToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_remote_ptr pBinRemoteData)
+{
+	U8 lu8unit[12] = { 0 };
+
+	sprintf((char*)pDbHisData->id, "%d", pBinRemoteData->fixMeter.meterId);
+	sprintf((char*)pDbHisData->maddr, "%02X%02X%02X%02X%02X%02X%02X", \
+		pBinRemoteData->fixMeter.meterAddr[6], pBinRemoteData->fixMeter.meterAddr[5], \
+		pBinRemoteData->fixMeter.meterAddr[4], pBinRemoteData->fixMeter.meterAddr[3], \
+		pBinRemoteData->fixMeter.meterAddr[2], pBinRemoteData->fixMeter.meterAddr[1], \
+		pBinRemoteData->fixMeter.meterAddr[0]);
+	sprintf((char*)pDbHisData->build, "%d", pBinRemoteData->fixMeter.buildId);
+	sprintf((char*)pDbHisData->unit, "%d", pBinRemoteData->fixMeter.unitId);
+	sprintf((char*)pDbHisData->room, "%d", pBinRemoteData->fixMeter.roomId);
+	sprintf((char*)pDbHisData->intemp, "%X%X.%02X C", pBinRemoteData->MeterData.WaterInTemp[2], \
+		pBinRemoteData->MeterData.WaterInTemp[1], pBinRemoteData->MeterData.WaterInTemp[0]);
+	sprintf((char*)pDbHisData->outtemp, "%X%X.%02X C", pBinRemoteData->MeterData.WaterOutTemp[2], \
+		pBinRemoteData->MeterData.WaterOutTemp[1], pBinRemoteData->MeterData.WaterOutTemp[0]);
+
+	//流量
+	switch (pBinRemoteData->MeterData.AccumulateFlowUnit)
+	{
+	case 0x29:
+		strcpy((char*)lu8unit, "L");
+		break;
+	case 0x2C:
+		strcpy((char*)lu8unit, "m3");
+		break;
+	default:
+		break;
+	}
+	sprintf((char*)pDbHisData->flow, "%X%X%X.%02X%s", pBinRemoteData->MeterData.AccumulateFlow[3], \
+		pBinRemoteData->MeterData.AccumulateFlow[2], pBinRemoteData->MeterData.AccumulateFlow[1], \
+		pBinRemoteData->MeterData.AccumulateFlow[0], lu8unit);
+	//热量
+	switch (pBinRemoteData->MeterData.CurrentHeatUnit)
+	{
+	case 0x02:
+		strcpy((char*)lu8unit, "Wh");
+		break;
+	case 0x05:
+		strcpy((char*)lu8unit, "kWh");
+		break;
+	case 0x08:
+		strcpy((char*)lu8unit, "MWh");
+		break;
+	case 0x0A:
+		strcpy((char*)lu8unit, "MWhX100");
+		break;
+	case 0x01:
+		strcpy((char*)lu8unit, "J");
+		break;
+	case 0x0B:
+		strcpy((char*)lu8unit, "KJ");
+		break;
+	case 0x0E:
+		strcpy((char*)lu8unit, "MJ");
+		break;
+	case 0x11:
+		strcpy((char*)lu8unit, "GJ");
+		break;
+	case 0x13:
+		strcpy((char*)lu8unit, "GJX100");
+		break;
+	default:
+		break;
+	}
+	sprintf((char*)pDbHisData->heat, "%X%X%X.%02X%s", pBinRemoteData->MeterData.CurrentHeat[3], \
+		pBinRemoteData->MeterData.CurrentHeat[2], pBinRemoteData->MeterData.CurrentHeat[1], \
+		pBinRemoteData->MeterData.CurrentHeat[0], lu8unit);
+	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinRemoteData->fixValve.RoomTempBCD[1], pBinRemoteData->fixValve.RoomTempBCD[0]);
+	sprintf((char*)pDbHisData->vopen, "%02X", pBinRemoteData->fixValve.vOpen);
+	sprintf((char*)pDbHisData->fsuc, "%02X", pBinRemoteData->fixValve.vState);
+	return NO_ERR;
+}
+
+
 
