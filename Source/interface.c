@@ -333,6 +333,13 @@ static void queryBaseInfoInit(WM_HWIN hDlg)
 	WM_HWIN hItem;
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_BUTTON4);
 	BUTTON_SetBkColor(hItem, BUTTON_CI_UNPRESSED, GUI_RED);
+	
+	hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
+	EDIT_SetMaxLen(hItem, 2 * PROTO_LEN_MADDR);
+	hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
+	EDIT_SetMaxLen(hItem, 2 * PROTO_LEN_MADDR);
+	hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
+	EDIT_SetMaxLen(hItem, 2 * PROTO_LEN_MADDR);
 }
 
 static void queryHisDataInit(WM_HWIN hDlg)

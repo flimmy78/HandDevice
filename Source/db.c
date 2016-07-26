@@ -376,7 +376,7 @@ U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 hisDataC
 	db_hisdata_str dbHisStr = { 0 };
 	U16 i = 0;
 	for (i = 0; i < hisDataCnt ; i++, pHisDataStr++) {
-		if (protoA_hisDataSuc(pHisDataStr) == ERROR) {
+		if (protoA_isHisDataSuc(pHisDataStr) == ERROR) {
 			(*failCnt) += 1;
 		} else	{
 			(*sucCnt) += 1;
@@ -417,32 +417,37 @@ U8 db_readOneHisData(db_hisdata_ptr pDbHis, U16 hisIdx)
 	return NO_ERR;
 }
 
+U8 db_isHisDataSuc(db_hisdata_ptr pDbHis)
+{
+	if (strncmp((const char*)pDbHis->intemp, DB_HIS_EE, 2) == 0 || \
+		strncmp((const char*)pDbHis->outtemp, DB_HIS_EE, 2) == 0 || \
+		strncmp((const char*)pDbHis->flow, DB_HIS_EE, 2) == 0 || \
+		strncmp((const char*)pDbHis->heat, DB_HIS_EE, 2) == 0 || \
+		strncmp((const char*)pDbHis->roomtemp, DB_HIS_EE, 2) == 0 || \
+		strncmp((const char*)pDbHis->vopen, DB_HIS_EE, 2) == 0 || \
+		strncmp((const char*)pDbHis->fsuc, DB_HIS_EE, 2) == 0) {
+		return ERROR;
+	}
+	return NO_ERR;
+}
+
 U8 db_readSucHisData(db_hisdata_ptr pDbHis, U16* hisCnt, U8 suc)
 {
 	U16 i = 0;
 	U16 actCnt = 0;
 	S32 totalRow = 0;
-	U8	vState[20] = { 0 };
+	db_hisdata_str DbHisStr;
 
 	if (openDBF(DB_TMP_HIS_DATA) == ERROR)
 		return ERROR;
 	totalRow = DbfRecordCount(pDbf);
 	if (totalRow < 0) return ERROR;
 	for (i = 0, actCnt = 0; i < totalRow; i++) {
-		if (DbfGotoRecord(i, pDbf)< 0) return ERROR;
-		if (DbfFieldGet(em_filedidx_fsuc, (char*)vState, pDbf) < 0) return ERROR;
-		if (suc == NO_ERR) {
-			if (strcmp((const char*)vState, "EE")!=0) {
-				db_readOneHisData(pDbHis, i);
-				pDbHis++;
-				actCnt++;
-			}
-		} else {
-			if (strcmp((const char*)vState, "EE") == 0) {
-				db_readOneHisData(pDbHis, i);
-				pDbHis++;
-				actCnt++;
-			}
+		db_readOneHisData(&DbHisStr, i);
+		if (db_isHisDataSuc(&DbHisStr) == suc) {
+			memcpy((U8*)pDbHis, (U8*)&DbHisStr, sizeof(db_hisdata_str));
+			pDbHis++;
+			actCnt++;
 		}
 		if ( actCnt == *hisCnt) {
 			break;
@@ -460,8 +465,8 @@ U8 db_getNextHisData(db_hisdata_ptr pHisData, U8 suc)
 {
 	S32 iRet = 0;
 	U16 i = 0;
-	U8	vState[20] = { 0 };
 	S32 totalRow = 0;
+	db_hisdata_str DbHisStr;
 
 	if (openDBF(DB_TMP_HIS_DATA) == ERROR)
 		return ERROR;
@@ -471,20 +476,12 @@ U8 db_getNextHisData(db_hisdata_ptr pHisData, U8 suc)
 		iRet = DbfGetCurrentRecord(pDbf);
 		if (iRet >= 0) {
 			iRet = ((iRet + 1) % totalRow);//跳到下一行, 若到最后一行, 则归零
-			if (DbfFieldGet(em_filedidx_fsuc, (char*)vState, pDbf) < 0) return ERROR;
-			if (suc == NO_ERR) {
-				if (strcmp((const char*)vState, "EE") != 0) {
-					if (db_readOneHisData(pHisData, iRet) == ERROR)	return ERROR;
-					break;
-				}
-			} else {
-				if (strcmp((const char*)vState, "EE") == 0) {
-					if (db_readOneHisData(pHisData, iRet) == ERROR)	return ERROR;
-					break;
-				}
+			db_readOneHisData(&DbHisStr, iRet);
+			if (suc == db_isHisDataSuc(&DbHisStr)) {
+				memcpy((U8*)pHisData, (U8*)&DbHisStr, sizeof(db_hisdata_str));
+				break;
 			}
-		}
-		else {
+		} else {
 			return ERROR;
 		}
 	}

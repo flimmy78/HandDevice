@@ -40,7 +40,6 @@
 #define GATEWAY_TIMENODE_LEN		2//每个抄表时间点的长度
 #define GATEWAY_TIMENODE_MAX_CNT	24//现在ARM7最多支持多少个抄表时间点
 
-#define GATEWAY_MSGTYPE_OFFSET		
 #define GATEWAY_ASWCODE_OFFSET		19//集中器返回帧中应答码的偏移量
 #define GATEWAY_STATCODE_OFFSET		27//集中器返回帧中成功状态码的偏移量
 #define GATEWAY_SEQCODE_OFFSET		28//集中器返回帧中服务器发送的序列码的偏移量
@@ -131,17 +130,6 @@
 #endif // GATEWAY_PROTOCOL_VER
 #pragma pack(push)
 #pragma pack(1)
-typedef struct {//集中器协议体结构
-	U8 SourceAddr[GATEWAY_SADD_LEN];//源地址, LE=Little Ending
-	U8 DestAddr[GATEWAY_OADD_LEN];  //目标地址, LE
-	U8 MsgIndex;                    //消息序列号
-	U16 MsgLen;						//消息体长度, LE
-	U8 MsgType;                     //消息类型
-	U8 ssmmhhDDMMYY[GATEWAY_TS_LEN];//秒分时日月年, LE
-	U8 *pMsgBody;                    //消息体指针
-} gateway_protocol_str;//类型名用下划线分隔, 下同
-typedef gateway_protocol_str* gateway_protocol_ptr;
-
 typedef struct{//下发集中器仪表基础信息结构
 	U8 rowId[PROTO_LEN_ROWID];		//计量点, 用作唯一标示一行(Little Ending, Hex)
 	U8 meterAddr[PROTO_LEN_MADDR];  //仪表(热量表,水表等)地址(Little Ending, BCD)
@@ -205,12 +193,19 @@ typedef struct {//消息头部结构体
 	U8 SourceAddr[GATEWAY_SADD_LEN];	//源地址, 发送方地址
 	U8 DestAddr[GATEWAY_OADD_LEN];		//目的地址, 接收方地址
 	U8 MsgID;							//消息序列
-	U16 MsgLength;						//消息体长度
+	U16 bodyLen;						//消息体长度
 	U8 MsgType;							//消息类型
-	U8 TimeSmybol[GATEWAY_TS_LEN];		//TS时间标签
+	sys_time_str sysTime;				//TS时间标签
 	U8 HeadCheck;						//消息头校验
 } protocol_head_str;
 typedef protocol_head_str* protocol_type_ptr;
+
+typedef struct {//集中器协议消息体结构
+	protocol_head_str head_str;	//消息头部
+	U8 *pMsgBody;				//消息体指针
+	U8	bodyChk;				//消息体校验
+} gateway_protocol_str;
+typedef gateway_protocol_str* gateway_protocol_ptr;
 
 typedef struct {//读取集中器表地址信息, 消息头结构体
 	U8 succeed;		//是否有后继帧, 0-没有, 1-有, 10-异常
@@ -239,7 +234,7 @@ typedef struct {//读取集中器热表历史信息结构体
 }CJ188_Format;
 typedef CJ188_Format* CJ188_Format_ptr;
 
-typedef struct {//温控计量一体化, 历史数据格式
+typedef struct {//历史数据中的固定信息部分
 	U16 meterId;				//计量点号
 	U8	meterType;				//仪表类型
 	U8	meterAddr[7];			//仪表地址
@@ -250,9 +245,10 @@ typedef struct {//温控计量一体化, 历史数据格式
 	U8	mMinuteBCD;				//抄热表分钟BCD
 	U8	mHourBCD;				//抄热表小时BCD
 	U8	meterDataLen;			//热表数据长度
-#ifdef CJ188_HEAT_METER
-	CJ188_Format	MeterData;	//热表数据
-#endif // CJ188_HEAT_METER
+} hisdata_meter_fix_str;
+typedef hisdata_meter_fix_str* hisdata_fix_ptr;
+
+typedef struct {
 	U8	vSecondBCD;				//抄阀秒BCD
 	U8	vMinuteBCD;				//抄阀分钟BCD
 	U8	vHourBCD;				//抄阀小时BCD
@@ -260,6 +256,15 @@ typedef struct {//温控计量一体化, 历史数据格式
 	U8	vOpen;					//阀门开度
 	U8	vState;					//阀门状态
 	U8	vReserve;				//保留
+} hisdata_valve_fix_str;
+typedef hisdata_valve_fix_str* hisdata_valve_fix_ptr;
+
+typedef struct {//温控计量一体化, 历史数据格式
+	hisdata_meter_fix_str	fixMeter;//热表的固定部分
+#ifdef CJ188_HEAT_METER
+	CJ188_Format	MeterData;		//热表数据
+#endif // CJ188_HEAT_METER
+	hisdata_valve_fix_str fixValve;	//阀控的固定部分
 } tempControl_messure_hisdata_str;
 typedef tempControl_messure_hisdata_str* tempControl_messure_hisdata_ptr;
 
@@ -283,12 +288,12 @@ typedef hisdata_head_str*  hisdata_head_ptr;
 extern U8 proto_assembleFrame(U8* buf, U16* bufSize, U8* gatewayId, \
 		U8 MsgIndex, U8 MsgType, U16 MsgLen, U8* pMsgBody);
 extern U8 protoA_retFrame(U8* buf, U16 bufSize, U8 msgType, U8 seq);
-extern U8 protoW_setTime(U8 *gatewatId, U8 idLen, U8* buf, U16* bufSize);
+extern U8 protoW_setTime(U8* buf, U16* bufSize, U8 *gatewayId);
 extern U8 protoR_radioReadId(U8* buf, U16* bufSize);
 extern U8 protoA_radioReadId(U8 *gatewayId, U8 idLen, U8* buf, U16 bufSize);
 extern U8 protoW_issueMinfo(U8*, U16*, U8*, meterinfo_bodyHead_ptr, meter_row_ptr);
 extern U8 protoW_modifyOneMinfo(U8* buf, U16* bufSize, U8* gatewayId, meter_row_ptr pProtoInfo);
-extern U8 protoW_tmNode(U8* buf, U16* bufSize, U8* gatewayId, U8 timeCnt, U8* pTimeNode);
+extern U8 protoW_tmNode(U8* buf, U16* bufSize, U8* gatewayId, U8 timeCnt, time_node_ptr pTimeNode);
 extern U8 protoR_GPRSParam(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoA_GPRSParam(U8* buf, U16 bufSize, gateway_params_ptr pParam);
 extern U8 protoW_modifyGatewayId(U8* buf, U16* bufSize, U8* lu8originalId, U8* lu8targetId);
@@ -300,8 +305,8 @@ extern U8 protoR_readBaseInfo(U8* buf, U16* bufSize, U8* gatewayId);
 extern U8 protoA_readBaseInfo(U8* buf, U16 bufSize, U16* infoCnt, base_info_head_ptr pBodyHead, meter_row_ptr pInfo);
 extern U8 protoR_readMultiInfo(U8* buf, U16* bufSize, U8* gatewayId, U8* seq);
 extern U8 protoR_readHisData(U8* buf, U16* bufSize, U8* gatewayId, U8* timeNode);
-extern U8 protoA_hisData(U8* buf, U16 bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData);
-extern U8 protoA_hisDataSuc(tempControl_messure_hisdata_ptr pHisData);
+extern U8 protoA_hisData(U8* buf, const U16 bufSize, U16* hisDataCnt, hisdata_head_ptr pBodyHead, tempControl_messure_hisdata_ptr pHisData);
+extern U8 protoA_isHisDataSuc(tempControl_messure_hisdata_ptr pHisData);
 
 #endif
 

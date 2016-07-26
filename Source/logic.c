@@ -45,7 +45,7 @@ U8 logic_setTime(U8* gatewayId)
 	U8 lu8buf[512] = { ~GATEWAY_ASW_CODE_SUC };
 	U16 lu8bufSize = 0;
 
-	protoW_setTime(gatewayId, GATEWAY_OADD_LEN, lu8buf, &lu8bufSize);
+	protoW_setTime(lu8buf, &lu8bufSize, gatewayId);
 	if (logic_sendAndRead(lu8buf, &lu8bufSize) == ERROR) {
 		return ERROR;
 	}
@@ -181,15 +181,15 @@ U8 logic_genTimeNodesStr(U8* buf, U16 bufSize, U8* startTime, U16 nodes)
 
 U8 logic_issueTimeNodes(U8* buf, U16 bufSize, U8* gatewayId)
 {
-	U16 timeCnt = 0;
+	U8 timeCnt = 0;
 	U8	lu8gatewayId[GATEWAY_OADD_LEN] = { 0 };
-	U8	pTimeNode[128] = { 0 };
+	time_node_str	timeNodeStr[48] = { 0 };
 	U8	bufSend[GATEWAY_FRAME_MAX_LEN] = { 0 };
 	U16	bufSendSize = 0;
 
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
-	strToTimeNode(buf, bufSize, pTimeNode, &timeCnt);
-	protoW_tmNode(bufSend, &bufSendSize, lu8gatewayId, timeCnt, pTimeNode);
+	strToTimeNode(buf, bufSize, &timeNodeStr[0], &timeCnt);
+	protoW_tmNode(bufSend, &bufSendSize, lu8gatewayId, timeCnt, &timeNodeStr[0]);
 	logic_sendAndRead(bufSend, &bufSendSize);
 	if (protoA_retFrame(bufSend, bufSendSize, GAT_MT_CLT_TIME_POINT, 0) == ERROR)
 		return ERROR;
@@ -335,11 +335,13 @@ U8 logic_readBaseInfo(U8* gatewayId, db_meterinfo_ptr pDbInfo)
 		Lib_printf("[%s][%s][%d]protoA_readBaseInfo fail\n", FILE_LINE);
 		return ERROR;
 	}
+
 	if (db_reCreateBaseInfoDBF() == ERROR) {
 		return ERROR;
 	}
 	if (openDBF(DB_TMP_BASEINFO) == ERROR)
 		return ERROR;
+
 	if (db_storeTempBaseInfo(&baseInfoStr[0], infoCnt, lu8gatewayId) == ERROR)
 		goto resultErr;
 	while (BodyHeadStr.succeed == 0x01)	{

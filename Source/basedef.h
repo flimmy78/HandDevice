@@ -8,7 +8,7 @@
 #define	FILE_LINE   __FILE__,__FUNCTION__,__LINE__
 #define	PRINT_LINE()	Lib_printf("[%s][%s][%d]\n", FILE_LINE);
 #define NO_ERR	0x00//无错
-#define ERROR	0xFF//有错
+#define ERROR	0xEE//有错
 
 #define WM_USER_EXIT	-1
 #define EDIT_MAX_LEN	128
@@ -36,6 +36,8 @@ typedef struct{//用一个字节表示分钟, 超过60则进位, 对于一般的
 	U8 u8hour;		//时, Hex
 }time_node_str;
 typedef time_node_str* time_node_ptr;
+#pragma pack(pop)
+
 
 //手持机设置的索引号, 在数据库中的行号也与此对应
 typedef enum {
@@ -61,7 +63,7 @@ typedef enum {//历史信息数据库中字段的索引
 } em_hisdata_idx;
 
 
-#pragma pack(pop)
+
 
 #endif
 

@@ -451,9 +451,11 @@ U8 timeStrToBCD(time_node_ptr pTimeStr)
 /*
 **	将用';'分隔的时间点字符串转化为集中器用的时间点格式(BCD).
 **	@buf:		字符串缓存
+**	@bufSize:	字符串缓存的长度
 **	@pTimeNode:	时间点序列
+**	@timeCnt:	时间点的个数
 */
-U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt)
+U8 strToTimeNode(U8* buf, U16 bufSize, time_node_ptr pTimeNode, U8* timeCnt)
 {
 	U8 lu8time[10] = { 0 };
 	U8* p = buf;
@@ -467,9 +469,9 @@ U8 strToTimeNode(U8* buf, U16 bufSize, U8* pTimeNode, U16* timeCnt)
 			lu8time[i] = *p;
 			i++;
 		} else {
-			if (timeStrToBin(lu8time, STRLEN(lu8time), &(((time_node_ptr)pTimeNode)[*timeCnt])) == ERROR)
+			if (timeStrToBin(lu8time, STRLEN(lu8time), pTimeNode + *timeCnt) == ERROR)
 				return ERROR;
-			if (timeStrToBCD(&((time_node_ptr)pTimeNode)[*timeCnt]) == ERROR)
+			if (timeStrToBCD(pTimeNode+*timeCnt) == ERROR)
 				return ERROR;
 			*timeCnt += 1;
 			i = 0;
@@ -560,14 +562,15 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 {
 	U8 lu8unit[12] = { 0 };
 
-	sprintf((char*)pDbHisData->id, "%d", pBinHisData->meterId);
+	sprintf((char*)pDbHisData->id, "%d", pBinHisData->fixMeter.meterId);
 	sprintf((char*)pDbHisData->maddr, "%02X%02X%02X%02X%02X%02X%02X", \
-		pBinHisData->meterAddr[6], pBinHisData->meterAddr[5], pBinHisData->meterAddr[4], \
-		pBinHisData->meterAddr[3], pBinHisData->meterAddr[2], pBinHisData->meterAddr[1], \
-		pBinHisData->meterAddr[0]);
-	sprintf((char*)pDbHisData->build, "%d", pBinHisData->buildId);
-	sprintf((char*)pDbHisData->unit, "%d", pBinHisData->unitId);
-	sprintf((char*)pDbHisData->room, "%d", pBinHisData->roomId);
+		pBinHisData->fixMeter.meterAddr[6], pBinHisData->fixMeter.meterAddr[5], \
+		pBinHisData->fixMeter.meterAddr[4], pBinHisData->fixMeter.meterAddr[3], \
+		pBinHisData->fixMeter.meterAddr[2], pBinHisData->fixMeter.meterAddr[1], \
+		pBinHisData->fixMeter.meterAddr[0]);
+	sprintf((char*)pDbHisData->build, "%d", pBinHisData->fixMeter.buildId);
+	sprintf((char*)pDbHisData->unit, "%d", pBinHisData->fixMeter.unitId);
+	sprintf((char*)pDbHisData->room, "%d", pBinHisData->fixMeter.roomId);
 	sprintf((char*)pDbHisData->intemp, "%X%X.%02X C", pBinHisData->MeterData.WaterInTemp[2], \
 		pBinHisData->MeterData.WaterInTemp[1], pBinHisData->MeterData.WaterInTemp[0]);
 	sprintf((char*)pDbHisData->outtemp, "%X%X.%02X C", pBinHisData->MeterData.WaterOutTemp[2], \
@@ -624,9 +627,9 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	sprintf((char*)pDbHisData->heat, "%X%X%X.%02X%s", pBinHisData->MeterData.CurrentHeat[3], \
 		pBinHisData->MeterData.CurrentHeat[2], pBinHisData->MeterData.CurrentHeat[1], \
 		pBinHisData->MeterData.CurrentHeat[0], lu8unit);
-	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinHisData->RoomTempBCD[1], pBinHisData->RoomTempBCD[0]);
-	sprintf((char*)pDbHisData->vopen, "%02X", pBinHisData->vOpen);
-	sprintf((char*)pDbHisData->fsuc, "%02X", pBinHisData->vState);
+	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinHisData->fixValve.RoomTempBCD[1], pBinHisData->fixValve.RoomTempBCD[0]);
+	sprintf((char*)pDbHisData->vopen, "%02X", pBinHisData->fixValve.vOpen);
+	sprintf((char*)pDbHisData->fsuc, "%02X", pBinHisData->fixValve.vState);
 	return NO_ERR;
 }
 

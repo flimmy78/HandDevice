@@ -19,6 +19,8 @@
 
 #define CONFIG_DELIMITER	','
 
+#define DB_HIS_EE	"EE"
+
 #define DB_MINFO_LEN_ROWID			3	//数据库中计量点长度
 #define DB_MINFO_LEN_METERADDR		14	//数据库中仪表地址长度
 #define DB_MINFO_LEN_VENDORID		3	//数据库中厂商代码长度
