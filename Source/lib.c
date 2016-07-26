@@ -118,6 +118,9 @@ U8 trimSpace(U8* s, U16 len)
 U8 isNumber(U8* s, U16 len)
 {
 	U16 i = 0;
+	if (len == 0) {
+		return ERROR;
+	}
 	for (i = 0;i < len; s++, i++) {
 		if (!isdigit(*s)) {
 			return ERROR;

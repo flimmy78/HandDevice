@@ -2155,7 +2155,7 @@ void userRemote1Meter(WM_HWIN hDlg)
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
 	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
-		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		GUI_MessageBox("\n请在集中器输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
 	supplementTo12(gatewayId);
@@ -2163,7 +2163,7 @@ void userRemote1Meter(WM_HWIN hDlg)
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
 	EDIT_GetText(hItem, (char*)idStr, 5);
 	if (isNumber(idStr, STRLEN(idStr)) == ERROR) {
-		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		GUI_MessageBox("\n请在计量点输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
 

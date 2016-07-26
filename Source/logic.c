@@ -458,10 +458,21 @@ U8 logic_remoteOneMeterId(U8* gatewayId, U8* meterID, db_hisdata_ptr pDbHis)
 	U16 bufSize = 0;
 	U16	lu16meterId = Lib_atoi((const char*)meterID);
 	tempControl_messure_remote_str remoteDataStr;
+	db_meterinfo_str dbInfo;
 
+	if (openDBF(DB_BASEINFO_NAME) == ERROR) {
+		return ERROR;
+	}
+	if (db_getOneMeterInfo(gatewayId, Lib_atoi((const char*)meterID), &dbInfo) == ERROR) {
+		Lib_printf("\n你输入的计量点不存在\n");
+		return ERROR;
+	}
+	if (closeDBF() == ERROR) {
+		return ERROR;
+	}
 	inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, lu8gatewayId, GATEWAY_OADD_LEN);
 	protoX_readOneMeter(buf, &bufSize, lu8gatewayId, &lu16meterId);
-	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_LONG) == ERROR){
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_LONG) == ERROR) {
 		return ERROR;
 	}
 	if (protoA_readOneMeter(buf, bufSize, &remoteDataStr) == ERROR) {
