@@ -43,7 +43,13 @@
 #define DB_HIS_LEN_VOPEN			10	//历史数据中, 阀门开度字段的长度
 #define DB_HIS_LEN_FSUC				7	//历史数据中, 阀门状态字段的长度
 
+
 #define HISDATA_FIELD_CNT	12//历史数据库列数量
+
+#define CONFIG_FIELD_CNT	2	//配置数据库的字段数量
+#define DB_CONFIG_ID_LEN	1	//配置数据库中ID字段的长度
+#define DB_CONFIG_VALUE_LEN	20	//配置数据库中VALUE字段的长度
+
 
 #define DBF_GETBASEFIELD(pInfo)	\
 if(DbfFieldGet(minfo_field_rowId, (char*)pInfo->rowId, pDbf) < 0) return ERROR;\
@@ -152,4 +158,12 @@ extern U8 db_storeTempHisData(tempControl_messure_hisdata_ptr pHisDataStr, U16 h
 extern U8 db_readOneHisData(db_hisdata_ptr pDbHis, U16 hisCnt);
 extern U8 db_readSucHisData(db_hisdata_ptr pDbHis, U16* hisCnt, U8 suc);
 extern U8 db_getNextHisData(db_hisdata_ptr pHisData, U8 suc);
+extern U8 db_setComConfig(U8 device, U32 baud, U8  mode);
+extern U8 db_setGatewayId(U8* gatewayId);
+extern U8 db_setSvrId(U8* svrId);
+extern U8 db_writeConfig(void);
+
+
+
+
 #endif // DB_H

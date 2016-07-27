@@ -76,8 +76,45 @@ typedef enum {//历史信息数据库中字段的索引
 	em_filedidx_fsuc		//成功标志
 } em_hisdata_idx;
 
+typedef enum {
+	em_device_rs485 = 0,
+	em_device_mbus
+}em_device_idx;
 
+typedef enum {
+	em_baud_1200 = 0,
+	em_baud_2400,
+	em_baud_4800,
+	em_baud_9600,
+	em_baud_19200,
+	em_baud_38400,
+	em_baud_57600,
+	em_baud_115200
+} em_baud_idx;
 
+typedef enum {
+	em_databit_8 = 0,
+	em_databit_7,
+	em_databit_9
+}em_databit_idx;
+
+typedef enum {
+	em_parity_none = 0,
+	em_parity_odd,
+	em_parity_even
+}em_parity_idx;
+
+typedef enum {
+	em_stop_1 = 0,
+	em_stop_2,
+	em_stop_1_5
+}em_stop_idx;
+
+typedef struct {
+	em_databit_idx	databit;
+	em_parity_idx	parity;
+	em_stop_idx		stop;
+} uart_mode_str;
 
 #endif
 

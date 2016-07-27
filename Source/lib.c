@@ -33,9 +33,9 @@ U8 lib_printBufToUart(U8* buf, U16 bufSize, const char* file, const char* func, 
 	db_getCongfig(config_com_para, (U8*)&comConfig);
 
 #ifdef DEBUG
-	sprintf((char*)debugStr, "[%s][%s][%d]buf: ", file, func, line);
+	Lib_sprintf((char*)debugStr, "[%s][%s][%d]buf: ", file, func, line);
 	for (i = 0; i < bufSize; i++) {
-		sprintf((char*)oneByte, "%02X ", buf[i]);
+		Lib_sprintf((char*)oneByte, "%02X ", buf[i]);
 		strcat((char*)debugStr, (char*)oneByte);
 	}
 	strcat((char*)debugStr,"\n");
@@ -239,33 +239,33 @@ void protoBinToAscii(meter_row_ptr pProtoInfo, db_meterinfo_ptr pDbInfo, U8* gat
 	U16 i = 0;
 
 	memcpy((U8*)&i ,pProtoInfo->rowId, 2);
-	sprintf((char*)pDbInfo->rowId, "%d", i);
+	Lib_sprintf((char*)pDbInfo->rowId, "%d", i);
 
-	sprintf((char*)pDbInfo->meterAddr, "%02X%02X%02X%02X%02X%02X%02X", \
+	Lib_sprintf((char*)pDbInfo->meterAddr, "%02X%02X%02X%02X%02X%02X%02X", \
 		pProtoInfo->meterAddr[6], pProtoInfo->meterAddr[5], \
 		pProtoInfo->meterAddr[4], pProtoInfo->meterAddr[3], \
 		pProtoInfo->meterAddr[2], pProtoInfo->meterAddr[1], \
 		pProtoInfo->meterAddr[0]);
-	sprintf((char*)pDbInfo->vendorId, "%d", pProtoInfo->vendorId);
-	sprintf((char*)pDbInfo->protoVer, "%d", pProtoInfo->protoVer);
-	sprintf((char*)pDbInfo->meterType, "%02X", pProtoInfo->meterType);
-	sprintf((char*)pDbInfo->channel, "%d", pProtoInfo->channel);
-	sprintf((char*)pDbInfo->valveProtoVer, "%d", pProtoInfo->valveProtoVer);
-	sprintf((char*)pDbInfo->valveAddr, "%02X%02X%02X%02X%02X%02X%02X", \
+	Lib_sprintf((char*)pDbInfo->vendorId, "%d", pProtoInfo->vendorId);
+	Lib_sprintf((char*)pDbInfo->protoVer, "%d", pProtoInfo->protoVer);
+	Lib_sprintf((char*)pDbInfo->meterType, "%02X", pProtoInfo->meterType);
+	Lib_sprintf((char*)pDbInfo->channel, "%d", pProtoInfo->channel);
+	Lib_sprintf((char*)pDbInfo->valveProtoVer, "%d", pProtoInfo->valveProtoVer);
+	Lib_sprintf((char*)pDbInfo->valveAddr, "%02X%02X%02X%02X%02X%02X%02X", \
 		pProtoInfo->valveAddr[6], pProtoInfo->valveAddr[5], \
 		pProtoInfo->valveAddr[4], pProtoInfo->valveAddr[3], \
 		pProtoInfo->valveAddr[2], pProtoInfo->valveAddr[1], \
 		pProtoInfo->valveAddr[0]);
-	sprintf((char*)pDbInfo->controlPanelAddr, "%02X%02X%02X%02X%02X%02X%02X", \
+	Lib_sprintf((char*)pDbInfo->controlPanelAddr, "%02X%02X%02X%02X%02X%02X%02X", \
 		pProtoInfo->controlPanelAddr[6], pProtoInfo->controlPanelAddr[5], \
 		pProtoInfo->controlPanelAddr[4], pProtoInfo->controlPanelAddr[3], \
 		pProtoInfo->controlPanelAddr[2], pProtoInfo->controlPanelAddr[1], \
 		pProtoInfo->controlPanelAddr[0]);
-	sprintf((char*)pDbInfo->buildId, "%d", pProtoInfo->buildId);
-	sprintf((char*)pDbInfo->unitId, "%d", pProtoInfo->unitId);
+	Lib_sprintf((char*)pDbInfo->buildId, "%d", pProtoInfo->buildId);
+	Lib_sprintf((char*)pDbInfo->unitId, "%d", pProtoInfo->unitId);
 	memcpy((U8*)&i, pProtoInfo->roomId, 2);
-	sprintf((char*)pDbInfo->roomId, "%d", i);
-	sprintf((char*)pDbInfo->gatewayId, "%02X%02X%02X%02X%02X%02X", \
+	Lib_sprintf((char*)pDbInfo->roomId, "%d", i);
+	Lib_sprintf((char*)pDbInfo->gatewayId, "%02X%02X%02X%02X%02X%02X", \
 		gatewayId[5], gatewayId[4], gatewayId[3], \
 		gatewayId[2], gatewayId[1], gatewayId[0]);
 }
@@ -438,7 +438,7 @@ U8 calcTimeNode(U8* buf, U16 bufSize, U8* startTime, U8 timeCnt, time_node_ptr p
 	for (i = 0; i < timeCnt ; i++) {
 		timeInterval.u8hour = i*hour;
 		addTime(&startTimeStr, &timeInterval, &(pTimeNodes[i]));
-		sprintf((char*)lu8Time, "%02d%c%02d%c", pTimeNodes[i].u8hour, TIME_DELIM, pTimeNodes[i].u8minute, TIME_NODE_DELIM);
+		Lib_sprintf((char*)lu8Time, "%02d%c%02d%c", pTimeNodes[i].u8hour, TIME_DELIM, pTimeNodes[i].u8minute, TIME_NODE_DELIM);
 		strcat((char*)buf, (char*)lu8Time);
 	}
 	return NO_ERR;
@@ -565,18 +565,18 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 {
 	U8 lu8unit[12] = { 0 };
 
-	sprintf((char*)pDbHisData->id, "%d", pBinHisData->fixMeter.meterId);
-	sprintf((char*)pDbHisData->maddr, "%02X%02X%02X%02X%02X%02X%02X", \
+	Lib_sprintf((char*)pDbHisData->id, "%d", pBinHisData->fixMeter.meterId);
+	Lib_sprintf((char*)pDbHisData->maddr, "%02X%02X%02X%02X%02X%02X%02X", \
 		pBinHisData->fixMeter.meterAddr[6], pBinHisData->fixMeter.meterAddr[5], \
 		pBinHisData->fixMeter.meterAddr[4], pBinHisData->fixMeter.meterAddr[3], \
 		pBinHisData->fixMeter.meterAddr[2], pBinHisData->fixMeter.meterAddr[1], \
 		pBinHisData->fixMeter.meterAddr[0]);
-	sprintf((char*)pDbHisData->build, "%d", pBinHisData->fixMeter.buildId);
-	sprintf((char*)pDbHisData->unit, "%d", pBinHisData->fixMeter.unitId);
-	sprintf((char*)pDbHisData->room, "%d", pBinHisData->fixMeter.roomId);
-	sprintf((char*)pDbHisData->intemp, "%X%X.%02X C", pBinHisData->MeterData.WaterInTemp[2], \
+	Lib_sprintf((char*)pDbHisData->build, "%d", pBinHisData->fixMeter.buildId);
+	Lib_sprintf((char*)pDbHisData->unit, "%d", pBinHisData->fixMeter.unitId);
+	Lib_sprintf((char*)pDbHisData->room, "%d", pBinHisData->fixMeter.roomId);
+	Lib_sprintf((char*)pDbHisData->intemp, "%X%X.%02X C", pBinHisData->MeterData.WaterInTemp[2], \
 		pBinHisData->MeterData.WaterInTemp[1], pBinHisData->MeterData.WaterInTemp[0]);
-	sprintf((char*)pDbHisData->outtemp, "%X%X.%02X C", pBinHisData->MeterData.WaterOutTemp[2], \
+	Lib_sprintf((char*)pDbHisData->outtemp, "%X%X.%02X C", pBinHisData->MeterData.WaterOutTemp[2], \
 		pBinHisData->MeterData.WaterOutTemp[1], pBinHisData->MeterData.WaterOutTemp[0]);
 
 	//流量
@@ -591,7 +591,7 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	default:
 		break;
 	}
-	sprintf((char*)pDbHisData->flow, "%X%X%X.%02X%s", pBinHisData->MeterData.AccumulateFlow[3], \
+	Lib_sprintf((char*)pDbHisData->flow, "%X%X%X.%02X%s", pBinHisData->MeterData.AccumulateFlow[3], \
 		pBinHisData->MeterData.AccumulateFlow[2], pBinHisData->MeterData.AccumulateFlow[1], \
 		pBinHisData->MeterData.AccumulateFlow[0], lu8unit);
 	//热量
@@ -627,12 +627,12 @@ U8 binHisToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_hisdata_ptr p
 	default:
 		break;
 	}
-	sprintf((char*)pDbHisData->heat, "%X%X%X.%02X%s", pBinHisData->MeterData.CurrentHeat[3], \
+	Lib_sprintf((char*)pDbHisData->heat, "%X%X%X.%02X%s", pBinHisData->MeterData.CurrentHeat[3], \
 		pBinHisData->MeterData.CurrentHeat[2], pBinHisData->MeterData.CurrentHeat[1], \
 		pBinHisData->MeterData.CurrentHeat[0], lu8unit);
-	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinHisData->fixValve.RoomTempBCD[1], pBinHisData->fixValve.RoomTempBCD[0]);
-	sprintf((char*)pDbHisData->vopen, "%02X", pBinHisData->fixValve.vOpen);
-	sprintf((char*)pDbHisData->fsuc, "%02X", pBinHisData->fixValve.vState);
+	Lib_sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinHisData->fixValve.RoomTempBCD[1], pBinHisData->fixValve.RoomTempBCD[0]);
+	Lib_sprintf((char*)pDbHisData->vopen, "%02X", pBinHisData->fixValve.vOpen);
+	Lib_sprintf((char*)pDbHisData->fsuc, "%02X", pBinHisData->fixValve.vState);
 	return NO_ERR;
 }
 
@@ -640,18 +640,18 @@ U8 binRemoteToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_remote_ptr
 {
 	U8 lu8unit[12] = { 0 };
 
-	sprintf((char*)pDbHisData->id, "%d", pBinRemoteData->fixMeter.meterId);
-	sprintf((char*)pDbHisData->maddr, "%02X%02X%02X%02X%02X%02X%02X", \
+	Lib_sprintf((char*)pDbHisData->id, "%d", pBinRemoteData->fixMeter.meterId);
+	Lib_sprintf((char*)pDbHisData->maddr, "%02X%02X%02X%02X%02X%02X%02X", \
 		pBinRemoteData->fixMeter.meterAddr[6], pBinRemoteData->fixMeter.meterAddr[5], \
 		pBinRemoteData->fixMeter.meterAddr[4], pBinRemoteData->fixMeter.meterAddr[3], \
 		pBinRemoteData->fixMeter.meterAddr[2], pBinRemoteData->fixMeter.meterAddr[1], \
 		pBinRemoteData->fixMeter.meterAddr[0]);
-	sprintf((char*)pDbHisData->build, "%d", pBinRemoteData->fixMeter.buildId);
-	sprintf((char*)pDbHisData->unit, "%d", pBinRemoteData->fixMeter.unitId);
-	sprintf((char*)pDbHisData->room, "%d", pBinRemoteData->fixMeter.roomId);
-	sprintf((char*)pDbHisData->intemp, "%X%X.%02X C", pBinRemoteData->MeterData.WaterInTemp[2], \
+	Lib_sprintf((char*)pDbHisData->build, "%d", pBinRemoteData->fixMeter.buildId);
+	Lib_sprintf((char*)pDbHisData->unit, "%d", pBinRemoteData->fixMeter.unitId);
+	Lib_sprintf((char*)pDbHisData->room, "%d", pBinRemoteData->fixMeter.roomId);
+	Lib_sprintf((char*)pDbHisData->intemp, "%X%X.%02X C", pBinRemoteData->MeterData.WaterInTemp[2], \
 		pBinRemoteData->MeterData.WaterInTemp[1], pBinRemoteData->MeterData.WaterInTemp[0]);
-	sprintf((char*)pDbHisData->outtemp, "%X%X.%02X C", pBinRemoteData->MeterData.WaterOutTemp[2], \
+	Lib_sprintf((char*)pDbHisData->outtemp, "%X%X.%02X C", pBinRemoteData->MeterData.WaterOutTemp[2], \
 		pBinRemoteData->MeterData.WaterOutTemp[1], pBinRemoteData->MeterData.WaterOutTemp[0]);
 
 	//流量
@@ -666,7 +666,7 @@ U8 binRemoteToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_remote_ptr
 	default:
 		break;
 	}
-	sprintf((char*)pDbHisData->flow, "%X%X%X.%02X%s", pBinRemoteData->MeterData.AccumulateFlow[3], \
+	Lib_sprintf((char*)pDbHisData->flow, "%X%X%X.%02X%s", pBinRemoteData->MeterData.AccumulateFlow[3], \
 		pBinRemoteData->MeterData.AccumulateFlow[2], pBinRemoteData->MeterData.AccumulateFlow[1], \
 		pBinRemoteData->MeterData.AccumulateFlow[0], lu8unit);
 	//热量
@@ -702,12 +702,12 @@ U8 binRemoteToAsciiHis(db_hisdata_ptr pDbHisData, tempControl_messure_remote_ptr
 	default:
 		break;
 	}
-	sprintf((char*)pDbHisData->heat, "%X%X%X.%02X%s", pBinRemoteData->MeterData.CurrentHeat[3], \
+	Lib_sprintf((char*)pDbHisData->heat, "%X%X%X.%02X%s", pBinRemoteData->MeterData.CurrentHeat[3], \
 		pBinRemoteData->MeterData.CurrentHeat[2], pBinRemoteData->MeterData.CurrentHeat[1], \
 		pBinRemoteData->MeterData.CurrentHeat[0], lu8unit);
-	sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinRemoteData->fixValve.RoomTempBCD[1], pBinRemoteData->fixValve.RoomTempBCD[0]);
-	sprintf((char*)pDbHisData->vopen, "%02X", pBinRemoteData->fixValve.vOpen);
-	sprintf((char*)pDbHisData->fsuc, "%02X", pBinRemoteData->fixValve.vState);
+	Lib_sprintf((char*)pDbHisData->roomtemp, "%02X.%02X C", pBinRemoteData->fixValve.RoomTempBCD[1], pBinRemoteData->fixValve.RoomTempBCD[0]);
+	Lib_sprintf((char*)pDbHisData->vopen, "%02X", pBinRemoteData->fixValve.vOpen);
+	Lib_sprintf((char*)pDbHisData->fsuc, "%02X", pBinRemoteData->fixValve.vState);
 	return NO_ERR;
 }
 

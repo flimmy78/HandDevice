@@ -259,10 +259,53 @@ static const GUI_WIDGET_CREATE_INFO widgetRemote1Meter[] = {
 	{ BUTTON_CreateIndirect, "读取", GUI_ID_BUTTON2, 130, 270, 80, 20, 0, 0 }
 };
 
+static const GUI_WIDGET_CREATE_INFO widgetDeviceConfig[] = {
+	{ FRAMEWIN_CreateIndirect, "手持机设置", COM_CONFIG_FRAME_IDX, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
+	{ TEXT_CreateIndirect, "端口", GUI_ID_TEXT0, 10, 10, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "波特率", GUI_ID_TEXT1, 10, 40, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "数据位", GUI_ID_TEXT2, 10, 70, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "校验位", GUI_ID_TEXT3, 11, 100, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "停止位", GUI_ID_TEXT4, 10, 130, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "集中器号", GUI_ID_TEXT5, 10, 160, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "服务器号", GUI_ID_TEXT6, 10, 190, 80, 20, 0, 0 },
+	{ DROPDOWN_CreateIndirect, "Dropdown", GUI_ID_DROPDOWN0, 136, 10, 80, 19, 0, 0 },
+	{ DROPDOWN_CreateIndirect, "Dropdown", GUI_ID_DROPDOWN1, 135, 40, 80, 19, 0, 0 },
+	{ DROPDOWN_CreateIndirect, "Dropdown", GUI_ID_DROPDOWN2, 135, 70, 80, 19, 0, 0 },
+	{ DROPDOWN_CreateIndirect, "Dropdown", GUI_ID_DROPDOWN3, 135, 100, 80, 19, 0, 0 },
+	{ DROPDOWN_CreateIndirect, "Dropdown", GUI_ID_DROPDOWN4, 135, 130, 80, 19, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", GUI_ID_BUTTON0, 10, 265, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "保存", GUI_ID_BUTTON1, 135, 265, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT0, 135, 160, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", GUI_ID_EDIT1, 135, 190, 80, 20, 0, 0 }
+};
+
 static U8 gu8success = NO_ERR;
 static U8 gu8hasReadHisData = ERROR;
 static U16	gu16sucCnt = 0;
 static U16	gu16failCnt = 0;
+
+S8* gs8deviceStrArray[] = { "RS485","MBUS" };
+
+U8	gu8deviceIntArray[] = { UART_DEVICE_RS485, UART_DEVICE_MBUS };
+
+S8* gs8baudStrArray[] = { "1200","2400","4800","9600","19200","38400","57600","115200" };
+
+U32 gu32baudIntArray[] = { 1200,2400,4800,9600,19200,38400,57600,115200 };
+
+S8* gs8databitStrArray[] = {"8", "7", "9"};
+
+S8* gs8parityStrArray[] = {"无",	 "奇", "偶"};
+
+S8* gs8stopStrArray[] = {"1"};
+
+uart_mode_str	gUart_mode_strMap[] = {
+{ em_databit_7, em_parity_odd, em_stop_1 },
+{ em_databit_7, em_parity_even,em_stop_1 },
+{ em_databit_8, em_parity_none,em_stop_1 },
+{ em_databit_8, em_parity_odd, em_stop_1 },
+{ em_databit_8, em_parity_even,em_stop_1 },
+{ em_databit_9, em_parity_none,em_stop_1 } };
+
 /************************************************************************/
 /* Init函数群                                                           */
 /************************************************************************/
@@ -278,70 +321,148 @@ static void mainFrameInit( WM_HWIN hDlg )
 }
 
 //对参数设置与控制界面初始化
-static void setParaAndControlInit(WM_HWIN hDlg)
-{
-    
-}
+static void setParaAndControlInit(WM_HWIN hDlg){}
 
 //对集中器校时界面初始化
 static void setTimeInit(WM_HWIN hDlg)
 {
-	WM_HWIN hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
-	EDIT_SetMaxLen(hObj, 2 * GATEWAY_OADD_LEN);
+	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+	EDIT_SetMaxLen(hItem, 2 * GATEWAY_OADD_LEN);
 }
 
 //对基础信息下发界面初始化
 static void baseInfoIssueInit(WM_HWIN hDlg)
 {
-    
+	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
 }
 
 //对修改基础信息界面初始化
 static void ModifyOneInfoInit(WM_HWIN hDlg)
 {
-	WM_HWIN hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
-	EDIT_SetMaxLen(hObj, 2 * PROTO_LEN_MADDR);
-	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
-	EDIT_SetMaxLen(hObj, 2 * PROTO_LEN_MADDR);
-	hObj = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
-	EDIT_SetMaxLen(hObj, 2 * PROTO_LEN_MADDR);
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+	WM_HWIN hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_METERADDR);
+	EDIT_SetMaxLen(hItem, 2 * PROTO_LEN_MADDR);
+	hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_VALVEADDR);
+	EDIT_SetMaxLen(hItem, 2 * PROTO_LEN_MADDR);
+	hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_CONTROLPANELADDR);
+	EDIT_SetMaxLen(hItem, 2 * PROTO_LEN_MADDR);
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
 }
 
 static void setTimeNodesInit(WM_HWIN hDlg)
 {
-	WM_HWIN hObj = WM_GetDialogItem(hDlg, GUI_ID_MULTIEDIT0);
-	MULTIEDIT_SetWrapWord(hObj);
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+	WM_HWIN hItem = WM_GetDialogItem(hDlg, GUI_ID_MULTIEDIT0);
+	MULTIEDIT_SetWrapWord(hItem);
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
 }
 
 static void modifyGatewayIdInit(WM_HWIN hDlg)
 {
-	
+	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
 }
 
 static void modifyGPRSInit(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT0);
 	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT1);
 	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_TEXT2);
 	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
-	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);//ip地址
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
 	EDIT_SetMaxLen(hItem, 20);
 }
 
-static void rebootInit(WM_HWIN hDlg){}
+static void rebootInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
 
-static void rereadInit(WM_HWIN hDlg) {}
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+}
 
-static void queryEditInfoInit(WM_HWIN hDlg) {}
+static void rereadInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
 
-static void queryVersionInit(WM_HWIN hDlg) {}
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+}
+
+static void queryEditInfoInit(WM_HWIN hDlg){}
+
+static void queryVersionInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+}
 
 static void queryBaseInfoInit(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_BUTTON4);
 	BUTTON_SetBkColor(hItem, BUTTON_CI_UNPRESSED, GUI_RED);
 	
@@ -356,9 +477,15 @@ static void queryBaseInfoInit(WM_HWIN hDlg)
 static void queryHisDataInit(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
 
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 	EDIT_SetMaxLen(hItem, 2*GATEWAY_OADD_LEN);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
 	EDIT_SetMaxLen(hItem, 5);
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
@@ -424,7 +551,7 @@ static void hisSheetInit(WM_HWIN hDlg)
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_vopen, (const char*)dbHisStr.vopen);
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_fsuc, (const char*)dbHisStr.fsuc);
 
-	sprintf((char*)count, "%d", gu8success == NO_ERR ? gu16sucCnt : gu16failCnt);
+	Lib_sprintf((char*)count, "%d", gu8success == NO_ERR ? gu16sucCnt : gu16failCnt);
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
 	EDIT_SetText(hItem, (const char*)count);
 }
@@ -432,6 +559,13 @@ static void hisSheetInit(WM_HWIN hDlg)
 static void remote1MeterInit(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
 
 	hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
 	LISTVIEW_AddColumn(hItem, 80, "项目", GUI_TA_HCENTER | GUI_TA_VCENTER);
@@ -461,6 +595,67 @@ static void remote1MeterInit(WM_HWIN hDlg)
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_vopen, "阀门开度");
 	LISTVIEW_SetItemText(hItem, LISTVIEW_COL_ITEM, em_filedidx_fsuc, "成功标志");
 	LISTVIEW_SetGridVis(hItem, 1);
+}
+
+static void deviceConfigInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U16 i = 0;
+	sUART lComConfig;//com config
+	U8 lu8svrAdd[GATEWAY_SADD_LEN] = { 0 };//主站编号, 反序的
+	U8 lu8gwyAdd[GATEWAY_OADD_LEN] = { 0 };//集中器编号, 反序的
+	S8 tmpStr[10] = { 0 };
+
+	db_getCongfig(config_com_para, (U8*)&lComConfig);
+	db_getCongfig(config_gateway_id, lu8gwyAdd);
+	db_getCongfig(config_server_id, lu8svrAdd);
+
+	for (i = GUI_ID_TEXT0; i <= GUI_ID_TEXT6;i++) {
+		hItem = WM_GetDialogItem(hDlg, i);
+		TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	}
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN0);
+	for (i = 0; i < sizeof(gs8deviceStrArray) / sizeof(S8*); i++) {
+		DROPDOWN_AddString(hItem, gs8deviceStrArray[i]);
+		if (gu8deviceIntArray[i] == lComConfig.device) {
+			DROPDOWN_SetSel(hItem, i);
+		}
+	}
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN1);
+	for (i = 0; i < sizeof(gs8baudStrArray) / sizeof(S8*); i++) {
+		DROPDOWN_AddString(hItem, gs8baudStrArray[i]);
+		if (gu32baudIntArray[i] == lComConfig.baud) {
+			DROPDOWN_SetSel(hItem, i);
+		}
+	}
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN2);
+	for (i = 0; i < sizeof(gs8databitStrArray) / sizeof(S8*); i++) {
+		DROPDOWN_AddString(hItem, gs8databitStrArray[i]);
+	}
+	DROPDOWN_SetSel(hItem, gUart_mode_strMap[lComConfig.mode - 1].databit);
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN3);
+	for (i = 0; i < sizeof(gs8parityStrArray) / sizeof(S8*); i++) {
+		DROPDOWN_AddString(hItem, gs8parityStrArray[i]);
+	}
+	DROPDOWN_SetSel(hItem, gUart_mode_strMap[lComConfig.mode - 1].parity);
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN4);
+	for (i = 0; i < sizeof(gs8stopStrArray) / sizeof(S8*); i++) {
+		DROPDOWN_AddString(hItem, gs8stopStrArray[i]);
+	}
+	DROPDOWN_SetSel(hItem, gUart_mode_strMap[lComConfig.mode - 1].stop);
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8gwyAdd[1], lu8gwyAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+	Lib_sprintf(tmpStr, "%02x%02x", lu8svrAdd[1], lu8svrAdd[0]);
+	EDIT_SetText(hItem, (const char*)tmpStr);
 }
 /************************************************************************/
 /* CallBack函数群                                                       */
@@ -586,6 +781,7 @@ void userSetTime(WM_HWIN hObj)
 
 	if (logic_setTime(lu8gatewayId) == NO_ERR) {
 		GUI_MessageBox("\n设置时间成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hObj);
 	}
 	else {
 		GUI_MessageBox("\n设置时间失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
@@ -597,7 +793,7 @@ void radioReadGatewayId(WM_HWIN hObj)
 	U8 gatewayId[GATEWAY_OADD_LEN] = { 0 };
 	char gatewayStr[2 * GATEWAY_OADD_LEN] = { 0 };
 	logic_readGatewayId(gatewayId);
-	sprintf(gatewayStr, "%02X%02X%02X%02X%02X%02X", \
+	Lib_sprintf(gatewayStr, "%02X%02X%02X%02X%02X%02X", \
 		gatewayId[0], gatewayId[1], gatewayId[2], \
 		gatewayId[3], gatewayId[4], gatewayId[5]);
 	trimZero((U8*)gatewayStr, 2 * GATEWAY_OADD_LEN);
@@ -684,6 +880,7 @@ void userIssueInfo(WM_HWIN hObj)
 
 	if (logic_issueMeterInfo(lu8InputBuf) == NO_ERR) {
 		GUI_MessageBox("\n下发表地址成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hObj);
 	}
 	else {
 		GUI_MessageBox("\n下发表地址失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
@@ -819,6 +1016,7 @@ void queryOneInfo(WM_HWIN hDlg)
 	}
 	else {
 		GUI_MessageBox("\n查询计量点信息失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hDlg);
 	}
 }
 
@@ -880,6 +1078,7 @@ void userIssueOneInfo(WM_HWIN hDlg)
 	else {
 		GUI_MessageBox("\n修改单行数据失败!\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void modifyOneInfoCb(WM_MESSAGE* pMsg)
@@ -1002,6 +1201,7 @@ void userIssueTimeNodes(WM_HWIN hDlg)
 	} else {
 		GUI_MessageBox("\n下发抄表时间点成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void setTimeNodesCb(WM_MESSAGE* pMsg)
@@ -1102,6 +1302,7 @@ void userModifyGatewayId(WM_HWIN hDlg)
 	} else {
 		GUI_MessageBox("\n修改集中器号成功!\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void modifyGatewayIdCb(WM_MESSAGE* pMsg)
@@ -1198,6 +1399,7 @@ void userQueryGPRS(WM_HWIN hDlg)
 		hObj = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);//apn编号
 		EDIT_SetText(hObj, (const char*)apnId);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void userModifyGPRS(WM_HWIN hDlg)
@@ -1233,6 +1435,7 @@ void userModifyGPRS(WM_HWIN hDlg)
 		GUI_MessageBox("\n修改GPRS参数失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	else
 		GUI_MessageBox("\n修改GPRS参数成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	WM_SetFocus(hDlg);
 }
 
 void modifyGPRSCb(WM_MESSAGE* pMsg)
@@ -1327,6 +1530,7 @@ void userReboot(WM_HWIN hDlg)
 	} else {
 		GUI_MessageBox("\n5秒后重启集中器\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void rebootCb(WM_MESSAGE* pMsg)
@@ -1432,6 +1636,7 @@ void userIssueRereadParam(WM_HWIN hDlg)
 	} else {
 		GUI_MessageBox("\n设置成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void rereadCb(WM_MESSAGE* pMsg)
@@ -1572,6 +1777,7 @@ void userReadMeterImmd(WM_HWIN hDlg)
 	else {
 		GUI_MessageBox("\n立即抄表成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void readMeterImmdCb(WM_MESSAGE* pMsg)
@@ -1667,6 +1873,7 @@ void userQueryVersion(WM_HWIN hDlg)
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
 		EDIT_SetText(hItem, (char*)hardVersion);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void queryVersionCb(WM_MESSAGE* pMsg)
@@ -1780,6 +1987,7 @@ void userReadBaseinfo(WM_HWIN hDlg)
 		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROOMID);
 		EDIT_SetText(hItem, (const char*)dbBaseInfoStr.roomId);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void userReadNextBaseinfo(WM_HWIN hDlg)
@@ -1788,6 +1996,7 @@ void userReadNextBaseinfo(WM_HWIN hDlg)
 	db_meterinfo_str dbBaseInfoStr = { 0 };
 	if (logic_readNextTempInfo(&dbBaseInfoStr) == ERROR) {
 		GUI_MessageBox("\n读取下一个失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hDlg);
 	}
 	else {
 		hItem = WM_GetDialogItem(hDlg, EDIT_MODIFY_1INFO_ROWID);
@@ -1826,6 +2035,7 @@ void userUpdateDbf(WM_HWIN hDlg)
 	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
 	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
 		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hDlg);
 		return;
 	}
 	supplementTo12(gatewayId);
@@ -1834,6 +2044,7 @@ void userUpdateDbf(WM_HWIN hDlg)
 	} else {
 		GUI_MessageBox("\n更新表地址成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
+	WM_SetFocus(hDlg);
 }
 
 void ReadBaseInfoCb(WM_MESSAGE* pMsg)
@@ -1928,18 +2139,20 @@ void userReadAllHisData(WM_HWIN hDlg)
 	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
 	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
 		GUI_MessageBox("\n请输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
 		return;
 	}
 	supplementTo12(gatewayId);
 	gu16sucCnt = gu16failCnt = 0;
 	if (logic_readHisData(gatewayId, &gu16sucCnt, &gu16failCnt) == ERROR) {
 		GUI_MessageBox("\n读取历史数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hDlg);
 	} else {
-		sprintf((char*)cntStr, "%d", gu16sucCnt);
+		Lib_sprintf((char*)cntStr, "%d", gu16sucCnt);
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
 		EDIT_SetText(hItem, (const char*)cntStr);
 
-		sprintf((char*)cntStr, "%d", gu16failCnt);
+		Lib_sprintf((char*)cntStr, "%d", gu16failCnt);
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT2);
 		EDIT_SetText(hItem, (const char*)cntStr);
 
@@ -1949,7 +2162,7 @@ void userReadAllHisData(WM_HWIN hDlg)
 			percent = (gu16sucCnt * 100 / (gu16sucCnt + gu16failCnt));
 		}
 
-		sprintf((char*)cntStr, "%.01f%%", percent);//不保留小数位, 原因不明
+		Lib_sprintf((char*)cntStr, "%.01f%%", percent);//不保留小数位, 原因不明
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT3);
 		EDIT_SetText(hItem, (const char*)cntStr);
 		gu8hasReadHisData = NO_ERR;
@@ -1963,6 +2176,7 @@ void userReadNextHisData(WM_HWIN hDlg)
 	db_hisdata_str dbHisStr = { 0 };
 	if (logic_nextHisData(&dbHisStr, gu8success) == ERROR) {
 		GUI_MessageBox("\n读取下一条数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hDlg);
 	} else {
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
 		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_id, (const char*)dbHisStr.id);
@@ -2055,6 +2269,7 @@ void userReadHisSheet(U8 suc)
 
 	if (gu8hasReadHisData == ERROR) {
 		GUI_MessageBox("\n请先读取历史数据\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
 	}
 	gu8success = suc;
 	while (1) {
@@ -2156,6 +2371,7 @@ void userRemote1Meter(WM_HWIN hDlg)
 	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
 	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
 		GUI_MessageBox("\n请在集中器输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
 		return;
 	}
 	supplementTo12(gatewayId);
@@ -2169,6 +2385,7 @@ void userRemote1Meter(WM_HWIN hDlg)
 
 	if (logic_remoteOneMeterId(gatewayId, idStr, &dbHisStr) == ERROR) {
 		GUI_MessageBox("\n透传失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hDlg);
 	} else {
 		hItem = WM_GetDialogItem(hDlg, GUI_ID_LISTVIEW0);
 		LISTVIEW_SetItemText(hItem, LISTVIEW_COL_VALUE, em_filedidx_id, (const char*)dbHisStr.id);
@@ -2253,6 +2470,150 @@ void remote1MeterCb(WM_MESSAGE* pMsg)
 		WM_DefaultProc(pMsg);
 	}
 }
+
+U8 getUartMode(em_databit_idx data, em_parity_idx parity, em_stop_idx stop)
+{
+	U8 i = 0;
+	U8	modeCnt = sizeof(gUart_mode_strMap) / sizeof(uart_mode_str);
+	for (i = 0; i < modeCnt;i++) {
+		if (gUart_mode_strMap[i].databit == data  &&\
+			gUart_mode_strMap[i].parity == parity &&\
+			gUart_mode_strMap[i].stop == stop) {
+			return (i + 1);
+		}
+	}
+	return ERROR;
+}
+
+void userSaveConfig(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8  device;
+	U32 baud;
+	em_databit_idx	data;
+	em_parity_idx	parity;
+	em_stop_idx		stop;
+	U8  mode;
+	U8	gatewayId[2 * GATEWAY_OADD_LEN + 1] = { 0 };
+	U8	svrId[2 * GATEWAY_SADD_LEN + 1] = { 0 };
+	
+
+	//设备
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN0);
+	device = gu8deviceIntArray[DROPDOWN_GetSel(hItem)];
+	//波特率
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN1);
+	baud = gu32baudIntArray[DROPDOWN_GetSel(hItem)];
+	//数据位
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN2);
+	data = (em_databit_idx)DROPDOWN_GetSel(hItem);
+	//校验位
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN3);
+	parity = (em_parity_idx)DROPDOWN_GetSel(hItem);
+	//停止位
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_DROPDOWN4);
+	stop = (em_stop_idx)DROPDOWN_GetSel(hItem);
+	mode = getUartMode(data, parity, stop);
+	if (mode == ERROR) {
+		GUI_MessageBox("\n此串口设置本系统不支持\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hDlg);
+		return;
+	}
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT0);
+	EDIT_GetText(hItem, (char*)gatewayId, 2 * GATEWAY_OADD_LEN);
+	if (isNumber(gatewayId, STRLEN(gatewayId)) == ERROR) {
+		GUI_MessageBox("\n请在集中器输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+	supplementTo12(gatewayId);
+
+	hItem = WM_GetDialogItem(hDlg, GUI_ID_EDIT1);
+	EDIT_GetText(hItem, (char*)svrId, 2 * GATEWAY_SADD_LEN);
+	if (isNumber(svrId, STRLEN(svrId)) == ERROR) {
+		GUI_MessageBox("\n请在集中器输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+	supplementTo12(svrId);
+
+	if (logic_saveConfig(device, baud, mode, gatewayId, svrId)==ERROR) {
+		GUI_MessageBox("\n保存设置失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		GUI_MessageBox("\n保存设置成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	WM_SetFocus(hDlg);
+}
+
+void deviceConfigCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		deviceConfigInit(hDlg);
+		break;
+	case WM_PAINT:
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode)
+		{
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case GUI_ID_BUTTON5://广播读集中器号
+				radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+				break;
+			case GUI_ID_BUTTON0://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case GUI_ID_BUTTON1://保存配置
+				userSaveConfig(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM6://广播读集中器号
+			radioReadGatewayId(WM_GetDialogItem(hDlg, GUI_ID_EDIT0));
+			break;
+		case GUI_KEY_NUM1://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM2://保存配置
+			userSaveConfig(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, GUI_ID_BUTTON0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
 /************************************************************************/
 /* 创建界面函数群                                                       */
 /************************************************************************/
@@ -2465,6 +2826,16 @@ int queryEditInfo()
 	}
 }
 
+int deviceConfig()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetDeviceConfig, GUI_COUNTOF(widgetDeviceConfig), &deviceConfigCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return WM_USER_EXIT;
+	}
+}
+
 int maingui( void ){
     int iRet;
 
@@ -2478,9 +2849,8 @@ int maingui( void ){
 			queryEditInfo();
 			break;
         case GUI_ID_BUTTON2:
+			deviceConfig();
 			break;
-        case GUI_ID_BUTTON5:
-            return 0;
         case -1:
             return -1;
         default:

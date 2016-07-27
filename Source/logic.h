@@ -25,5 +25,6 @@ extern U8 logic_readHisData(U8* gatewayId, U16* sucCnt, U16* failCnt);
 extern U8 logic_initHisView(db_hisdata_ptr pDbHis, U8 suc);
 extern U8 logic_nextHisData(db_hisdata_ptr pDbHis, U8 suc);
 extern U8 logic_remoteOneMeterId(U8* gatewayId, U8* meterID, db_hisdata_ptr pDbHis);
+extern U8 logic_saveConfig(U8  device, U32 baud, U8  mode, U8* gatewayId, U8* svrId);
 
 #endif

@@ -15,6 +15,9 @@ static sUART gComConfig;//com config
 static U8 gu8svrAdd[GATEWAY_SADD_LEN] = {0};//主站编号, 反序的
 static U8 gu8gwyAdd[GATEWAY_OADD_LEN] = {0};//集中器编号, 反序的
 
+S8* configFieldName[] = { "id", "value" };
+U8 configFieldSize[] = { DB_CONFIG_ID_LEN, DB_CONFIG_VALUE_LEN };
+
 S8* hisFieldName[] = { "id", "maddr", "build", "unit", "room", "intemp", \
 "outtemp", "flow", "heat", "roomtemp", "vopen", "fsuc"};
 U8 hisFieldSize[] = {
@@ -41,7 +44,6 @@ U8 db_hasInitConfig()
 U8 openDBF(U8* dbfName)
 {
 	if (DbfOpen((char*)dbfName, pDbf) < 0) {//open
-		GUI_MessageBox("\n配置信息丢失, 请重新设置!\n", "丢失", GUI_MESSAGEBOX_CF_MODAL);
 		return ERROR;
 	}
 	return NO_ERR;
@@ -64,9 +66,81 @@ U8 db_gotoRecord0()
 	return NO_ERR;
 }
 
-U8 db_writeConfigDb(void)
+U8 db_setComConfig(U8 device, U32 baud, U8  mode)
 {
-	//DbfCreate();
+	gComConfig.device = device;
+	gComConfig.baud = baud;
+	gComConfig.mode = mode;
+	return NO_ERR;
+}
+
+U8 db_setGatewayId(U8* gatewayId)
+{
+	return inverseStrToBCD(gatewayId, 2 * GATEWAY_OADD_LEN, gu8gwyAdd, GATEWAY_OADD_LEN);
+}
+
+U8 db_setSvrId(U8* svrId)
+{
+	return inverseStrToBCD(svrId, 2 * GATEWAY_OADD_LEN, gu8svrAdd, GATEWAY_OADD_LEN);
+}
+
+U8 db_createConfigDb()
+{
+	sFILE *fp = FileOpen(DB_CONFIG_NAME, "war");
+
+	if (fp != NULL) {
+		FileDelete(fp);
+	}
+	FileClose(fp);
+	if (DbfCreate(DB_CONFIG_NAME, CONFIG_FIELD_CNT, configFieldName, configFieldSize) < 0)
+		return ERROR;
+
+	return NO_ERR;
+}
+
+U8 db_writeConfig()
+{
+	S8	tmpStr[64] = { 0 };
+
+	if (db_createConfigDb() == ERROR) {
+		return ERROR;
+	}
+
+	if (openDBF(DB_CONFIG_NAME) == ERROR) {
+		return ERROR;
+	}
+
+	DbfRecordAppend(pDbf);
+	Lib_sprintf(tmpStr, "%d", config_com_para);
+	DbfFieldSet(config_field_id, tmpStr, pDbf);
+	memset(tmpStr, 0, sizeof(tmpStr));
+	Lib_sprintf(tmpStr, "%d,%d,%d", gComConfig.baud, gComConfig.mode, gComConfig.device);
+	DbfFieldSet(config_field_vale, tmpStr, pDbf);
+	memset(tmpStr, 0, sizeof(tmpStr));
+
+	DbfRecordAppend(pDbf);
+	Lib_sprintf(tmpStr, "%d", config_gateway_id);
+	DbfFieldSet(config_field_id, tmpStr, pDbf);
+	memset(tmpStr, 0, sizeof(tmpStr));
+	Lib_sprintf(tmpStr, "%02x%02x%02x%02x%02x%02x", \
+		gu8gwyAdd[5], gu8gwyAdd[4], gu8gwyAdd[3], \
+		gu8gwyAdd[2], gu8gwyAdd[1], gu8gwyAdd[0]);
+	DbfFieldSet(config_field_vale, tmpStr, pDbf);
+	memset(tmpStr, 0, sizeof(tmpStr));
+
+	DbfRecordAppend(pDbf);
+	Lib_sprintf(tmpStr, "%d", config_server_id);
+	DbfFieldSet(config_field_id, tmpStr, pDbf);
+	memset(tmpStr, 0, sizeof(tmpStr));
+	Lib_sprintf(tmpStr, "%02x%02x%02x%02x%02x%02x", \
+		gu8svrAdd[5], gu8svrAdd[4], gu8svrAdd[3], \
+		gu8svrAdd[2], gu8svrAdd[1], gu8svrAdd[0]);
+	DbfFieldSet(config_field_vale, tmpStr, pDbf);
+	memset(tmpStr, 0, sizeof(tmpStr));
+
+	if (closeDBF() == ERROR) {
+		return ERROR;
+	}
 	return NO_ERR;
 }
 
@@ -113,27 +187,32 @@ U8 db_readAllConfig(void)
 	s32 iRet = 0;
 	memset(&gComConfig, 0x00, sizeof(sUART));
 
-	if (openDBF(DB_CONFIG_NAME) == ERROR) return ERROR;//open dbf
-	//read com config
+	if (openDBF(DB_CONFIG_NAME) == ERROR) {
+		GUI_MessageBox("\n配置信息丢失, 请重新设置!\n", "丢失", GUI_MESSAGEBOX_CF_MODAL);
+		return ERROR;
+	}
+
 	iRet = DbfGotoRecord(config_com_para, pDbf);
 	if (iRet<0) return ERROR;
 	iRet = DbfFieldGet(config_field_vale, data, pDbf);
 	if (iRet<0) return ERROR;
 	readComConfig(data);
-	//read gatewayId
+
 	iRet = DbfGotoRecord(config_gateway_id, pDbf);
 	if (iRet < 0) return ERROR;
 	iRet = DbfFieldGet(config_field_vale, data, pDbf);
 	if (iRet < 0) return ERROR;
 	readGatewayId((U8*)data);
-	//read serverId
+
 	iRet = DbfGotoRecord(config_server_id, pDbf);
 	if (iRet < 0) return ERROR;
 	iRet = DbfFieldGet(config_field_vale, data, pDbf);
 	if (iRet < 0) return ERROR;
 	readServerId((U8*)data);
 	gu8hasInitConfig = CONFIG_INITTED;
-	closeDBF();
+	if (closeDBF()==ERROR) {
+		return ERROR;
+	}
 	return NO_ERR;
 }
 
