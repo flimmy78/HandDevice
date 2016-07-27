@@ -193,6 +193,7 @@ Note that we have chosen the values to be close to existing
 #define GUI_ID_DROPDOWN1  0x181
 #define GUI_ID_DROPDOWN2  0x182
 #define GUI_ID_DROPDOWN3  0x183
+#define GUI_ID_DROPDOWN4  0x184
 
 #define GUI_ID_MULTIEDIT0 0x190
 #define GUI_ID_MULTIEDIT1 0x191
