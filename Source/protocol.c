@@ -9,10 +9,9 @@
 **	A(analyze)意为"解析", 即解析集中器返回的帧;
 ****************************************************
 */
-#include "basedef.h"
+
 #include "lib.h"
 #include "protocol.h"
-#include "db.h"
 
 /*
 **	创建集中器发送帧.

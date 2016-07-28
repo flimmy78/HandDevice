@@ -10,7 +10,6 @@
 #include "logic.h"
 #include "lib.h"
 #include "db.h"
-#include "protocol.h"
 #include "interface.h"
 
 /************************************************************************/

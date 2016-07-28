@@ -5,7 +5,6 @@
 ****************************************************
 */
 #include "protocol.h"
-#include "db.h"
 #include "lib.h"
 #include "logic.h"
 

@@ -4,11 +4,10 @@
 **	作者：		宋宝善
 ****************************************************
 */
-#include "basedef.h"
-#include "protocol.h"
-#include "lib.h"
-#include "db.h"
 #include "user.h"
+#include "basedef.h"
+#include "lib.h"
+
 
 static const U8 spaces[] = { ' ', '\t', '\n', '\r', '\0' };
 

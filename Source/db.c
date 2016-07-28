@@ -4,7 +4,7 @@
 **	×÷Õß£º		ËÎ±¦ÉÆ
 ****************************************************
 */
-#include "protocol.h"
+
 #include "logic.h"
 #include "lib.h"
 #include "db.h"
@@ -114,7 +114,8 @@ U8 db_writeConfig()
 	Lib_sprintf(tmpStr, "%d", config_com_para);
 	DbfFieldSet(config_field_id, tmpStr, pDbf);
 	memset(tmpStr, 0, sizeof(tmpStr));
-	Lib_sprintf(tmpStr, "%d,%d,%d", gComConfig.baud, gComConfig.mode, gComConfig.device);
+	Lib_sprintf(tmpStr, "%d%c%d%c%d", gComConfig.baud, \
+		CONFIG_DELIMITER, gComConfig.mode, CONFIG_DELIMITER, gComConfig.device);
 	DbfFieldSet(config_field_vale, tmpStr, pDbf);
 	memset(tmpStr, 0, sizeof(tmpStr));
 
