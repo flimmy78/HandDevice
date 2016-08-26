@@ -24,8 +24,9 @@ static const GUI_WIDGET_CREATE_INFO widgetMainFrame[] = {
 
 static const GUI_WIDGET_CREATE_INFO widgetMeterRelate[] = {
 	{ FRAMEWIN_CreateIndirect, "仪表程序", ID_FRAMEWIN_1, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
-	{ BUTTON_CreateIndirect, "误差", ID_BUTTON_0, 10, 70, 80, 80, 0, 0 },
-	{ BUTTON_CreateIndirect, "示值", ID_BUTTON_1, 130, 70, 80, 80, 0, 0 }
+	{ BUTTON_CreateIndirect, "误差", ID_BUTTON_0, 60, 35, 100, 35, 0, 0 },
+	{ BUTTON_CreateIndirect, "表号", ID_BUTTON_1, 60, 110, 100, 35, 0, 0 },
+	{ BUTTON_CreateIndirect, "时间", ID_BUTTON_2, 60, 185, 100, 35, 0, 0 }
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
@@ -735,14 +736,24 @@ void setMeterErr()
 	}
 }
 
-void setMeterValue()
+void setMeterAddr()
 {
-//	int iRet;
-//	while (1) {
-//		iRet = GUI_ExecDialogBox(widgetSetMeterValue, GUI_COUNTOF(widgetSetMeterValue), &setMeterValueCb, WM_HBKWIN, 0, 0);
-//		if (iRet == WM_USER_EXIT)
-//			return;
-//	}
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetSetMeterAddr, GUI_COUNTOF(widgetSetMeterAddr), &setMeterAddrCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
+}
+
+void setMeterTime()
+{
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetSetMeterTime, GUI_COUNTOF(widgetSetMeterTime), &setMeterTimeCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
 }
 
 void setMeter()
@@ -755,7 +766,10 @@ void setMeter()
 			setMeterErr();
 			break;
 		case ID_BUTTON_1:
-			setMeterValue();
+			setMeterAddr();
+			break;
+		case ID_BUTTON_2:
+			setMeterTime();
 			break;
 		case WM_USER_EXIT:
 			return;
