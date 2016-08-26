@@ -108,6 +108,27 @@ U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr p
 	return NO_ERR;
 }
 
+U8 protoW_ModifyAddr(U8* buf, U16* bufSize, U8* oldMeterAddr, U8* newMeterAddr)
+{
+	U8 data[] = { 0x68, 0x20, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x39, 0x11, 0x18, 0xA0, 0xAA, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x16 };
+	sys_time_str timeStr;
+
+	readSysTime(&timeStr);
+	memcpy(data + 2, oldMeterAddr, METER_ADDR_LEN);
+	memcpy(data + 14, newMeterAddr, METER_ADDR_LEN);
+	memcpy(data + 21, (U8*)&timeStr, sizeof(sys_time_str));
+	data[27] = 0x20;
+	data[28] = countCheck(data, 28);
+	*bufSize = sizeof(data);
+	memcpy(buf, data, *bufSize);
+	return NO_ERR;
+}
+
 /*
 **	使热表进入检定状态.
 **	@buf:		帧缓存

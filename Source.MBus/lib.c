@@ -410,14 +410,15 @@ U8 bytesToStr(U8* buf, U16 bufSize, U8* strBuf, const char* file, const char* fu
 	S8	tmpStr[4] = { 0 };
 	sys_time_str timeStr;
 
-	if (bufSize == 0) {
-		return NO_ERR;
-	}
-	readSysTime(&timeStr);
 
+	readSysTime(&timeStr);
 	Lib_sprintf((S8*)strBuf, "[20%02X-%02X-%02X %02X:%02X:%02X][%s, %s, %d]", \
 		timeStr.u8year, timeStr.u8month, timeStr.u8day, \
 		timeStr.u8hour, timeStr.u8minute, timeStr.u8second, file, func, line);
+
+	if (bufSize == 0) {
+		return NO_ERR;
+	}
 	for (i = 0; i < bufSize-1;i++) {
 		Lib_sprintf(tmpStr, "%02X ", buf[i]);
 		strcat((S8*)strBuf, (const char*)tmpStr);

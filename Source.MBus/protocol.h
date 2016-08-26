@@ -162,6 +162,7 @@ typedef enum
 extern U8 protoR_radioMAddr(U8* buf, U16* bufSize, meter_frame_info_ptr pSendFrame);
 extern U8 protoA_meterAddr(U8* buf, U16 bufSize, meter_frame_info_ptr pFrameInfo, flow_coe_ptr pFlowErr);
 extern U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr pSendFrame, flow_coe_ptr pFlowCoe);
+extern U8 protoW_ModifyAddr(U8* buf, U16* bufSize, U8* oldMeterAddr, U8* newMeterAddr);
 extern U8 vprotoR_readValue(U8* buf, U16* bufSize, U8* valveAddr);
 extern U8 vprotoA_readValue(U8* buf, U16 bufSize, vElsonic_asw_frame_ptr pElRetFrame);
 extern U8 vprotoR_readOpenTime(U8* buf, U16* bufSize, U8* valveAddr);

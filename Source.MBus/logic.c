@@ -45,10 +45,13 @@ U8 logic_radioMeterAddr(U8* meterAddr, flow_err_string_ptr pError)
 	U8	buf[FRAME_MAX_LEN] = { 0 };
 	U16	bufSize = 0;
 
+	printBuf(NULL, 0, FILE_LINE);
 	db_getCongfig(config_meter_type, (U8*)&infoIdx);
 	if (db_getFrameInfo(infoIdx, &dbFrameStr) == ERROR) {
+		printBuf(NULL, 0, FILE_LINE);
 		return ERROR;
 	}
+	printBuf(NULL, 0, FILE_LINE);
 	dbFrameToProto(&dbFrameStr, &protoStr);
 	protoR_radioMAddr(buf, &bufSize, &protoStr);
 	printBuf(buf, bufSize, FILE_LINE);
@@ -91,6 +94,21 @@ U8 logic_modifyCoe(U8* meterAddr, flow_err_string_ptr pError)
 	printBuf(buf, bufSize, FILE_LINE);
 	logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT);
 
+	return NO_ERR;
+}
+
+U8 logic_modifyAddr(U8* oldMeterAddr, U8* newMeterAddr)
+{
+	U8	buf[FRAME_MAX_LEN] = { 0 };
+	U16	bufSize = 0;
+	U8	lu8oldMeterAddr[METER_ADDR_LEN] = { 0 };
+	U8	lu8newMeterAddr[METER_ADDR_LEN] = { 0 };
+
+	inverseStrToBCD(oldMeterAddr, 2 * METER_ADDR_LEN, lu8oldMeterAddr, METER_ADDR_LEN);
+	inverseStrToBCD(newMeterAddr, 2 * METER_ADDR_LEN, lu8newMeterAddr, METER_ADDR_LEN);
+	protoW_ModifyAddr(buf, &bufSize, lu8oldMeterAddr, lu8newMeterAddr);
+	printBuf(buf, bufSize, FILE_LINE);
+	logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT);
 	return NO_ERR;
 }
 

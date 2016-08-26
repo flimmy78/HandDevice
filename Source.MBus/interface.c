@@ -26,7 +26,6 @@ static const GUI_WIDGET_CREATE_INFO widgetMeterRelate[] = {
 	{ FRAMEWIN_CreateIndirect, "仪表程序", ID_FRAMEWIN_1, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ BUTTON_CreateIndirect, "误差", ID_BUTTON_0, 60, 35, 100, 35, 0, 0 },
 	{ BUTTON_CreateIndirect, "表号", ID_BUTTON_1, 60, 110, 100, 35, 0, 0 },
-	{ BUTTON_CreateIndirect, "时间", ID_BUTTON_2, 60, 185, 100, 35, 0, 0 }
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
@@ -43,6 +42,17 @@ static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
 	{ EDIT_CreateIndirect, "", ID_EDIT_4, 110, 170, 100, 20, 0, 0 },
 	{ BUTTON_CreateIndirect, "退出", ID_BUTTON_1, 10, 255, 80, 20, 0, 0 },
 	{ BUTTON_CreateIndirect, "修改", ID_BUTTON_2, 130, 255, 80, 20, 0, 0 }
+};
+
+static const GUI_WIDGET_CREATE_INFO widgetSetMeterAddr[] = {
+	{ FRAMEWIN_CreateIndirect, "修改表号和时间", ID_FRAMEWIN_0, 1, -1, 240, 320, 0, 0 },
+	{ BUTTON_CreateIndirect, "旧表号", ID_BUTTON_0, 10, 25, 60, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", ID_EDIT_0, 85, 25, 120, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", ID_EDIT_1, 85, 70, 120, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", ID_BUTTON_1, 10, 245, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "修改", ID_BUTTON_2, 130, 245, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "新表号", ID_TEXT_0, 10, 70, 60, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "请将热表\n切换到温差状态下", ID_TEXT_1, 25, 130, 165, 90, 0, 0 }
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetSetValve[] = {
@@ -137,6 +147,18 @@ static void setMeterErrInit(WM_HWIN hDlg)
 	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
 
 	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_SetMaxLen(hItem, EDIT_MAX_LEN);
+}
+
+static void setMeterAddrInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+
+	hItem = WM_GetDialogItem(hDlg, ID_TEXT_0);
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_SetMaxLen(hItem, EDIT_MAX_LEN);
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_1);
 	EDIT_SetMaxLen(hItem, EDIT_MAX_LEN);
 }
 
@@ -466,6 +488,120 @@ void setMeterErrCb(WM_MESSAGE* pMsg)
 	}
 }
 
+void userRadioMeterAddr(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 meterAddr[2 * METER_ADDR_LEN + 1] = { 0 };
+	flow_err_string_str flowErrStr;
+
+	printBuf(NULL, 0, FILE_LINE);
+	if (logic_radioMeterAddr(meterAddr, &flowErrStr) == ERROR) {
+		GUI_MessageBox("\n广播读取表号失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+		EDIT_SetText(hItem, (const char*)meterAddr);
+	}
+	WM_SetFocus(hDlg);
+}
+
+void userModifyAddr(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 oldMeterAddr[2 * METER_ADDR_LEN + 1] = { 0 };
+	U8 newMeterAddr[2 * METER_ADDR_LEN + 1] = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_GetText(hItem, (S8*)oldMeterAddr, 20);
+	if (isNumber(oldMeterAddr, STRLEN(oldMeterAddr)) == ERROR) {
+		GUI_MessageBox("\n请在旧表地址输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_1);
+	EDIT_GetText(hItem, (S8*)newMeterAddr, 20);
+	if (isNumber(newMeterAddr, STRLEN(newMeterAddr)) == ERROR) {
+		GUI_MessageBox("\n请在旧表地址输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+
+	if (logic_modifyAddr(oldMeterAddr, newMeterAddr) == ERROR) {
+		GUI_MessageBox("\n修改表号失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	else {
+		GUI_MessageBox("\n修改表号成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	WM_SetFocus(hDlg);
+}
+
+void setMeterAddrCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		setMeterAddrInit(hDlg);
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode) {
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case ID_BUTTON_0://广播读取表号
+				userRadioMeterAddr(hDlg);
+				break;
+			case ID_BUTTON_1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case ID_BUTTON_2://修改表号
+				userModifyAddr(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://广播读取表号
+			userRadioMeterAddr(hDlg);
+			break;
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM3://修改表号
+			userModifyAddr(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, ID_BUTTON_0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, ID_BUTTON_0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
 void readValve(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
@@ -746,16 +882,6 @@ void setMeterAddr()
 	}
 }
 
-void setMeterTime()
-{
-	int iRet;
-	while (1) {
-		iRet = GUI_ExecDialogBox(widgetSetMeterTime, GUI_COUNTOF(widgetSetMeterTime), &setMeterTimeCb, WM_HBKWIN, 0, 0);
-		if (iRet == WM_USER_EXIT)
-			return;
-	}
-}
-
 void setMeter()
 {
 	int iRet;
@@ -767,9 +893,6 @@ void setMeter()
 			break;
 		case ID_BUTTON_1:
 			setMeterAddr();
-			break;
-		case ID_BUTTON_2:
-			setMeterTime();
 			break;
 		case WM_USER_EXIT:
 			return;
