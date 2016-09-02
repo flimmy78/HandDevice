@@ -1,4 +1,4 @@
-﻿/***************************************************
+/***************************************************
 **	模块功能：	常用函数
 **	模块名字:	lib.c
 **	作者：		宋宝善
@@ -181,12 +181,29 @@ void trimZero(U8* buf, U8 bufSize)
 }
 
 /*
+**	将不足指定位的字符串前面补零.
+**	@data:	输入的字符串
+**	@len:	指定的目标字符串长度
+*/
+void supplementToLenWith0(U8* s, U16 len)
+{
+	U8 lu8tmpStr[GATEWAY_FRAME_MAX_LEN] = { 0 };
+
+	if (STRLEN(s)>=len) {
+		return;
+	}
+
+	memset(lu8tmpStr, '0', (len - STRLEN(s)));
+	memcpy(lu8tmpStr + (len - STRLEN(s)), s, STRLEN(s));
+	memcpy(s, lu8tmpStr, len);
+}
+
+/*
 **	将不足12位的集中器号前面补零.
 **	@data:	用户输入的集中器号
 */
 void supplementTo12(U8* data)
 {
-	U8 lu8tmpStr[EDIT_MAX_LEN] = { 0 };
 	U8 lu8InputLen = 0;
 
 	//supplement '0' before data, if lu8InputLen < 2 * GATEWAY_OADD_LEN
@@ -200,9 +217,7 @@ void supplementTo12(U8* data)
 		if (lu8InputLen > 2 * GATEWAY_OADD_LEN)
 			return;
 	}
-	memset(lu8tmpStr, '0', 2 * GATEWAY_OADD_LEN - lu8InputLen);
-	memcpy(lu8tmpStr + (2 * GATEWAY_OADD_LEN - lu8InputLen), data, lu8InputLen);
-	memcpy(data, lu8tmpStr, 2 * GATEWAY_OADD_LEN);
+	supplementToLenWith0(data, 2 * GATEWAY_OADD_LEN);
 }
 
 /*
@@ -217,6 +232,11 @@ void asciiToProtoBin(db_meterinfo_ptr pDbInfo, meter_row_ptr pProtoInfo)
 	i = Lib_atoi((const char*)pDbInfo->rowId);
 	pProtoInfo->rowId[0] = (U8)i;//L
 	pProtoInfo->rowId[1] = (U8)(i >> 8);//H
+
+	/*如果不够14位的, 在前面补0; 德鲁地址除外, 这就需要输入时便补上111100 */
+	if (STRLEN(pDbInfo->meterAddr)<DB_MINFO_LEN_METERADDR)
+		supplementToLenWith0(pDbInfo->meterAddr, DB_MINFO_LEN_METERADDR);
+
 	inverseStrToBCD(pDbInfo->meterAddr, DB_MINFO_LEN_METERADDR, pProtoInfo->meterAddr, PROTO_LEN_MADDR);
 	pProtoInfo->vendorId = Lib_atoi((const char*)pDbInfo->vendorId);
 	pProtoInfo->protoVer = Lib_atoi((const char*)pDbInfo->protoVer);
