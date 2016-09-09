@@ -373,7 +373,7 @@ U8 timeLegal(U8* timeStr, U16 strLen, em_time_state* pState)
 result:
 	if(pState)
 		*pState = state;
-	//扫描完字符串后, 如果状态停在小时或分隔符状态, 则合法
+	//扫描完字符串后, 如果状态停在小时或分钟状态, 则合法
 	if (state == tm_state_hour || state == tm_state_min)
 		return NO_ERR;
 	else
